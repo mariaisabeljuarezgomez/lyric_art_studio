@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browse Gallery - LyricArt Studio</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <meta name="description" content="Discover thousands of lyric art designs across all genres. Filter by style, artist, instrument shape, and more." />
+<script type="module" src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Flyricarts9704back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.6"></script>
+    <!-- OpenSeadragon for high-resolution zoomable images -->
+    <script src="https://openseadragon.github.io/openseadragon/openseadragon.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="bg-background text-text-primary font-inter">
+    <!-- Navigation Header -->
+    <header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-border-subtle">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                        <path d="M19 15L19.5 17L21 17.5L19.5 18L19 20L18.5 18L17 17.5L18.5 17L19 15Z"/>
+                        <path d="M5 15L5.5 17L7 17.5L5.5 18L5 20L4.5 18L3 17.5L4.5 17L5 15Z"/>
+                    </svg>
+                    <span class="text-xl font-montserrat font-bold">LyricArt Studio</span>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/homepage" class="text-text-secondary hover:text-accent transition-smooth">Home</a>
+                    <a href="/browse" class="text-accent font-medium">Browse Gallery</a>
+                    <a href="/artist-profiles" class="text-text-secondary hover:text-accent transition-smooth">Artists</a>
+                    <a href="/my-collection" class="text-text-secondary hover:text-accent transition-smooth">My Collection</a>
+                </div>
+
+                <!-- Search & User Actions -->
+                <div class="flex items-center space-x-4">
+                    <button class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </button>
+                    <button class="p-2 text-text-secondary hover:text-accent transition-smooth">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                    </button>
+                    <!-- Mobile Menu Button -->
+                    <button id="mobile-menu-btn" class="md:hidden p-2 text-text-secondary hover:text-accent transition-smooth">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Particle Background -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 left-10 w-2 h-2 bg-accent rounded-full opacity-60 animate-particle-slow"></div>
+        <div class="absolute top-40 right-20 w-1 h-1 bg-accent rounded-full opacity-40 animate-particle-medium"></div>
+        <div class="absolute top-60 left-1/4 w-1.5 h-1.5 bg-accent rounded-full opacity-50 animate-particle-fast"></div>
+        <div class="absolute bottom-40 right-1/3 w-2 h-2 bg-accent rounded-full opacity-30 animate-particle-slow"></div>
+        <div class="absolute bottom-60 left-1/2 w-1 h-1 bg-accent rounded-full opacity-70 animate-particle-medium"></div>
+        <div class="absolute top-1/3 right-10 w-1.5 h-1.5 bg-accent rounded-full opacity-45 animate-particle-fast"></div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="pt-20">
+        <!-- Search & Filter Header -->
+        <section class="bg-secondary/50 py-6 sm:py-8">
+            <div class="container mx-auto px-4 sm:px-6">
+                <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start lg:items-center justify-between">
+                    <!-- Search Bar -->
+                    <div class="flex-1 max-w-2xl w-full">
+                        <div class="relative">
+                            <input type="text" placeholder="Search by song, artist, or lyric snippet..." class="w-full bg-surface border border-border-subtle rounded-lg px-4 sm:px-6 py-3 sm:py-4 pr-12 text-text-primary placeholder-text-secondary focus:border-accent focus:outline-none transition-smooth text-sm sm:text-base" id="search-input" />
+                            <button class="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-accent">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- View Toggle & Sort -->
+                    <div class="flex items-center space-x-3 sm:space-x-4 w-full lg:w-auto">
+                        <!-- Mobile Filter Button -->
+                        <button id="mobile-filter-btn" class="lg:hidden btn-primary text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+                            Filters
+                        </button>
+
+                        <!-- View Toggle -->
+                        <div class="flex bg-surface rounded-lg p-1">
+                            <button id="grid-view" class="p-2 rounded text-accent bg-accent/20">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                </svg>
+                            </button>
+                            <button id="list-view" class="p-2 rounded text-text-secondary hover:text-accent transition-smooth">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Sort Dropdown -->
+                        <select class="bg-surface border border-border-subtle rounded-lg px-3 sm:px-4 py-2 text-text-primary focus:border-accent focus:outline-none text-sm sm:text-base">
+                            <option value="popularity">Most Popular</option>
+                            <option value="newest">Newest First</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="alphabetical">A-Z</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Results Summary -->
+                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                    <p class="text-text-secondary text-sm sm:text-base">
+                        Showing <span class="text-accent font-medium" id="results-count">0</span> designs
+                    </p>
+                    <button class="text-accent hover:text-text-primary transition-smooth text-sm sm:text-base self-start sm:self-auto" onclick="clearAllFilters()">
+                        Clear all filters
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Content -->
+        <section class="py-8">
+            <div class="container mx-auto px-4 sm:px-6">
+                <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+                    <!-- Sidebar Filters (Desktop) -->
+                    <aside class="hidden lg:block w-80 flex-shrink-0">
+                        <div class="sticky top-28 space-y-6">
+                            <!-- Genre Filters -->
+                            <div class="card-surface p-6">
+                                <h3 class="font-montserrat font-semibold mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-accent" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                                    </svg>
+                                    Genres
+                                </h3>
+                                <div class="space-y-3" id="genre-filters">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Rock (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Country (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Pop (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Alternative Rock (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Classic Rock (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Folk/Singer-Songwriter (0)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Instrument Shapes -->
+                            <div class="card-surface p-6">
+                                <h3 class="font-montserrat font-semibold mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-accent" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 2L3 6V20C3 21.1 3.9 22 5 22H19C20.1 22 21 21.1 21 20V6L18 2H6ZM12 4L14 6H10L12 4ZM5 8H19V20H5V8Z"/>
+                                    </svg>
+                                    Instrument Shapes
+                                </h3>
+                                <div class="space-y-3" id="instrument-filters">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Guitar (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Piano Keys (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Cassette Tape (0)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Color Schemes -->
+                            <div class="card-surface p-6">
+                                <h3 class="font-montserrat font-semibold mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-accent" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12S7.59 4 12 4 20 7.59 20 12 16.41 20 12 20Z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    Color Schemes
+                                </h3>
+                                <div class="grid grid-cols-4 gap-3">
+                                    <button class="w-8 h-8 rounded-full bg-accent border-2 border-transparent hover:border-text-primary transition-smooth"></button>
+                                    <button class="w-8 h-8 rounded-full bg-red-500 border-2 border-transparent hover:border-text-primary transition-smooth"></button>
+                                    <button class="w-8 h-8 rounded-full bg-yellow-500 border-2 border-transparent hover:border-text-primary transition-smooth"></button>
+                                    <button class="w-8 h-8 rounded-full bg-green-500 border-2 border-transparent hover:border-text-primary transition-smooth"></button>
+                                    <button class="w-8 h-8 rounded-full bg-purple-500 border-2 border-transparent hover:border-text-primary transition-smooth"></button>
+                                    <button class="w-8 h-8 rounded-full bg-pink-500 border-2 border-transparent hover:border-text-primary transition-smooth"></button>
+                                    <button class="w-8 h-8 rounded-full bg-orange-500 border-2 border-transparent hover:border-text-primary transition-smooth"></button>
+                                    <button class="w-8 h-8 rounded-full bg-text-primary border-2 border-transparent hover:border-accent transition-smooth"></button>
+                                </div>
+                            </div>
+
+                            <!-- Top Artists -->
+                            <div class="card-surface p-6">
+                                <h3 class="font-montserrat font-semibold mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-accent" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 12C14.21 12 16 10.21 16 8S14.21 4 12 4 8 5.79 8 8 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"/>
+                                    </svg>
+                                    Top Artists
+                                </h3>
+                                <div class="space-y-3" id="artist-filters">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">Loading...</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Decade Filter -->
+                            <div class="card-surface p-6">
+                                <h3 class="font-montserrat font-semibold mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-accent" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM13 17H11V11H13V17ZM13 9H11V7H13V9Z"/>
+                                    </svg>
+                                    Decade
+                                </h3>
+                                <div class="space-y-3" id="decade-filters">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">2020s (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">2010s (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">2000s (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">90s (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">80s (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">70s (0)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="sr-only peer" />
+                                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                                        <span class="ml-3 text-sm">60s (0)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- Main Gallery -->
+                    <div class="flex-1 min-w-0">
+                        <!-- Design Grid -->
+                        <div id="catalog-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                            <!-- Songs will be loaded dynamically by JavaScript -->
+                            <div class="col-span-full text-center py-12">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+                                <p class="text-text-secondary">Loading song catalog...</p>
+                            </div>
+                        </div>
+
+                        <!-- Load More Button -->
+                        <div class="text-center mt-12" id="load-more-container" style="display: none;">
+                            <button class="btn-primary text-lg px-8 py-4" onclick="loadMoreSongs()">
+                                Load More Designs
+                                <svg class="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Mobile Filter Sidebar -->
+    <div id="mobile-filter-sidebar" class="fixed inset-0 z-50 lg:hidden transform translate-x-full transition-smooth">
+        <div class="absolute inset-0 bg-primary/80 backdrop-blur-sm" onclick="closeMobileFilters()"></div>
+        <div class="absolute right-0 top-0 h-full w-full sm:w-80 bg-background border-l border-border-subtle overflow-y-auto">
+            <div class="p-4 sm:p-6">
+                <div class="flex items-center justify-between mb-4 sm:mb-6">
+                    <h2 class="text-lg sm:text-xl font-montserrat font-bold">Filters</h2>
+                    <button onclick="closeMobileFilters()" class="p-2 text-text-secondary hover:text-accent transition-smooth">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Mobile Filter Content (Same as desktop sidebar) -->
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Genre Filters -->
+                    <div class="card-surface p-4 sm:p-6">
+                        <h3 class="font-montserrat font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Genres</h3>
+                        <div class="space-y-2 sm:space-y-3" id="mobile-genre-filters">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Apply Filters Button -->
+                    <button class="w-full btn-primary text-sm sm:text-base py-3 sm:py-4" onclick="closeMobileFilters()">
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-secondary border-t border-border-subtle py-8 sm:py-12 mt-16">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+                <!-- Brand -->
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <svg class="w-6 h-6 sm:w-8 sm:h-8 text-accent" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                            <path d="M19 15L19.5 17L21 17.5L19.5 18L19 20L18.5 18L17 17.5L18.5 17L19 15Z"/>
+                            <path d="M5 15L5.5 17L7 17.5L5.5 18L5 20L4.5 18L3 17.5L4.5 17L5 15Z"/>
+                        </svg>
+                        <span class="text-lg sm:text-xl font-montserrat font-bold">LyricArt Studio</span>
+                    </div>
+                    <p class="text-text-secondary text-xs sm:text-sm">Transforming your favorite lyrics into stunning visual art since 2020.</p>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-montserrat font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Explore</h4>
+                    <ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm">
+                        <li><a href="/browse" class="text-text-secondary hover:text-accent transition-smooth">Browse Gallery</a></li>
+                        <li><a href="/artist-profiles" class="text-text-secondary hover:text-accent transition-smooth">Artists</a></li>
+                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Genres</a></li>
+                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">New Releases</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support -->
+                <div>
+                    <h4 class="font-montserrat font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Support</h4>
+                    <ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm">
+                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Help Center</a></li>
+                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Download Guide</a></li>
+                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Licensing</a></li>
+                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Contact Us</a></li>
+                    </ul>
+                </div>
+
+                <!-- Connect -->
+                <div>
+                    <h4 class="font-montserrat font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Connect</h4>
+                    <div class="flex space-x-3 sm:space-x-4">
+                        <a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.36 2.165-2.38-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                            </svg>
+                        </a>
+                        <a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-border-subtle mt-6 sm:mt-8 pt-6 sm:pt-8 text-center">
+                <p class="text-text-secondary text-xs sm:text-sm">© 2025 LyricArt Studio. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- OpenSeadragon Viewer -->
+    <script src="../public/openseadragon-viewer.js"></script>
+    
+    <!-- Song Catalog -->
+    <script src="../public/song-catalog.js"></script>
+
+    <!-- JavaScript -->
+    <script>
+        // Mobile filter sidebar functionality
+        function openMobileFilters() {
+            document.getElementById('mobile-filter-sidebar').classList.remove('translate-x-full');
+        }
+
+        function closeMobileFilters() {
+            document.getElementById('mobile-filter-sidebar').classList.add('translate-x-full');
+        }
+
+        function clearAllFilters() {
+            // Clear all checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+                const checkDiv = checkbox.nextElementSibling;
+                checkDiv.classList.remove('bg-accent', 'border-accent');
+                checkDiv.innerHTML = '';
+            });
+
+            // Clear search
+            document.getElementById('search-input').value = '';
+
+            // Reset catalog manager filters if available
+            if (window.songCatalog) {
+                window.songCatalog.currentFilters = {
+                    search: '',
+                    genres: [],
+                    instruments: [],
+                    artists: [],
+                    decades: [],
+                    colors: []
+                };
+                window.songCatalog.applyFilters();
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile filter button
+            const mobileFilterBtn = document.getElementById('mobile-filter-btn');
+            if (mobileFilterBtn) {
+                mobileFilterBtn.addEventListener('click', openMobileFilters);
+            }
+
+            // Wait for song catalog to initialize
+            const initCheckInterval = setInterval(() => {
+                if (window.songCatalog) {
+                    clearInterval(initCheckInterval);
+                    
+                    // Show load more button after catalog loads
+                    const loadMoreContainer = document.getElementById('load-more-container');
+                    if (loadMoreContainer) {
+                        loadMoreContainer.style.display = 'block';
+                    }
+
+                    // Update filter counts
+                    updateFilterCounts();
+                    
+                    // Handle URL parameters for genre filtering
+                    handleURLParameters();
+                }
+            }, 100);
+        });
+
+        function handleURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const genreParam = urlParams.get('genre');
+            const searchParam = urlParams.get('search');
+            
+            if (genreParam && window.songCatalog) {
+                // Find and check the genre checkbox
+                const genreCheckboxes = document.querySelectorAll('#genre-filters input[type="checkbox"]');
+                genreCheckboxes.forEach(checkbox => {
+                    const label = checkbox.closest('label');
+                    const span = label.querySelector('span');
+                    const genreName = span.textContent.split(' (')[0];
+                    
+                    if (genreName.toLowerCase() === genreParam.toLowerCase()) {
+                        checkbox.checked = true;
+                        const checkDiv = checkbox.nextElementSibling;
+                        checkDiv.classList.add('bg-accent', 'border-accent');
+                        checkDiv.innerHTML = '<svg class="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+                        
+                        // Apply the filter
+                        window.songCatalog.updateFiltersFromCheckboxes();
+                        window.songCatalog.applyFilters();
+                        
+                        // Update the page title to show the filter
+                        document.title = `${genreName} Designs - LyricArt Studio`;
+                    }
+                });
+            }
+            
+            if (searchParam && window.songCatalog) {
+                // Set the search input value
+                const searchInput = document.getElementById('search-input');
+                if (searchInput) {
+                    searchInput.value = searchParam;
+                }
+                
+                // Apply the search filter
+                window.songCatalog.currentFilters.search = searchParam;
+                window.songCatalog.applyFilters();
+                
+                // Update the page title to show the search
+                document.title = `Search: ${searchParam} - LyricArt Studio`;
+            }
+        }
+
+        function updateFilterCounts() {
+            if (!window.songCatalog) return;
+
+            // Update genre filter counts
+            const genreContainer = document.getElementById('genre-filters');
+            if (genreContainer && window.songCatalog.genres) {
+                const labels = genreContainer.querySelectorAll('span');
+                labels.forEach(label => {
+                    const genreName = label.textContent.split(' (')[0];
+                    const count = window.songCatalog.genres.get(genreName) || 0;
+                    label.textContent = `${genreName} (${count})`;
+                });
+            }
+
+            // Update results count
+            const resultsCountElement = document.getElementById('results-count');
+            if (resultsCountElement && window.songCatalog.filteredSongs) {
+                resultsCountElement.textContent = window.songCatalog.filteredSongs.length.toLocaleString();
+            }
+
+            // Update top artists filter
+            updateTopArtistsFilter();
+        }
+
+        function updateTopArtistsFilter() {
+            if (!window.songCatalog || !window.songCatalog.artists) return;
+
+            const artistContainer = document.getElementById('artist-filters');
+            if (artistContainer) {
+                // Get top 8 artists by song count
+                const topArtists = Array.from(window.songCatalog.artists.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 8);
+
+                artistContainer.innerHTML = '';
+                topArtists.forEach(([artist, count]) => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center';
+                    label.innerHTML = `
+                        <input type="checkbox" class="sr-only peer" />
+                        <div class="w-4 h-4 border border-border-subtle rounded peer-checked:bg-accent peer-checked:border-accent transition-smooth"></div>
+                        <span class="ml-3 text-sm">${artist} (${count})</span>
+                    `;
+                    artistContainer.appendChild(label);
+
+                    // Add event listener for the new checkbox
+                    const checkbox = label.querySelector('input[type="checkbox"]');
+                    checkbox.addEventListener('change', function() {
+                        const checkDiv = this.nextElementSibling;
+                        if (this.checked) {
+                            checkDiv.classList.add('bg-accent', 'border-accent');
+                            checkDiv.innerHTML = '<svg class="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+                        } else {
+                            checkDiv.classList.remove('bg-accent', 'border-accent');
+                            checkDiv.innerHTML = '';
+                        }
+
+                        // Update filters
+                        if (window.songCatalog) {
+                            window.songCatalog.updateFiltersFromCheckboxes();
+                            window.songCatalog.applyFilters();
+                        }
+                    });
+                });
+            }
+        }
+
+        // Checkbox styling for existing checkboxes
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox') {
+                const checkDiv = e.target.nextElementSibling;
+                if (e.target.checked) {
+                    checkDiv.classList.add('bg-accent', 'border-accent');
+                    checkDiv.innerHTML = '<svg class="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+                } else {
+                    checkDiv.classList.remove('bg-accent', 'border-accent');
+                    checkDiv.innerHTML = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

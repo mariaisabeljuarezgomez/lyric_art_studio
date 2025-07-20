@@ -1,0 +1,56 @@
+{
+  "totalFiles": 433,
+  "totalFolders": 430,
+  "sampleFiles": [
+    {
+      "original": "AC DC BACK IN BLACK GUITAR.pdf",
+      "newPath": "organized_pdfs_simple\\ac-dc-back-in-black-guitar\\ac-dc-back-in-black-guitar.pdf",
+      "folder": "ac-dc-back-in-black-guitar"
+    },
+    {
+      "original": "AC DC HIGHWAY TO HELL GUITAR.pdf",
+      "newPath": "organized_pdfs_simple\\ac-dc-highway-to-hell-guitar\\ac-dc-highway-to-hell-guitar.pdf",
+      "folder": "ac-dc-highway-to-hell-guitar"
+    },
+    {
+      "original": "AC DC LET THERE BE ROCK GUITAR.pdf",
+      "newPath": "organized_pdfs_simple\\ac-dc-let-there-be-rock-guitar\\ac-dc-let-there-be-rock-guitar.pdf",
+      "folder": "ac-dc-let-there-be-rock-guitar"
+    },
+    {
+      "original": "AC DC OVERDOSE GUITAR.pdf",
+      "newPath": "organized_pdfs_simple\\ac-dc-overdose-guitar\\ac-dc-overdose-guitar.pdf",
+      "folder": "ac-dc-overdose-guitar"
+    },
+    {
+      "original": "AC DC SHOOK ME ALL NIGHT LONG GUITAR.pdf",
+      "newPath": "organized_pdfs_simple\\ac-dc-shook-me-all-night-long-guitar\\ac-dc-shook-me-all-night-long-guitar.pdf",
+      "folder": "ac-dc-shook-me-all-night-long-guitar"
+    },
+    {
+      "original": "AC DC THUNDERSTRUCK GUITAR.pdf",
+      "newPath": "organized_pdfs_simple\\ac-dc-thunderstruck-guitar\\ac-dc-thunderstruck-guitar.pdf",
+      "folder": "ac-dc-thunderstruck-guitar"
+    },
+    {
+      "original": "AEROSMITH DONT WANT TO MISS A THING GUITAR.pdf",
+      "newPath": "organized_pdfs_simple\\aerosmith-dont-want-to-miss-a-thing-guitar\\aerosmith-dont-want-to-miss-a-thing-guitar.pdf",
+      "folder": "aerosmith-dont-want-to-miss-a-thing-guitar"
+    },
+    {
+      "original": "ALABAMA DIXIELAND DELIGHT GUITAR (2).pdf",
+      "newPath": "organized_pdfs_simple\\alabama-dixieland-delight-guitar-2\\alabama-dixieland-delight-guitar-2.pdf",
+      "folder": "alabama-dixieland-delight-guitar-2"
+    },
+    {
+      "original": "ALABAMA DIXIELAND DELIGHT GUITAR SS.pdf",
+      "newPath": "organized_pdfs_simple\\alabama-dixieland-delight-guitar-ss\\alabama-dixieland-delight-guitar-ss.pdf",
+      "folder": "alabama-dixieland-delight-guitar-ss"
+    },
+    {
+      "original": "ALABAMA DIXIELAND DELIGHT GUITAR.pdf",
+      "newPath": "organized_pdfs_simple\\alabama-dixieland-delight-guitar\\alabama-dixieland-delight-guitar.pdf",
+      "folder": "alabama-dixieland-delight-guitar"
+    }
+  ]
+}
