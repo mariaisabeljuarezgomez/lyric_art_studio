@@ -174,7 +174,8 @@ class ImageProtectionMiddleware {
     addProtectionHeaders(res) {
         res.set({
             'X-Content-Type-Options': 'nosniff',
-            'X-Frame-Options': 'DENY',
+            // Temporarily disabled for development debugging
+            // 'X-Frame-Options': 'DENY',
             'X-Download-Options': 'noopen',
             'Cache-Control': 'no-store, no-cache, must-revalidate, private',
             'Pragma': 'no-cache',

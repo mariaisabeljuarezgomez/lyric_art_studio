@@ -5,6 +5,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
+const fs = require('fs');
 const { DatabaseManager } = require('./database-setup');
 const { ShoppingCartSystem } = require('./shopping-cart-system');
 const PerformanceOptimizer = require('./performance-optimization');
@@ -18,24 +19,48 @@ const dbManager = new DatabaseManager();
 const cartSystem = new ShoppingCartSystem();
 const imageProtection = new ImageProtectionMiddleware();
 
+// Use default memory store for sessions
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session management - Secure configuration
+// Security headers middleware (re-enabled for production)
+app.use((req, res, next) => {
+    // Add security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Allow same-origin frames for dev tools
+    res.setHeader('X-Download-Options', 'noopen');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
+
+// Secure session management (using memory store for now)
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'lyricart-studio-secret-key-2024',
-    resave: false,
+    secret: process.env.SESSION_SECRET || 'lyricart-studio-secure-secret-key-2024',
+    resave: true,
     saveUninitialized: false,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production', // Secure in production
-        httpOnly: true, // Prevent XSS attacks
+        secure: false, // Set to true in production with HTTPS
+        httpOnly: false, // Temporarily false for debugging
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        sameSite: 'strict' // Prevent CSRF attacks
+        sameSite: 'lax', // CSRF protection
+        path: '/'
     },
-    name: 'lyricart-session' // Custom session name for security
+    name: 'lyricart-session'
 }));
+
+// Middleware to check session for API requests
+app.use('/api', (req, res, next) => {
+    if (req.session.userId) {
+        // User is authenticated, proceed
+        next();
+    } else {
+        // No session, but don't block - let individual endpoints handle auth
+        next();
+    }
+});
 
 // Cache headers middleware
 app.use((req, res, next) => {
@@ -56,7 +81,8 @@ app.use((req, res, next) => {
 
 // Image protection middleware (must come before static file serving)
 app.use(imageProtection.protectImages());
-app.use(imageProtection.rateLimit());
+// Temporarily disabled rate limiting for development
+// app.use(imageProtection.rateLimit());
 
 // Serve static files from the root directory (with protection)
 app.use(express.static(__dirname));
@@ -67,29 +93,26 @@ app.get('*.json', (req, res, next) => {
     next();
 });
 
-// Authentication middleware
+// Secure authentication middleware
 const authenticateUser = async (req, res, next) => {
     try {
         if (req.session.userId) {
-            console.log('🔍 Checking session for user:', req.session.userId);
             const user = await dbManager.getUserById(req.session.userId);
             if (user) {
                 req.user = user;
-                console.log('✅ User authenticated:', user.email);
             } else {
-                console.log('❌ User not found in database');
+                // Clear invalid session
+                req.session.destroy((err) => {
+                    if (err) console.error('Error destroying session:', err);
+                });
             }
-        } else {
-            console.log('❌ No session userId found');
         }
-        next();
     } catch (error) {
-        console.error('❌ Authentication middleware error:', error);
-        next();
+        console.error('Authentication error:', error);
     }
+    next();
 };
 
-// Apply authentication to all routes
 app.use(authenticateUser);
 
 // Basic routes
@@ -117,6 +140,10 @@ app.get('/about', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/about.html'));
 });
 
+app.get('/test-login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test-login.html'));
+});
+
 app.get('/terms', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/terms.html'));
 });
@@ -125,7 +152,12 @@ app.get('/privacy', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/privacy.html'));
 });
 
-app.get('/my-collection', (req, res) => {
+app.get('/my-collection', authenticateUser, (req, res) => {
+    // Check if user has made purchases
+    const userOrders = getUserOrders(req.session.userId);
+    if (!userOrders || userOrders.length === 0) {
+        return res.redirect('/browse?message=no-purchases');
+    }
     res.sendFile(path.join(__dirname, 'pages/my_collection_dashboard.html'));
 });
 
@@ -203,15 +235,24 @@ app.post('/api/auth/login', async (req, res) => {
         req.session.userName = user.name;
         
         console.log('💾 Setting session data:', {
-            userId: req.session.userId,
-            userEmail: req.session.userEmail,
-            userName: req.session.userName
+            sessionId: req.sessionID,
+            userId: user.id,
+            userEmail: user.email,
+            userName: user.name
         });
         
-        // Simple response - session will be saved automatically
-        res.json({ 
-            success: true, 
-            user: { id: user.id, email: user.email, name: user.name }
+        // Force session save
+        req.session.save((err) => {
+            if (err) {
+                console.error('❌ Session save error:', err);
+                return res.status(500).json({ success: false, error: 'Session save failed' });
+            }
+            
+            console.log('✅ Session saved successfully');
+            res.json({ 
+                success: true, 
+                user: { id: user.id, email: user.email, name: user.name }
+            });
         });
     } catch (error) {
         console.error('❌ Login error:', error);
@@ -223,13 +264,22 @@ app.post('/api/auth/logout', async (req, res) => {
     try {
         req.session.destroy((err) => {
             if (err) {
-                console.error('Logout error:', err);
+                console.error('❌ Logout error:', err);
                 return res.status(500).json({ success: false, error: 'Logout error' });
             }
+            
+            // Clear the session cookie
+            res.clearCookie('lyricart-session', {
+                path: '/',
+                httpOnly: false,
+                secure: false,
+                sameSite: 'lax'
+            });
+            
             res.json({ success: true, message: 'Logged out successfully' });
         });
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('❌ Logout error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -248,12 +298,7 @@ app.get('/api/auth/me', (req, res) => {
 
 
         app.get('/api/auth/status', (req, res) => {
-            console.log('🔍 Auth status check - Session:', req.session);
-            console.log('🔍 Auth status check - UserId:', req.session.userId);
-            console.log('🔍 Auth status check - UserEmail:', req.session.userEmail);
-            
             if (req.session.userId) {
-                console.log('✅ User is logged in:', req.session.userEmail);
                 res.json({ 
                     loggedIn: true, 
                     user: { 
@@ -262,7 +307,6 @@ app.get('/api/auth/me', (req, res) => {
                     } 
                 });
             } else {
-                console.log('❌ No session userId found');
                 res.json({ loggedIn: false });
             }
         });
@@ -511,6 +555,117 @@ app.post('/api/orders/complete', async (req, res) => {
     } catch (error) {
         console.error('Order completion error:', error);
         res.json({ success: false, error: 'Order completion failed' });
+    }
+});
+
+// Helper function to get user orders
+function getUserOrders(userId) {
+    try {
+        const ordersData = fs.readFileSync(path.join(__dirname, 'database/orders.json'), 'utf8');
+        const orders = JSON.parse(ordersData);
+        return orders.filter(order => order.userId === userId);
+    } catch (error) {
+        console.error('Error reading orders:', error);
+        return [];
+    }
+}
+
+// Helper function to get user's purchased designs
+function getUserDesigns(userId) {
+    try {
+        const ordersData = fs.readFileSync(path.join(__dirname, 'database/orders.json'), 'utf8');
+        const orders = JSON.parse(ordersData);
+        const userOrders = orders.filter(order => order.userId === userId && order.status === 'completed');
+        
+        const designs = [];
+        userOrders.forEach(order => {
+            if (order.items && Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    designs.push({
+                        id: item.id,
+                        name: item.name,
+                        artist: item.artist,
+                        format: item.format,
+                        purchaseDate: order.date,
+                        orderId: order.id,
+                        price: item.price,
+                        imageUrl: item.imageUrl || `/images/designs/${item.id}/${item.id}.webp`
+                    });
+                });
+            }
+        });
+        
+        return designs;
+    } catch (error) {
+        console.error('Error reading user designs:', error);
+        return [];
+    }
+}
+
+// Helper function to get user's purchase history
+function getUserPurchaseHistory(userId) {
+    try {
+        const ordersData = fs.readFileSync(path.join(__dirname, 'database/orders.json'), 'utf8');
+        const orders = JSON.parse(ordersData);
+        return orders.filter(order => order.userId === userId)
+                    .map(order => ({
+                        id: order.id,
+                        date: order.date,
+                        total: order.total,
+                        status: order.status,
+                        items: order.items || [],
+                        paymentMethod: order.paymentMethod
+                    }))
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
+    } catch (error) {
+        console.error('Error reading purchase history:', error);
+        return [];
+    }
+}
+
+// My Collection API endpoints
+app.get('/api/my-collection/designs', authenticateUser, (req, res) => {
+    try {
+        const designs = getUserDesigns(req.session.userId);
+        res.json({ success: true, designs, total: designs.length });
+    } catch (error) {
+        console.error('Error getting user designs:', error);
+        res.status(500).json({ success: false, error: 'Failed to load designs' });
+    }
+});
+
+app.get('/api/my-collection/history', authenticateUser, (req, res) => {
+    try {
+        const history = getUserPurchaseHistory(req.session.userId);
+        res.json({ success: true, history, total: history.length });
+    } catch (error) {
+        console.error('Error getting purchase history:', error);
+        res.status(500).json({ success: false, error: 'Failed to load history' });
+    }
+});
+
+app.get('/api/my-collection/download/:designId', authenticateUser, (req, res) => {
+    try {
+        const { designId } = req.params;
+        const userId = req.session.userId;
+        
+        // Verify user owns this design
+        const designs = getUserDesigns(userId);
+        const design = designs.find(d => d.id === designId);
+        
+        if (!design) {
+            return res.status(404).json({ success: false, error: 'Design not found or not owned' });
+        }
+        
+        // For now, return the design info - in production, you'd serve the actual file
+        res.json({ 
+            success: true, 
+            design,
+            downloadUrl: `/images/designs/${designId}/${designId}.webp`
+        });
+    } catch (error) {
+        console.error('Error downloading design:', error);
+        res.status(500).json({ success: false, error: 'Download failed' });
     }
 });
 

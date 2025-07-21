@@ -880,6 +880,267 @@
 
     <!-- JavaScript for Dashboard Functionality -->
     <script>
+        // Global variables
+        let userDesigns = [];
+        let purchaseHistory = [];
+        let currentUser = null;
+
+        // Check authentication status
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                if (data.success && data.user) {
+                    currentUser = data.user;
+                    updateUserInterface();
+                    loadUserData();
+                } else {
+                    // Redirect to login if not authenticated
+                    window.location.href = '/login?redirect=/my-collection';
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login?redirect=/my-collection';
+            }
+        }
+
+        // Update user interface with real user data
+        function updateUserInterface() {
+            if (currentUser) {
+                // Update user avatar with first letter of name
+                const avatar = document.querySelector('.w-8.h-8.bg-accent.rounded-full');
+                if (avatar) {
+                    avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+                }
+            }
+        }
+
+        // Load user's purchased designs
+        async function loadUserDesigns() {
+            try {
+                const response = await fetch('/api/my-collection/designs');
+                const data = await response.json();
+                
+                if (data.success) {
+                    userDesigns = data.designs;
+                    updateDesignsDisplay();
+                    updateDesignsCount();
+                }
+            } catch (error) {
+                console.error('Failed to load designs:', error);
+                showError('Failed to load your designs');
+            }
+        }
+
+        // Update designs display with real data
+        function updateDesignsDisplay() {
+            const designsGrid = document.querySelector('#my-designs .grid');
+            if (!designsGrid) return;
+
+            if (userDesigns.length === 0) {
+                designsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <svg class="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <h3 class="text-xl font-montserrat font-semibold mb-2">No Designs Yet</h3>
+                        <p class="text-text-secondary mb-6">You haven't purchased any designs yet.</p>
+                        <a href="/browse" class="btn-primary">Browse Designs</a>
+                    </div>
+                `;
+                return;
+            }
+
+            designsGrid.innerHTML = userDesigns.map(design => `
+                <div class="group">
+                    <div class="card-surface overflow-hidden hover:border-accent transition-smooth">
+                        <div class="relative">
+                            <img src="${design.imageUrl}" alt="${design.name} design" class="w-full h-48 object-contain" loading="lazy" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-smooth"></div>
+                            <div class="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-smooth">
+                                <div class="flex space-x-2">
+                                    <button onclick="downloadDesign('${design.id}')" class="flex-1 bg-accent text-primary px-3 py-2 rounded text-sm font-medium hover:bg-accent/90 transition-smooth">Download</button>
+                                    <button onclick="shareDesign('${design.id}')" class="bg-surface/80 text-text-primary p-2 rounded hover:bg-surface transition-smooth">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-montserrat font-semibold mb-1">${design.name}</h3>
+                            <p class="text-text-secondary text-sm mb-2">${design.artist} • ${design.format}</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex space-x-1">
+                                    <span class="px-2 py-1 bg-accent/20 text-accent text-xs rounded">${design.format}</span>
+                                </div>
+                                <span class="text-text-secondary text-xs">${formatDate(design.purchaseDate)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update designs count
+        function updateDesignsCount() {
+            const countElement = document.querySelector('.bg-surface.px-4.py-2.rounded-lg .font-bold.text-accent');
+            if (countElement) {
+                countElement.textContent = userDesigns.length;
+            }
+        }
+
+        // Load purchase history
+        async function loadPurchaseHistory() {
+            try {
+                const response = await fetch('/api/my-collection/history');
+                const data = await response.json();
+                
+                if (data.success) {
+                    purchaseHistory = data.history;
+                    updateHistoryDisplay();
+                }
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        // Update purchase history display
+        function updateHistoryDisplay() {
+            const historyContainer = document.querySelector('#history .space-y-4');
+            if (!historyContainer) return;
+
+            if (purchaseHistory.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="text-center py-12">
+                        <svg class="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <h3 class="text-xl font-montserrat font-semibold mb-2">No Purchase History</h3>
+                        <p class="text-text-secondary">You haven't made any purchases yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            historyContainer.innerHTML = purchaseHistory.map(order => `
+                <div class="card-surface p-6 hover:border-accent transition-smooth">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 ${order.status === 'completed' ? 'bg-success/20' : 'bg-warning/20'} rounded-lg flex items-center justify-center">
+                                <svg class="w-8 h-8 ${order.status === 'completed' ? 'text-success' : 'text-warning'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-montserrat font-semibold mb-1">Order #${order.id}</h3>
+                                <p class="text-text-secondary text-sm mb-2">${order.items.length} design${order.items.length !== 1 ? 's' : ''} purchased</p>
+                                <div class="flex items-center space-x-4 text-sm text-text-secondary">
+                                    <span>${formatDate(order.date)}</span>
+                                    <span>•</span>
+                                    <span>$${order.total}</span>
+                                    <span>•</span>
+                                    <span class="${order.status === 'completed' ? 'text-success' : 'text-warning'}">${order.status}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="redownloadOrder('${order.id}')" class="bg-accent text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent/90 transition-smooth">
+                                Re-download All
+                            </button>
+                            <button onclick="viewOrderDetails('${order.id}')" class="bg-surface border border-border-subtle text-text-primary px-4 py-2 rounded-lg text-sm hover:border-accent hover:text-accent transition-smooth">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        ${order.items.map(item => `<span class="bg-secondary px-3 py-1 rounded-full text-sm">${item.name}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load all user data
+        async function loadUserData() {
+            await Promise.all([
+                loadUserDesigns(),
+                loadPurchaseHistory()
+            ]);
+        }
+
+        // Download design function
+        async function downloadDesign(designId) {
+            try {
+                const response = await fetch(`/api/my-collection/download/${designId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = data.downloadUrl;
+                    link.download = `${data.design.name}.${data.design.format.toLowerCase()}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showSuccess('Download started!');
+                } else {
+                    showError('Download failed');
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                showError('Download failed');
+            }
+        }
+
+        // Share design function
+        function shareDesign(designId) {
+            const design = userDesigns.find(d => d.id === designId);
+            if (design && navigator.share) {
+                navigator.share({
+                    title: `${design.name} by ${design.artist}`,
+                    text: `Check out this amazing lyric art design!`,
+                    url: window.location.origin + `/design/${designId}`
+                });
+            } else {
+                // Fallback: copy to clipboard
+                const url = window.location.origin + `/design/${designId}`;
+                navigator.clipboard.writeText(url).then(() => {
+                    showSuccess('Link copied to clipboard!');
+                });
+            }
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+
+        function showSuccess(message) {
+            // Simple success notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-success text-white px-4 py-2 rounded-lg z-50';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        function showError(message) {
+            // Simple error notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-error text-white px-4 py-2 rounded-lg z-50';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
         // Tab Navigation
         document.addEventListener('DOMContentLoaded', function() {
             const tabs = document.querySelectorAll('.dashboard-tab');
@@ -898,6 +1159,9 @@
                     document.getElementById(targetTab).classList.add('active');
                 });
             });
+
+            // Check authentication on page load
+            checkAuthStatus();
         });
 
         // Mobile responsive behavior

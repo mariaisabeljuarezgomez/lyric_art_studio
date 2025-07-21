@@ -46,5 +46,21 @@
     "userId": "8a428e2c095c3d605076dc5415592a21",
     "createdAt": "2025-07-21T02:06:20.776Z",
     "expiresAt": "2025-07-22T02:06:20.776Z"
+  },
+  {
+    "id": "oWxgCNFAH4kFLsEexeYXZxkKZPIHw6P2",
+    "userId": "8a428e2c095c3d605076dc5415592a21",
+    "userEmail": "mariaisabeljuarezgomez85@gmail.com",
+    "userName": "Maria Isabel Juarez Gomez",
+    "cookie": {
+      "originalMaxAge": 86400000,
+      "expires": "2025-07-22T03:56:20.348Z",
+      "secure": false,
+      "httpOnly": true,
+      "path": "/",
+      "sameSite": "lax"
+    },
+    "createdAt": "2025-07-21T03:56:20.351Z",
+    "expiresAt": "2025-07-22T03:56:20.351Z"
   }
 ]

@@ -3454,28 +3454,7 @@
         "eps": "music_lyricss/hudson-westbrook-mine-tommorrow-guitar/hudson-westbrook-mine-tommorrow-guitar.eps"
       }
     },
-    {
-      "id": 158,
-      "artist": "Imagine",
-      "song": "Simple",
-      "shape": "GUITAR",
-      "genre": "Rock",
-      "price": 3,
-      "formats": [
-        "SVG",
-        "PDF",
-        "PNG",
-        "EPS"
-      ],
-      "image": "images/designs/imagine-simple-style-guitar/imagine-simple-style-guitar.webp",
-      "webp": "images/designs/imagine-simple-style-guitar/imagine-simple-style-guitar.webp",
-      "files": {
-        "svg": "music_lyricss/imagine-simple-style/imagine-simple-style.svg",
-        "pdf": "music_lyricss/imagine-simple-style/imagine-simple-style.pdf",
-        "png": "music_lyricss/imagine-simple-style/imagine-simple-style.png",
-        "eps": "music_lyricss/imagine-simple-style/imagine-simple-style.eps"
-      }
-    },
+
     {
       "id": 159,
       "artist": "Incubus",

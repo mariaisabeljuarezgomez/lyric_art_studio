@@ -178,26 +178,39 @@ class ShoppingCartSystem {
         // Cart routes
         app.post('/api/cart/add', (req, res) => {
             try {
-                const { designId, format } = req.body;
-                const sessionId = req.session.id || req.headers['x-session-id'];
+                console.log('🛒 Cart add request received');
+                const { designId, format, price } = req.body;
                 
-                if (!sessionId) {
-                    return res.status(400).json({ error: 'Session required' });
+                // Use a more reliable session identifier
+                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
+                console.log('🛒 Session ID for cart:', sessionId);
+                console.log('🛒 Request body:', req.body);
+                
+                if (!designId) {
+                    console.error('❌ Design ID missing');
+                    return res.status(400).json({ error: 'Design ID required' });
                 }
 
-                const cart = this.addToCart(sessionId, designId, format);
+                const cart = this.addToCart(sessionId, designId, format || 'digital-download', price || 3);
+                console.log('🛒 Cart after adding item:', cart);
                 res.json({ success: true, cart });
             } catch (error) {
+                console.error('❌ Cart add error:', error);
                 res.status(500).json({ error: error.message });
             }
         });
 
         app.get('/api/cart', (req, res) => {
             try {
-                const sessionId = req.session.id || req.headers['x-session-id'];
+                console.log('🛒 Cart get request received');
+                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
+                console.log('🛒 Session ID for cart get:', sessionId);
+                
                 const cart = this.getCart(sessionId);
+                console.log('🛒 Cart data:', cart);
                 res.json({ cart });
             } catch (error) {
+                console.error('❌ Cart get error:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -205,7 +218,7 @@ class ShoppingCartSystem {
         app.put('/api/cart/update', (req, res) => {
             try {
                 const { designId, format, quantity } = req.body;
-                const sessionId = req.session.id || req.headers['x-session-id'];
+                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
                 
                 const cart = this.updateQuantity(sessionId, designId, format, quantity);
                 res.json({ success: true, cart });
@@ -217,7 +230,7 @@ class ShoppingCartSystem {
         app.delete('/api/cart/remove', (req, res) => {
             try {
                 const { designId, format } = req.body;
-                const sessionId = req.session.id || req.headers['x-session-id'];
+                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
                 
                 const cart = this.removeFromCart(sessionId, designId, format);
                 res.json({ success: true, cart });
@@ -228,7 +241,7 @@ class ShoppingCartSystem {
 
         app.delete('/api/cart/clear', (req, res) => {
             try {
-                const sessionId = req.session.id || req.headers['x-session-id'];
+                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
                 this.clearCart(sessionId);
                 res.json({ success: true });
             } catch (error) {

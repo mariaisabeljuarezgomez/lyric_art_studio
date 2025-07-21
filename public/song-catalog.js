@@ -751,17 +751,131 @@ function closeDesignModal() {
 }
 
 // Add to cart functionality
-function addToCart(songTitle, price) {
-    // For now, just show an alert. You can implement actual cart functionality later
-    alert(`Added "${songTitle}" to cart for $${price.toFixed(2)}`);
-    closeDesignModal();
+async function addToCart(songTitle, price) {
+    try {
+        console.log('🛒 Add to Cart clicked for:', songTitle, 'at price:', price);
+        const designId = songTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        console.log('🛒 Design ID:', designId);
+        
+        const response = await fetch('/api/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                designId: designId,
+                format: 'digital-download',
+                price: price
+            })
+        });
+        
+        console.log('🛒 Add to cart response status:', response.status);
+        const data = await response.json();
+        console.log('🛒 Add to cart response data:', data);
+        
+        if (data.success) {
+            console.log('✅ Successfully added to cart!');
+            showNotification('Added to cart!', 'success');
+            updateCartCount();
+            closeDesignModal();
+        } else {
+            console.error('❌ Failed to add to cart:', data.error);
+            showNotification('Failed to add to cart', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error in addToCart:', error);
+        showNotification('Error adding to cart', 'error');
+    }
 }
 
 // Buy now functionality
-function buyNow(songTitle, price) {
-    // For now, just show an alert. You can implement actual checkout functionality later
-    alert(`Proceeding to checkout for "${songTitle}" - $${price.toFixed(2)}`);
-    closeDesignModal();
+async function buyNow(songTitle, price) {
+    try {
+        console.log('🛒 Buy Now clicked for:', songTitle, 'at price:', price);
+        const designId = songTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        console.log('🛒 Design ID:', designId);
+        
+        const addResponse = await fetch('/api/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                designId: designId,
+                format: 'digital-download',
+                price: price
+            })
+        });
+        
+        console.log('🛒 Add to cart response status:', addResponse.status);
+        const addData = await addResponse.json();
+        console.log('🛒 Add to cart response data:', addData);
+        
+        if (addData.success) {
+            console.log('✅ Successfully added to cart!');
+            showNotification('Added to cart! Redirecting to checkout...', 'success');
+            updateCartCount();
+            closeDesignModal();
+            
+            // Immediately redirect to checkout page
+            setTimeout(() => {
+                console.log('🔄 Redirecting to checkout...');
+                window.location.href = '/pages/checkout.html';
+            }, 1000);
+        } else {
+            console.error('❌ Failed to add to cart:', addData.error);
+            showNotification('Failed to add to cart', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error in buyNow:', error);
+        showNotification('Error processing purchase', 'error');
+    }
+}
+
+// Update cart count function
+async function updateCartCount() {
+    try {
+        console.log('🛒 Updating cart count...');
+        const response = await fetch('/api/cart');
+        const data = await response.json();
+        console.log('🛒 Cart data:', data);
+        
+        const cartCount = document.getElementById('cart-count');
+        if (!cartCount) {
+            console.error('❌ Cart count element not found!');
+            return;
+        }
+        
+        const count = data.cart && data.cart.itemCount ? data.cart.itemCount : 0;
+        console.log('🛒 Cart count:', count);
+        
+        cartCount.textContent = count;
+        // Always show the cart count, even when 0
+        cartCount.classList.remove('hidden');
+        console.log('✅ Cart count updated to:', count);
+    } catch (error) {
+        console.error('❌ Error updating cart count:', error);
+        const cartCount = document.getElementById('cart-count');
+        if (cartCount) {
+            cartCount.classList.add('hidden');
+        }
+    }
+}
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        'bg-blue-500 text-white'
+    }`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
 }
 
 // Clear all filters function

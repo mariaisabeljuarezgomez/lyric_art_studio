@@ -57,7 +57,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
-                        <span id="cart-count" class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                        <span id="cart-count" class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
                     </button>
                     
                     <!-- User Authentication -->
@@ -71,6 +71,12 @@
                         <span id="user-email" class="text-text-secondary text-sm"></span>
                         <button onclick="logout()" class="text-text-secondary hover:text-accent transition-smooth text-sm font-medium">Logout</button>
                     </div>
+                    
+                    <!-- Auth Status Indicator (for debugging) -->
+                    <div id="auth-status-indicator" class="hidden text-red-500 text-xs bg-red-100 px-2 py-1 rounded">
+                        Checking auth...
+                    </div>
+                    
                     <!-- Mobile Menu Button -->
                     <button class="md:hidden p-2 text-text-secondary hover:text-accent transition-smooth">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,7 +288,7 @@
     <!-- Shopping Cart Modal -->
     <div id="cart-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div class="flex justify-between items-center p-4 border-b border-gray-200">
+            <div class="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
                 <h3 class="text-lg font-bold text-gray-900">Shopping Cart</h3>
                 <button onclick="closeCartModal()" class="text-gray-500 hover:text-gray-700 transition-smooth">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,11 +297,11 @@
                 </button>
             </div>
             
-            <div id="cart-items" class="p-4 overflow-y-auto max-h-80">
+            <div id="cart-items" class="p-4 overflow-y-auto max-h-80 bg-white">
                 <!-- Cart items will be loaded here -->
             </div>
             
-            <div class="p-4 border-t border-gray-200">
+            <div class="p-4 border-t border-gray-200 bg-white">
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-base font-semibold text-gray-900">Total:</span>
                     <span id="cart-total" class="text-lg font-bold text-blue-600">$0.00</span>
@@ -588,7 +594,7 @@
                                         <button onclick="addToCart('${songTitle}', ${price})" style="width: 100%; background-color: #2563EB; color: white; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#1D4ED8'" onmouseout="this.style.backgroundColor='#2563EB'">
                                             Add to Cart
                                         </button>
-                                        <button style="width: 100%; background-color: #059669; color: white; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#047857'" onmouseout="this.style.backgroundColor='#059669'">
+                                        <button onclick="buyNow('${songTitle}', ${price})" style="width: 100%; background-color: #059669; color: white; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#047857'" onmouseout="this.style.backgroundColor='#059669'">
                                             Buy Now
                                         </button>
                                     </div>
@@ -1253,25 +1259,69 @@
         });
 
         // Shopping Cart Functions
-        function updateCartCount() {
-            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            const cartCount = document.getElementById('cart-count');
-            if (cartCount) {
-                if (cart.length > 0) {
-                    cartCount.textContent = cart.length;
-                    cartCount.classList.remove('hidden');
-                } else {
+        async function updateCartCount() {
+            try {
+                console.log('🛒 Updating cart count...');
+                const response = await fetch('/api/cart');
+                const data = await response.json();
+                console.log('🛒 Cart data:', data);
+                
+                const cartCount = document.getElementById('cart-count');
+                if (!cartCount) {
+                    console.error('❌ Cart count element not found!');
+                    return;
+                }
+                
+                const count = data.cart && data.cart.itemCount ? data.cart.itemCount : 0;
+                console.log('🛒 Cart count:', count);
+                
+                cartCount.textContent = count;
+                // Always show the cart count, even when 0
+                cartCount.classList.remove('hidden');
+                console.log('✅ Cart count updated to:', count);
+            } catch (error) {
+                console.error('❌ Error updating cart count:', error);
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) {
                     cartCount.classList.add('hidden');
                 }
             }
         }
 
-        function addToCart(songTitle, price) {
-            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            cart.push({ title: songTitle, price: price, id: Date.now() });
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartCount();
-            showNotification('Added to cart!', 'success');
+        async function addToCart(songTitle, price) {
+            try {
+                console.log('🛒 Add to Cart clicked for:', songTitle, 'at price:', price);
+                const designId = songTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                console.log('🛒 Design ID:', designId);
+                
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        designId: designId,
+                        format: 'digital-download',
+                        price: price
+                    })
+                });
+                
+                console.log('🛒 Add to cart response status:', response.status);
+                const data = await response.json();
+                console.log('🛒 Add to cart response data:', data);
+                
+                if (data.success) {
+                    console.log('✅ Successfully added to cart!');
+                    showNotification('Added to cart!', 'success');
+                    updateCartCount();
+                } else {
+                    console.error('❌ Failed to add to cart:', data.error);
+                    showNotification('Failed to add to cart', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error in addToCart:', error);
+                showNotification('Error adding to cart', 'error');
+            }
         }
 
         function openCartModal() {
@@ -1285,130 +1335,122 @@
             modal.classList.add('hidden');
         }
 
-        function loadCartItems() {
-            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            const cartItems = document.getElementById('cart-items');
-            const cartTotal = document.getElementById('cart-total');
-            const checkoutBtn = document.getElementById('checkout-btn');
-            
-            if (cart.length === 0) {
-                cartItems.innerHTML = '<p class="text-gray-500 text-center py-6 text-sm">Your cart is empty</p>';
-                cartTotal.textContent = '$0.00';
-                checkoutBtn.disabled = true;
-                return;
-            }
-            
-            let total = 0;
-            cartItems.innerHTML = cart.map((item, index) => {
-                total += item.price;
-                
-                if (item.type === 'custom-design') {
-                    return `
-                        <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-gray-900 text-sm truncate">${item.title}</h4>
-                                <p class="text-gray-600 text-xs">Custom Design Request</p>
-                                <p class="text-gray-500 text-xs">Style: ${item.commissionData.designStyle}</p>
-                            </div>
-                            <div class="flex items-center space-x-2 ml-2">
-                                <span class="font-semibold text-blue-600 text-sm">$${item.price.toFixed(2)}</span>
-                                <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 transition-smooth">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    return `
-                        <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-gray-900 text-sm truncate">${item.title}</h4>
-                                <p class="text-gray-600 text-xs">Design Download</p>
-                            </div>
-                            <div class="flex items-center space-x-2 ml-2">
-                                <span class="font-semibold text-blue-600 text-sm">$${item.price.toFixed(2)}</span>
-                                <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 transition-smooth">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }
-            }).join('');
-            
-            cartTotal.textContent = `$${total.toFixed(2)}`;
-            checkoutBtn.disabled = false;
-        }
-
-        function removeFromCart(index) {
-            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            cart.splice(index, 1);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartCount();
-            loadCartItems();
-            showNotification('Item removed from cart', 'success');
-        }
-
-        function clearCart() {
-            localStorage.removeItem('cart');
-            updateCartCount();
-            loadCartItems();
-            showNotification('Cart cleared', 'success');
-        }
-
-        async function checkout() {
-            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            if (cart.length === 0) {
-                showNotification('Your cart is empty', 'error');
-                return;
-            }
-
-            // Check if user is logged in
+        async function loadCartItems() {
             try {
-                const authResponse = await fetch('/api/auth/status');
-                const authData = await authResponse.json();
+                const response = await fetch('/api/cart');
+                const data = await response.json();
                 
-                if (!authData.loggedIn) {
-                    showNotification('Please log in to checkout', 'error');
-                    closeCartModal();
+                const cartItems = document.getElementById('cart-items');
+                const cartTotal = document.getElementById('cart-total');
+                const checkoutBtn = document.getElementById('checkout-btn');
+                
+                if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
+                    cartItems.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 text-sm mb-2">Your cart is empty</p><p class="text-gray-400 text-xs">Add some designs to get started!</p></div>';
+                    cartTotal.textContent = '$0.00';
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     return;
                 }
+                
+                let itemsHtml = '';
+                data.cart.items.forEach(item => {
+                    itemsHtml += `
+                        <div class="flex items-center justify-between p-3 border-b border-gray-200">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-900">${item.designId}</h4>
+                                <p class="text-sm text-gray-500">Digital Download</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium text-gray-900">$${item.price.toFixed(2)}</p>
+                                <button onclick="removeFromCart('${item.designId}')" class="text-red-500 text-sm hover:text-red-700">Remove</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                cartItems.innerHTML = itemsHtml;
+                cartTotal.textContent = `$${data.cart.total.toFixed(2)}`;
+                checkoutBtn.disabled = false;
+                checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             } catch (error) {
-                showNotification('Please log in to checkout', 'error');
-                closeCartModal();
-                return;
+                document.getElementById('cart-items').innerHTML = '<div class="text-center py-8"><p class="text-red-500 text-sm">Error loading cart</p></div>';
             }
+        }
 
-            // Create order
+        async function removeFromCart(designId) {
             try {
-                const response = await fetch('/api/orders/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: cart })
+                console.log('🗑️ Removing from cart:', designId);
+                
+                const response = await fetch('/api/cart/remove', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        designId: designId
+                    })
                 });
                 
                 const data = await response.json();
+                console.log('🗑️ Remove response:', data);
                 
                 if (data.success) {
-                    // Clear cart after successful order
-                    localStorage.removeItem('cart');
                     updateCartCount();
-                    closeCartModal();
-                    showNotification('Order created successfully!', 'success');
-                    
-                    // Redirect to PayPal checkout
-                    if (data.paypalUrl) {
-                        window.location.href = data.paypalUrl;
-                    }
+                    loadCartItems();
+                    showNotification('Item removed from cart', 'success');
                 } else {
-                    showNotification(data.error || 'Checkout failed', 'error');
+                    showNotification('Failed to remove item: ' + (data.error || 'Unknown error'), 'error');
                 }
             } catch (error) {
-                showNotification('Checkout failed', 'error');
+                console.error('💥 Remove from cart error:', error);
+                showNotification('Error removing item. Please try again.', 'error');
+            }
+        }
+
+        async function clearCart() {
+            try {
+                console.log('🧹 Clearing cart');
+                
+                const response = await fetch('/api/cart/clear', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('🧹 Clear response:', data);
+                
+                if (data.success) {
+                    updateCartCount();
+                    loadCartItems();
+                    showNotification('Cart cleared', 'success');
+                } else {
+                    showNotification('Failed to clear cart: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('💥 Clear cart error:', error);
+                showNotification('Error clearing cart. Please try again.', 'error');
+            }
+        }
+
+        async function checkout() {
+            try {
+                console.log('🛒 Checkout clicked');
+                const cartResponse = await fetch('/api/cart');
+                const cartData = await cartResponse.json();
+                
+                if (!cartData.cart || !cartData.cart.items || cartData.cart.items.length === 0) {
+                    showNotification('Your cart is empty', 'error');
+                    return;
+                }
+
+                console.log('✅ Cart has items, redirecting to checkout page...');
+                closeCartModal();
+                window.location.href = '/pages/checkout.html';
+            } catch (error) {
+                console.error('❌ Checkout error:', error);
+                showNotification('Checkout error', 'error');
             }
         }
 
@@ -1427,41 +1469,169 @@
             }, 3000);
         }
 
-        // User Authentication Functions
+        // Secure User Authentication Functions
+        let authCheckInProgress = false;
+        let lastAuthStatus = null;
+        
         function checkAuthStatus() {
+            if (authCheckInProgress) {
+                console.log('⏳ Auth check already in progress, skipping...');
+                return;
+            }
+            
+            authCheckInProgress = true;
             console.log('🔍 Checking authentication status...');
-            fetch('/api/auth/status')
-                .then(response => {
-                    console.log('📡 Auth status response:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('📊 Auth status data:', data);
-                    if (data.loggedIn) {
-                        console.log('✅ User is logged in:', data.user.email);
-                        document.getElementById('auth-buttons').classList.add('hidden');
-                        document.getElementById('user-menu').classList.remove('hidden');
-                        document.getElementById('user-email').textContent = data.user.email;
-                    } else {
-                        console.log('❌ User is not logged in');
-                        document.getElementById('auth-buttons').classList.remove('hidden');
-                        document.getElementById('user-menu').classList.add('hidden');
-                    }
-                })
-                .catch(error => {
-                    console.error('💥 Auth check error:', error);
-                    console.log('Not logged in');
-                });
+            
+            fetch('/api/auth/status', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
+            .then(response => {
+                console.log('📡 Auth status response:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('📊 Auth status data:', data);
+                
+                // Check if status actually changed
+                const currentStatus = data.loggedIn ? 'logged-in' : 'logged-out';
+                if (lastAuthStatus === currentStatus) {
+                    console.log('🔄 Auth status unchanged, skipping UI update');
+                    authCheckInProgress = false;
+                    return;
+                }
+                
+                lastAuthStatus = currentStatus;
+                
+                if (data.loggedIn) {
+                    console.log('✅ User is logged in:', data.user.email);
+                    updateUIForLoggedInUser(data.user);
+                } else {
+                    console.log('❌ User is not logged in');
+                    updateUIForLoggedOutUser();
+                }
+                
+                authCheckInProgress = false;
+            })
+            .catch(error => {
+                console.error('💥 Auth check error:', error);
+                console.log('❌ Assuming not logged in due to error');
+                updateUIForLoggedOutUser();
+                authCheckInProgress = false;
+            });
+        }
+        
+        function updateUIForLoggedInUser(user) {
+            console.log('🔧 Updating UI for logged-in user:', user.email);
+            
+            const authButtons = document.getElementById('auth-buttons');
+            const userMenu = document.getElementById('user-menu');
+            const userEmail = document.getElementById('user-email');
+            
+            // Force immediate UI update with multiple approaches
+            if (authButtons) {
+                authButtons.classList.add('hidden');
+                authButtons.style.display = 'none';
+                authButtons.style.visibility = 'hidden';
+                console.log('✅ Auth buttons hidden');
+            }
+            
+            if (userMenu) {
+                userMenu.classList.remove('hidden');
+                userMenu.style.display = 'flex';
+                userMenu.style.visibility = 'visible';
+                console.log('✅ User menu shown');
+            }
+            
+            if (userEmail) {
+                userEmail.textContent = user.email;
+                console.log('✅ User email set to:', user.email);
+            }
+            
+            // Force browser reflow
+            document.body.offsetHeight;
+            
+            console.log('✅ UI updated for logged-in user');
+        }
+        
+        function updateUIForLoggedOutUser() {
+            console.log('🔧 Updating UI for logged-out user');
+            
+            const authButtons = document.getElementById('auth-buttons');
+            const userMenu = document.getElementById('user-menu');
+            
+            // Force immediate UI update with multiple approaches
+            if (authButtons) {
+                authButtons.classList.remove('hidden');
+                authButtons.style.display = 'flex';
+                authButtons.style.visibility = 'visible';
+                console.log('✅ Auth buttons shown');
+            }
+            
+            if (userMenu) {
+                userMenu.classList.add('hidden');
+                userMenu.style.display = 'none';
+                userMenu.style.visibility = 'hidden';
+                console.log('✅ User menu hidden');
+            }
+            
+            // Force browser reflow
+            document.body.offsetHeight;
+            
+            console.log('✅ UI updated for logged-out user');
         }
 
-        function logout() {
-            fetch('/api/auth/logout', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    }
+        // Force auth check function (for debugging)
+        function forceAuthCheck() {
+            console.log('🔄 Manual force auth check triggered');
+            checkAuthStatus();
+        }
+
+        async function logout() {
+            try {
+                console.log('🚪 Logging out...');
+                
+                const response = await fetch('/api/auth/logout', { 
+                    method: 'POST',
+                    credentials: 'include'
                 });
+                
+                const data = await response.json();
+                console.log('🚪 Logout response:', data);
+                
+                if (data.success) {
+                    console.log('✅ Logout successful, updating UI...');
+                    
+                    // Clear any client-side data
+                    localStorage.removeItem('cart');
+                    
+                    // Update UI immediately
+                    const authButtons = document.getElementById('auth-buttons');
+                    const userMenu = document.getElementById('user-menu');
+                    
+                    if (authButtons) authButtons.classList.remove('hidden');
+                    if (userMenu) userMenu.classList.add('hidden');
+                    
+                    // Update cart count
+                    updateCartCount();
+                    
+                    console.log('✅ UI updated, user logged out');
+                    showNotification('Logged out successfully', 'success');
+                } else {
+                    console.error('❌ Logout failed:', data.error);
+                    showNotification('Logout failed', 'error');
+                }
+            } catch (error) {
+                console.error('💥 Logout error:', error);
+                showNotification('Logout failed', 'error');
+            }
         }
 
         // Subscription Function
@@ -1491,12 +1661,105 @@
             });
         }
 
+        // Secure initialization system
+        let authInitialized = false;
+        let authCheckAttempts = 0;
+        const MAX_AUTH_ATTEMPTS = 5;
+        
+        function initializeAuth() {
+            if (authInitialized) {
+                console.log('✅ Auth already initialized');
+                return;
+            }
+            
+            console.log('🚀 Initializing secure authentication...');
+            checkAuthStatus();
+            
+            // Intelligent retry system
+            const authRetryInterval = setInterval(() => {
+                authCheckAttempts++;
+                console.log(`🔄 Auth check attempt ${authCheckAttempts}/${MAX_AUTH_ATTEMPTS}`);
+                
+                if (authCheckAttempts >= MAX_AUTH_ATTEMPTS) {
+                    clearInterval(authRetryInterval);
+                    authInitialized = true;
+                    console.log('✅ Auth initialization complete');
+                    return;
+                }
+                
+                // Only retry if we haven't confirmed login status
+                if (lastAuthStatus === null) {
+                    checkAuthStatus();
+                } else {
+                    clearInterval(authRetryInterval);
+                    authInitialized = true;
+                    console.log('✅ Auth status confirmed, initialization complete');
+                }
+            }, 1000);
+        }
+        
         // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Homepage loaded, initializing...');
+            updateCartCount();
+            initializeAuth();
+        });
+
+        // Also initialize immediately when script loads
+        console.log('🔍 Immediate auth initialization...');
+        initializeAuth();
+
+        // Initialize page functionality
         document.addEventListener('DOMContentLoaded', function() {
             updateCartCount();
             checkAuthStatus();
-            loadDesigns();
+            setInterval(checkAuthStatus, 30000);
         });
+
+        // Buy now functionality - add to cart and immediately checkout
+        async function buyNow(songTitle, price) {
+            try {
+                console.log('🛒 Buy Now clicked for:', songTitle, 'at price:', price);
+                const designId = songTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                console.log('🛒 Design ID:', designId);
+                
+                const addResponse = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        designId: designId,
+                        format: 'digital-download',
+                        price: price
+                    })
+                });
+                
+                console.log('🛒 Add to cart response status:', addResponse.status);
+                const addData = await addResponse.json();
+                console.log('🛒 Add to cart response data:', addData);
+                
+                if (addData.success) {
+                    console.log('✅ Successfully added to cart!');
+                    showNotification('Added to cart! Redirecting to checkout...', 'success');
+                    
+                    // Update cart count before redirecting
+                    updateCartCount();
+                    
+                    // Immediately redirect to checkout page
+                    setTimeout(() => {
+                        console.log('🔄 Redirecting to checkout...');
+                        window.location.href = '/pages/checkout.html';
+                    }, 1000);
+                } else {
+                    console.error('❌ Failed to add to cart:', addData.error);
+                    showNotification('Failed to add to cart', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error in buyNow:', error);
+                showNotification('Error processing purchase', 'error');
+            }
+        }
     </script>
     
     <!-- Song Catalog -->

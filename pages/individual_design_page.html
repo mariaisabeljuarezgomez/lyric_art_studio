@@ -38,10 +38,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </button>
-                    <button class="p-2 text-text-secondary hover:text-accent transition-smooth">
+                    <!-- Shopping Cart -->
+                    <button id="cart-button" onclick="openCartModal()" class="relative p-2 text-text-secondary hover:text-accent transition-smooth">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
+                        <span id="cart-count" class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
                     </button>
                     <!-- Mobile Menu Button -->
                     <button class="md:hidden p-2 text-text-secondary hover:text-accent transition-smooth">
@@ -510,7 +512,7 @@
                 <div class="text-sm text-text-secondary">SVG Format</div>
                 <div class="text-lg font-montserrat font-bold text-accent">$24.99</div>
             </div>
-            <button class="btn-primary px-6 py-3">Add to Cart</button>
+            <button class="btn-primary px-6 py-3" onclick="addToCart()">Add to Cart</button>
         </div>
     </div>
 
@@ -636,6 +638,78 @@
         if (formatCards.length > 0) {
             formatCards[0].classList.add('border-accent');
         }
+
+        // Cart functionality
+        async function updateCartCount() {
+            try {
+                const response = await fetch('/api/cart');
+                const data = await response.json();
+                
+                const cartCount = document.getElementById('cart-count');
+                const count = data.cart && data.cart.itemCount ? data.cart.itemCount : 0;
+                
+                cartCount.textContent = count;
+                // Always show the cart count, even when 0
+                cartCount.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error updating cart count:', error);
+                document.getElementById('cart-count').classList.add('hidden');
+            }
+        }
+
+        async function addToCart() {
+            try {
+                const designId = 'custom-design'; // You can make this dynamic based on the design
+                const price = parseFloat(selectedPrice.replace('$', ''));
+                
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        designId: designId,
+                        format: selectedFormat,
+                        price: price
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Added to cart!', 'success');
+                    updateCartCount();
+                } else {
+                    showNotification('Failed to add to cart', 'error');
+                }
+            } catch (error) {
+                showNotification('Error adding to cart', 'error');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function openCartModal() {
+            window.location.href = '/checkout';
+        }
+
+        // Initialize cart count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+        });
     </script>
 <script id="dhws-dataInjector" src="../public/dhws-data-injector.js"></script>
 </body>

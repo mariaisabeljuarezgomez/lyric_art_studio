@@ -12,5 +12,19 @@
       "downloads": [],
       "subscription": null
     }
+  },
+  {
+    "id": "a1d4f3f989e2e99be3968cbc77648050",
+    "email": "test@example.com",
+    "password": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+    "name": "Test User",
+    "createdAt": "2025-07-21T03:11:11.502Z",
+    "verified": false,
+    "verificationToken": "9d91997afb9a5225ec5029a607ae3aea701d793d0e01b8062ce073826c54d715",
+    "profile": {
+      "favorites": [],
+      "downloads": [],
+      "subscription": null
+    }
   }
 ]
