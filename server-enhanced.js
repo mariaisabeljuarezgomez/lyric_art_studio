@@ -366,46 +366,46 @@ app.delete('/api/cart', (req, res) => {
     res.json({ ok: true });
 });
 
-app.get('/api/auth/status', (req, res) => {
-    if (req.session.userId) {
-        res.json({ 
-            loggedIn: true, 
-            user: { 
-                id: req.session.userId, 
-                email: req.session.userEmail 
-            } 
+        app.get('/api/auth/status', (req, res) => {
+            if (req.session.userId) {
+                res.json({ 
+                    loggedIn: true, 
+                    user: { 
+                        id: req.session.userId, 
+                        email: req.session.userEmail 
+                    } 
+                });
+            } else {
+                res.json({ loggedIn: false });
+            }
         });
-    } else {
-        res.json({ loggedIn: false });
-    }
-});
 
-// Secure download routes
-app.get('/api/download/:token', imageProtection.secureDownload());
-app.get('/api/preview/:token', imageProtection.secureDownload());
-
-// Generate secure download URLs
-app.post('/api/generate-download-url', (req, res) => {
-    try {
-        const { imagePath } = req.body;
-        const userId = req.user?.id;
+        // Secure download routes
+        app.get('/api/download/:token', imageProtection.secureDownload());
+        app.get('/api/preview/:token', imageProtection.secureDownload());
         
-        if (!userId) {
-            return res.status(401).json({ error: 'Authentication required' });
-        }
-        
-        // Verify user has purchased this design
-        // This would check the user's purchase history
-        
-        const downloadUrl = imageProtection.generateDownloadUrl(imagePath, userId);
-        res.json({ 
-            downloadUrl,
-            expiresIn: '5 minutes'
+        // Generate secure download URLs
+        app.post('/api/generate-download-url', (req, res) => {
+            try {
+                const { imagePath } = req.body;
+                const userId = req.user?.id;
+                
+                if (!userId) {
+                    return res.status(401).json({ error: 'Authentication required' });
+                }
+                
+                // Verify user has purchased this design
+                // This would check the user's purchase history
+                
+                const downloadUrl = imageProtection.generateDownloadUrl(imagePath, userId);
+                res.json({ 
+                    downloadUrl,
+                    expiresIn: '5 minutes'
+                });
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
         });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
 // Subscription API routes
 app.post('/api/subscription/create', async (req, res) => {

@@ -755,11 +755,11 @@ function closeDesignModal() {
 async function addToCart(songTitle, price) {
     const id = songTitle.toLowerCase().replace(/\s+/g, '-');
     await fetch('/api/cart/add', {
-        method: 'POST',
+            method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemId: id, qty: 1, price })
-    });
+        });
     updateCartBadge();
 }
 
