@@ -58,6 +58,14 @@ class ProtectedImageViewer {
 
     // Create protected OpenDragon viewer
     createProtectedViewer(containerId, imageUrl, options = {}) {
+        console.log('🔍 createProtectedViewer called with:', { containerId, imageUrl });
+        console.log('🔍 OpenSeadragon available:', typeof OpenSeadragon !== 'undefined');
+        
+        if (typeof OpenSeadragon === 'undefined') {
+            console.error('❌ OpenSeadragon library not loaded!');
+            throw new Error('OpenSeadragon library not loaded');
+        }
+        
         const defaultOptions = {
             id: containerId,
             prefixUrl: "https://openseadragon.github.io/openseadragon/images/",

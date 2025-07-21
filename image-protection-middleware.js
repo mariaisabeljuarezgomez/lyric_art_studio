@@ -9,13 +9,14 @@ class ImageProtectionMiddleware {
     constructor() {
         this.protectedPaths = [
             '/images/designs/',
-            '/music_lyricss/',
-            '/public/'
+            '/music_lyricss/'
         ];
         this.allowedReferrers = [
             'lyricartstudio-production.up.railway.app',
             'localhost:3001',
-            '127.0.0.1:3001'
+            '127.0.0.1:3001',
+            'localhost',
+            '127.0.0.1'
         ];
         this.downloadTokens = new Map();
     }
@@ -89,7 +90,8 @@ class ImageProtectionMiddleware {
 
     // Validate referrer
     isValidReferrer(referer) {
-        if (!referer) return false;
+        // Allow access if no referrer (development environment)
+        if (!referer) return true;
         
         try {
             const url = new URL(referer);

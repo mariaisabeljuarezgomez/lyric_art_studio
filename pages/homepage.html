@@ -8,6 +8,15 @@
     <meta name="description" content="Transform your favorite song lyrics into stunning visual art. Premium digital marketplace for music-inspired typographic designs." />
     <!-- OpenSeadragon for high-resolution zoomable images -->
     <script src="https://openseadragon.github.io/openseadragon/openseadragon.min.js"></script>
+    <!-- Fallback CDN if main one fails -->
+    <script>
+        if (typeof OpenSeadragon === 'undefined') {
+            console.log('🔄 Loading OpenSeadragon from fallback CDN...');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/openseadragon@3.1.0/build/openseadragon/openseadragon.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
     <!-- Enhanced protected image viewer -->
     <script src="../public/openseadragon-viewer.js"></script>
 <script type="module" src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Flyricarts9704back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.6"></script>
@@ -1112,10 +1121,14 @@
             // Initialize protected viewer
             setTimeout(() => {
                 try {
+                    console.log('🔍 About to call createProtectedViewer...');
+                    console.log('🔍 createProtectedViewer function available:', typeof window.createProtectedViewer);
+                    console.log('🔍 OpenSeadragon available:', typeof OpenSeadragon);
+                    
                     window.createProtectedViewer('protected-viewer-container', imagePath);
-                    console.log('Protected viewer initialized successfully');
+                    console.log('✅ Protected viewer initialized successfully');
                 } catch (error) {
-                    console.error('Error initializing protected viewer:', error);
+                    console.error('❌ Error initializing protected viewer:', error);
                     alert('Error loading image viewer. Please try again.');
                 }
             }, 100);
