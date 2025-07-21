@@ -181,8 +181,13 @@ class ShoppingCartSystem {
                 console.log('🛒 Cart add request received');
                 const { designId, format, price } = req.body;
                 
-                // Use a more reliable session identifier
-                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
+                // Ensure session exists
+                if (!req.session.id) {
+                    console.error('❌ No session available');
+                    return res.status(401).json({ error: 'Session required' });
+                }
+                
+                const sessionId = req.session.id;
                 console.log('🛒 Session ID for cart:', sessionId);
                 console.log('🛒 Request body:', req.body);
                 
@@ -191,9 +196,22 @@ class ShoppingCartSystem {
                     return res.status(400).json({ error: 'Design ID required' });
                 }
 
+                // Validate input
+                if (typeof designId !== 'string' || designId.length > 100) {
+                    return res.status(400).json({ error: 'Invalid design ID' });
+                }
+
                 const cart = this.addToCart(sessionId, designId, format || 'digital-download', price || 3);
                 console.log('🛒 Cart after adding item:', cart);
-                res.json({ success: true, cart });
+                
+                // Ensure session is saved
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        return res.status(500).json({ error: 'Failed to save session' });
+                    }
+                    res.json({ success: true, cart });
+                });
             } catch (error) {
                 console.error('❌ Cart add error:', error);
                 res.status(500).json({ error: error.message });
@@ -203,7 +221,14 @@ class ShoppingCartSystem {
         app.get('/api/cart', (req, res) => {
             try {
                 console.log('🛒 Cart get request received');
-                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
+                
+                // Ensure session exists
+                if (!req.session.id) {
+                    console.error('❌ No session available');
+                    return res.status(401).json({ error: 'Session required' });
+                }
+                
+                const sessionId = req.session.id;
                 console.log('🛒 Session ID for cart get:', sessionId);
                 
                 const cart = this.getCart(sessionId);
@@ -218,10 +243,29 @@ class ShoppingCartSystem {
         app.put('/api/cart/update', (req, res) => {
             try {
                 const { designId, format, quantity } = req.body;
-                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
+                
+                // Ensure session exists
+                if (!req.session.id) {
+                    return res.status(401).json({ error: 'Session required' });
+                }
+                
+                const sessionId = req.session.id;
+                
+                // Validate input
+                if (typeof quantity !== 'number' || quantity < 0 || quantity > 100) {
+                    return res.status(400).json({ error: 'Invalid quantity' });
+                }
                 
                 const cart = this.updateQuantity(sessionId, designId, format, quantity);
-                res.json({ success: true, cart });
+                
+                // Ensure session is saved
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        return res.status(500).json({ error: 'Failed to save session' });
+                    }
+                    res.json({ success: true, cart });
+                });
             } catch (error) {
                 res.status(500).json({ error: error.message });
             }
@@ -230,10 +274,24 @@ class ShoppingCartSystem {
         app.delete('/api/cart/remove', (req, res) => {
             try {
                 const { designId, format } = req.body;
-                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
+                
+                // Ensure session exists
+                if (!req.session.id) {
+                    return res.status(401).json({ error: 'Session required' });
+                }
+                
+                const sessionId = req.session.id;
                 
                 const cart = this.removeFromCart(sessionId, designId, format);
-                res.json({ success: true, cart });
+                
+                // Ensure session is saved
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        return res.status(500).json({ error: 'Failed to save session' });
+                    }
+                    res.json({ success: true, cart });
+                });
             } catch (error) {
                 res.status(500).json({ error: error.message });
             }
@@ -241,9 +299,22 @@ class ShoppingCartSystem {
 
         app.delete('/api/cart/clear', (req, res) => {
             try {
-                const sessionId = req.sessionID || req.session.id || req.headers['x-session-id'] || 'anonymous';
+                // Ensure session exists
+                if (!req.session.id) {
+                    return res.status(401).json({ error: 'Session required' });
+                }
+                
+                const sessionId = req.session.id;
                 this.clearCart(sessionId);
-                res.json({ success: true });
+                
+                // Ensure session is saved
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        return res.status(500).json({ error: 'Failed to save session' });
+                    }
+                    res.json({ success: true });
+                });
             } catch (error) {
                 res.status(500).json({ error: error.message });
             }
@@ -252,7 +323,12 @@ class ShoppingCartSystem {
         // PayPal routes
         app.post('/api/payment/create-paypal-order', async (req, res) => {
             try {
-                const sessionId = req.session.id || req.headers['x-session-id'];
+                // Ensure session exists
+                if (!req.session.id) {
+                    return res.status(401).json({ error: 'Session required' });
+                }
+                
+                const sessionId = req.session.id;
                 const cart = this.getCart(sessionId);
                 
                 if (cart.items.length === 0) {
@@ -269,7 +345,7 @@ class ShoppingCartSystem {
         app.post('/api/payment/capture-paypal', async (req, res) => {
             try {
                 const { paymentId } = req.body;
-                const sessionId = req.session.id || req.headers['x-session-id'];
+                const sessionId = req.session.id || req.sessionID || 'anonymous';
                 const cart = this.getCart(sessionId);
                 const userId = req.user?.id;
 

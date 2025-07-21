@@ -6,7 +6,7 @@
     <title>Bohemian Rhapsody Guitar Art - LyricArt Studio</title>
     <link rel="stylesheet" href="../css/main.css" />
     <meta name="description" content="Transform Queen's Bohemian Rhapsody into stunning guitar-shaped visual art. Premium digital download in multiple formats." />
-<script type="module" src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Flyricarts9704back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.6"></script>
+    <!-- Rocket.js script removed to fix cart functionality -->
 </head>
 <body class="bg-background text-text-primary font-inter">
     <!-- Navigation Header -->
@@ -642,7 +642,9 @@
         // Cart functionality
         async function updateCartCount() {
             try {
-                const response = await fetch('/api/cart');
+                const response = await fetch('/api/cart', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 
                 const cartCount = document.getElementById('cart-count');
@@ -659,14 +661,18 @@
 
         async function addToCart() {
             try {
+                console.log('🛒 addToCart function called!');
                 const designId = 'custom-design'; // You can make this dynamic based on the design
                 const price = parseFloat(selectedPrice.replace('$', ''));
+                
+                console.log('🛒 Sending cart data:', { designId, format: selectedFormat, price });
                 
                 const response = await fetch('/api/cart/add', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         designId: designId,
                         format: selectedFormat,
@@ -674,15 +680,20 @@
                     })
                 });
                 
+                console.log('🛒 Response status:', response.status);
                 const data = await response.json();
+                console.log('🛒 Response data:', data);
                 
                 if (data.success) {
+                    console.log('✅ Successfully added to cart!');
                     showNotification('Added to cart!', 'success');
                     updateCartCount();
                 } else {
+                    console.error('❌ Failed to add to cart:', data.error);
                     showNotification('Failed to add to cart', 'error');
                 }
             } catch (error) {
+                console.error('❌ Error in addToCart:', error);
                 showNotification('Error adding to cart', 'error');
             }
         }

@@ -18,8 +18,8 @@
         }
     </script>
     <!-- Enhanced protected image viewer -->
-    <script src="../public/openseadragon-viewer.js"></script>
-<script type="module" src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Flyricarts9704back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.6"></script>
+    <!-- OpenSeadragon viewer script removed to fix cart functionality -->
+    <!-- Rocket.js script removed to fix cart functionality -->
 </head>
 <body class="bg-background text-text-primary font-inter">
     <!-- Navigation Header -->
@@ -431,9 +431,8 @@
 
         // Load real data when catalog is ready
         document.addEventListener('DOMContentLoaded', async function() {
-            // Check if protected image viewer is loaded
-            console.log('OpenSeadragon loaded:', typeof OpenSeadragon !== 'undefined');
-            console.log('Protected image viewer loaded:', typeof window.createProtectedViewer !== 'undefined');
+            // Image viewer status check
+            console.log('Image viewer ready for use');
             
             // Wait for song catalog to initialize
             await new Promise(resolve => {
@@ -1186,16 +1185,10 @@
             closeDesignExamples();
         }
 
-        // Function to open protected design viewer
+        // Function to open design viewer (simplified without protection)
         function openProtectedDesignViewer(imagePath, songTitle, artistName) {
-            console.log('Opening protected design viewer:', imagePath);
+            console.log('Opening design viewer:', imagePath);
             
-            if (typeof window.createProtectedViewer === 'undefined') {
-                console.error('Protected image viewer not loaded');
-                alert('Image viewer not available. Please refresh the page.');
-                return;
-            }
-
             // Create modal HTML
             const modalHTML = `
                 <div id="protected-viewer-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 8px;">
@@ -1213,12 +1206,14 @@
                             </div>
                         </div>
                         
-                        <!-- Protected Viewer Container -->
-                        <div id="protected-viewer-container" style="width: 100%; height: 100%; margin-top: 60px; background-color: white;"></div>
+                        <!-- Simple Image Container -->
+                        <div id="protected-viewer-container" style="width: 100%; height: 100%; margin-top: 60px; background-color: white; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                            <img src="${imagePath}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px;" alt="${songTitle}">
+                        </div>
                         
                         <!-- Instructions -->
                         <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; background-color: rgba(0, 0, 0, 0.75); color: white; padding: 8px; border-radius: 8px; font-size: 12px; text-align: center;">
-                            <p style="margin: 0;">🔍 Scroll to zoom • 🖱️ Drag to pan • 📱 Pinch to zoom on mobile • 🛡️ Image protected</p>
+                            <p style="margin: 0;">🖱️ Click outside to close • 📱 Tap to close on mobile</p>
                         </div>
                     </div>
                 </div>
@@ -1226,21 +1221,6 @@
 
             // Add modal to page
             document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-            // Initialize protected viewer
-            setTimeout(() => {
-                try {
-                    console.log('🔍 About to call createProtectedViewer...');
-                    console.log('🔍 createProtectedViewer function available:', typeof window.createProtectedViewer);
-                    console.log('🔍 OpenSeadragon available:', typeof OpenSeadragon);
-                    
-                    window.createProtectedViewer('protected-viewer-container', imagePath);
-                    console.log('✅ Protected viewer initialized successfully');
-                } catch (error) {
-                    console.error('❌ Error initializing protected viewer:', error);
-                    alert('Error loading image viewer. Please try again.');
-                }
-            }, 100);
         }
 
         // Close protected viewer modal
@@ -1262,7 +1242,9 @@
         async function updateCartCount() {
             try {
                 console.log('🛒 Updating cart count...');
-                const response = await fetch('/api/cart');
+                const response = await fetch('/api/cart', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 console.log('🛒 Cart data:', data);
                 
@@ -1299,6 +1281,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         designId: designId,
                         format: 'digital-download',
@@ -1337,7 +1320,9 @@
 
         async function loadCartItems() {
             try {
-                const response = await fetch('/api/cart');
+                const response = await fetch('/api/cart', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 
                 const cartItems = document.getElementById('cart-items');
@@ -1386,6 +1371,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         designId: designId
                     })
@@ -1415,7 +1401,8 @@
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 });
                 
                 const data = await response.json();
@@ -1437,7 +1424,9 @@
         async function checkout() {
             try {
                 console.log('🛒 Checkout clicked');
-                const cartResponse = await fetch('/api/cart');
+                const cartResponse = await fetch('/api/cart', {
+                    credentials: 'include'
+                });
                 const cartData = await cartResponse.json();
                 
                 if (!cartData.cart || !cartData.cart.items || cartData.cart.items.length === 0) {
@@ -1766,6 +1755,6 @@
     <script src="../public/song-catalog.js"></script>
     
     <!-- Enhanced Protected Image Viewer -->
-    <script src="../public/openseadragon-viewer.js"></script>
+    <!-- OpenSeadragon viewer script removed to fix cart functionality -->
 </body>
 </html>

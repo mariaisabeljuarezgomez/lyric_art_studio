@@ -6,6 +6,10 @@
     <title>Checkout - LyricArt Studio</title>
     <link rel="stylesheet" href="../css/main.css" />
     <meta name="description" content="Complete your purchase and download your lyric art designs." />
+    <!-- Cache busting -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 </head>
 <body class="bg-background text-text-primary font-inter">
     <!-- Navigation Header -->
@@ -128,6 +132,12 @@
     <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"></div>
 
     <script>
+        // Force cache refresh
+        if (performance.navigation.type === 1) {
+            // Page was refreshed, clear any cached data
+            sessionStorage.removeItem('cartCache');
+        }
+
         // Load cart data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadCartData();
@@ -135,8 +145,20 @@
 
         async function loadCartData() {
             try {
-                const response = await fetch('/api/cart');
+                console.log('🛒 Loading cart data...');
+                
+                // Add cache-busting parameter
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/cart?t=${timestamp}`, {
+                    method: 'GET',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                
                 const data = await response.json();
+                console.log('🛒 Cart data received:', data);
                 
                 document.getElementById('loading').style.display = 'none';
                 
@@ -150,6 +172,7 @@
                 document.getElementById('checkout-content').style.display = 'block';
                 
             } catch (error) {
+                console.error('❌ Cart loading error:', error);
                 document.getElementById('loading').style.display = 'none';
                 showError('Failed to load cart data. Please try again.');
             }
@@ -207,8 +230,14 @@
             try {
                 console.log('🛒 Processing checkout...');
                 
-                // Get cart data
-                const cartResponse = await fetch('/api/cart');
+                // Get cart data with cache busting
+                const timestamp = new Date().getTime();
+                const cartResponse = await fetch(`/api/cart?t=${timestamp}`, {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 const cartData = await cartResponse.json();
                 
                 if (!cartData.cart || !cartData.cart.items || cartData.cart.items.length === 0) {
@@ -224,7 +253,9 @@
                 const paypalResponse = await fetch('/api/payment/create-paypal-order', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
                     },
                     body: JSON.stringify({
                         items: cartData.cart.items,

@@ -5,6 +5,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 const fs = require('fs');
 const { DatabaseManager } = require('./database-setup');
 const { ShoppingCartSystem } = require('./shopping-cart-system');
@@ -19,31 +20,45 @@ const dbManager = new DatabaseManager();
 const cartSystem = new ShoppingCartSystem();
 const imageProtection = new ImageProtectionMiddleware();
 
-// Use default memory store for sessions
+// Create sessions directory if it doesn't exist
+const sessionsDir = path.join(__dirname, 'sessions');
+if (!fs.existsSync(sessionsDir)) {
+    fs.mkdirSync(sessionsDir, { recursive: true });
+}
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production' ? ['https://yourdomain.com'] : true,
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Security headers middleware (re-enabled for production)
+// Security headers middleware (properly configured)
 app.use((req, res, next) => {
     // Add security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Allow same-origin frames for dev tools
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-Download-Options', 'noopen');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
     next();
 });
 
-// Secure session management (using memory store for now)
+// Secure session management with file store for persistence
 app.use(session({
+    store: new FileStore({
+        path: sessionsDir,
+        ttl: 24 * 60 * 60, // 24 hours
+        reapInterval: 60 * 60, // Clean up expired sessions every hour
+        secret: process.env.SESSION_SECRET || 'lyricart-studio-secure-secret-key-2024'
+    }),
     secret: process.env.SESSION_SECRET || 'lyricart-studio-secure-secret-key-2024',
-    resave: true,
-    saveUninitialized: false,
+    resave: false,
+    saveUninitialized: false, // Only save sessions when they're modified
     cookie: { 
-        secure: false, // Set to true in production with HTTPS
-        httpOnly: false, // Temporarily false for debugging
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        httpOnly: true, // Prevent XSS attacks
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         sameSite: 'lax', // CSRF protection
         path: '/'
@@ -51,15 +66,13 @@ app.use(session({
     name: 'lyricart-session'
 }));
 
-// Middleware to check session for API requests
-app.use('/api', (req, res, next) => {
-    if (req.session.userId) {
-        // User is authenticated, proceed
-        next();
-    } else {
-        // No session, but don't block - let individual endpoints handle auth
-        next();
+// Middleware to ensure session is available for cart operations
+app.use((req, res, next) => {
+    // Ensure session is created for cart operations
+    if (!req.session.id) {
+        req.session.temp = true; // Force session creation
     }
+    next();
 });
 
 // Cache headers middleware
@@ -81,8 +94,8 @@ app.use((req, res, next) => {
 
 // Image protection middleware (must come before static file serving)
 app.use(imageProtection.protectImages());
-// Temporarily disabled rate limiting for development
-// app.use(imageProtection.rateLimit());
+// Re-enable rate limiting for security
+app.use(imageProtection.rateLimit());
 
 // Serve static files from the root directory (with protection)
 app.use(express.static(__dirname));
@@ -112,8 +125,6 @@ const authenticateUser = async (req, res, next) => {
     }
     next();
 };
-
-app.use(authenticateUser);
 
 // Basic routes
 app.get('/', (req, res) => {

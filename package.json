@@ -1,34 +1,26 @@
 {
-  "name": "lyricart-studio",
+  "name": "lyricart-studio-website",
   "version": "1.0.0",
-  "description": "Digital marketplace for music-inspired lyric art designs",
-  "main": "server-enhanced.js",
+  "description": "LyricArt Studio - Custom Lyric Art Designs",
+  "main": "server-railway.js",
   "scripts": {
-    "start": "node server-enhanced.js",
-    "dev": "nodemon server-enhanced.js",
-    "build": "echo 'No build process needed for static site'",
-    "test": "echo 'No tests specified'"
+    "start": "node server-railway.js",
+    "dev": "node server-railway.js",
+    "railway": "node server-railway.js"
+  },
+  "dependencies": {
+    "connect-pg-simple": "^10.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "pg": "^8.16.3"
   },
   "keywords": [
-    "lyric-art",
-    "music-designs",
-    "digital-marketplace",
-    "svg-designs",
-    "music-typography"
+    "lyricart",
+    "music",
+    "designs",
+    "website"
   ],
   "author": "LyricArt Studio",
-  "license": "MIT",
-  "dependencies": {
-    "axios": "^1.10.0",
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "express-session": "^1.18.2",
-    "path": "^0.12.7"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "license": "MIT"
 }
