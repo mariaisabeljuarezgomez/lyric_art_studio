@@ -1,6 +1,9 @@
 // Enhanced Server for LyricArt Studio Website
 // Integrates performance optimization, database, shopping cart, PayPal, and user authentication
 
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -51,9 +54,9 @@ app.use(session({
         path: sessionsDir,
         ttl: 24 * 60 * 60, // 24 hours
         reapInterval: 60 * 60, // Clean up expired sessions every hour
-        secret: process.env.SESSION_SECRET || 'lyricart-studio-secure-secret-key-2024'
+        secret: process.env.SESSION_SECRET
     }),
-    secret: process.env.SESSION_SECRET || 'lyricart-studio-secure-secret-key-2024',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false, // Only save sessions when they're modified
     cookie: { 
