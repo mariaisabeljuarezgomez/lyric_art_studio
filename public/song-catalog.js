@@ -517,7 +517,7 @@ class SongCatalogManager {
                     
                     <!-- Zoom Button - Mobile friendly -->
                     <div class="absolute top-2 right-2 bg-accent text-white p-2 md:p-2 rounded-full opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 hover:opacity-100 transition-opacity duration-300 cursor-pointer touch-manipulation"
-                         onclick="event.stopPropagation(); openSeadragonViewer.openDesignViewer('${highResPath}', '${song.song}', '${song.artist}')"
+                         onclick="event.stopPropagation(); openProtectedDesignViewer('${highResPath}', '${song.song}', '${song.artist}')"
                          title="Zoom to see high-resolution details">
                         <span class="text-sm md:text-base">🔍</span>
                     </div>
@@ -663,7 +663,7 @@ function openDesignModal(imageSrc, songTitle, artistName, shape, price, highResP
                                 
                                 <!-- Zoom Button -->
                                 <div style="position: absolute; top: 8px; right: 8px; background-color: #2563EB; color: white; padding: 8px; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-                                     onclick="openSeadragonViewer.openDesignViewer('${correctedHighResPath}', '${songTitle}', '${artistName}')"
+                                     onclick="openProtectedDesignViewer('${correctedHighResPath}', '${songTitle}', '${artistName}')"
                                      title="Zoom to see high-resolution details">
                                     <span style="font-size: 14px;">🔍</span>
                                 </div>
@@ -789,6 +789,71 @@ function clearAllFilters() {
             colors: []
         };
         window.songCatalog.applyFilters();
+    }
+}
+
+// Function to open protected design viewer
+function openProtectedDesignViewer(imagePath, songTitle, artistName) {
+    console.log('Opening protected design viewer:', imagePath);
+    
+    if (typeof window.createProtectedViewer === 'undefined') {
+        console.error('Protected image viewer not loaded');
+        alert('Image viewer not available. Please refresh the page.');
+        return;
+    }
+
+    // Create modal HTML
+    const modalHTML = `
+        <div id="protected-viewer-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 8px;">
+            <div style="position: relative; width: 100%; height: 100%; max-width: 1200px; max-height: 95vh; background-color: white; border-radius: 8px; overflow: hidden;">
+                <!-- Header -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; background: linear-gradient(to right, #2563EB, #1D4ED8); color: white; padding: 12px; z-index: 10;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1; min-width: 0;">
+                            <h2 style="font-size: 18px; font-weight: bold; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${songTitle}</h2>
+                            <p style="font-size: 12px; opacity: 0.9; margin: 4px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${artistName}</p>
+                        </div>
+                        <button onclick="closeProtectedViewerModal()" style="color: white; background: none; border: none; font-size: 24px; font-weight: bold; cursor: pointer; margin-left: 8px; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                            ×
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Protected Viewer Container -->
+                <div id="protected-viewer-container" style="width: 100%; height: 100%; margin-top: 60px; background-color: white;"></div>
+                
+                <!-- Instructions -->
+                <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; background-color: rgba(0, 0, 0, 0.75); color: white; padding: 8px; border-radius: 8px; font-size: 12px; text-align: center;">
+                    <p style="margin: 0;">🔍 Scroll to zoom • 🖱️ Drag to pan • 📱 Pinch to zoom on mobile • 🛡️ Image protected</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Initialize protected viewer
+    setTimeout(() => {
+        try {
+            console.log('🔍 About to call createProtectedViewer...');
+            console.log('🔍 createProtectedViewer function available:', typeof window.createProtectedViewer);
+            console.log('🔍 OpenSeadragon available:', typeof OpenSeadragon);
+            
+            window.createProtectedViewer('protected-viewer-container', imagePath);
+            console.log('✅ Protected viewer initialized successfully');
+        } catch (error) {
+            console.error('❌ Error initializing protected viewer:', error);
+            alert('Error loading image viewer. Please try again.');
+        }
+    }, 100);
+}
+
+// Close protected viewer modal
+function closeProtectedViewerModal() {
+    const modal = document.getElementById('protected-viewer-modal');
+    if (modal) {
+        modal.remove();
     }
 }
 

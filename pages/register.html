@@ -7,36 +7,37 @@
     <meta name="description" content="Create your LyricArt Studio account to start collecting and purchasing music lyric designs.">
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/tailwind.css">
+
 </head>
-<body class="bg-gradient-to-br from-primary to-secondary min-h-screen">
-    <div class="container mx-auto px-6 py-12">
-        <div class="max-w-md mx-auto bg-white rounded-lg shadow-xl p-8">
+<body class="bg-white min-h-screen">
+    <div class="w-full max-w-xs mx-auto px-4">
+        <div class="w-full max-w-xs mx-auto bg-white rounded-lg shadow-xl p-6 border border-gray-200" style="max-width: 320px; width: 100%;">
             <!-- Logo -->
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800">LyricArt Studio</h1>
-                <p class="text-gray-600 mt-2">Create your account</p>
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">LyricArt Studio</h1>
+                <p class="text-gray-600 mt-1">Create your account</p>
             </div>
 
             <!-- Registration Form -->
-            <form id="registerForm" class="space-y-6">
+            <form id="registerForm" class="space-y-4">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                     <input type="text" id="name" name="name" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                            placeholder="Enter your full name">
                 </div>
 
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                     <input type="email" id="email" name="email" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                            placeholder="Enter your email">
                 </div>
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
                     <input type="password" id="password" name="password" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                            placeholder="Create a password">
                     <p class="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
                 </div>
@@ -44,7 +45,7 @@
                 <div>
                     <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
                     <input type="password" id="confirmPassword" name="confirmPassword" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                            placeholder="Confirm your password">
                 </div>
 
@@ -66,30 +67,30 @@
                 </div>
 
                 <button type="submit" 
-                        class="w-full bg-accent text-white py-3 px-4 rounded-lg hover:bg-accent-dark transition-colors duration-200 font-medium">
+                        class="w-full bg-accent text-white py-2 px-4 rounded-lg hover:bg-accent-dark transition-colors duration-200 font-medium">
                     Create Account
                 </button>
             </form>
 
             <!-- Divider -->
-            <div class="my-6 flex items-center">
+            <div class="my-4 flex items-center">
                 <div class="flex-1 border-t border-gray-300"></div>
                 <span class="px-4 text-gray-500 text-sm">or</span>
                 <div class="flex-1 border-t border-gray-300"></div>
             </div>
 
             <!-- Social Registration -->
-            <div class="space-y-3">
-                <button class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+            <div class="space-y-2">
+                <button class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
                     Sign up with Google
                 </button>
-                <button class="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-gray-900 transition-colors duration-200 font-medium">
+                <button class="w-full bg-gray-800 text-white py-2 px-4 rounded-lg hover:bg-gray-900 transition-colors duration-200 font-medium">
                     Sign up with GitHub
                 </button>
             </div>
 
             <!-- Login Link -->
-            <div class="text-center mt-8">
+            <div class="text-center mt-6">
                 <p class="text-gray-600">
                     Already have an account? 
                     <a href="/login" class="text-accent hover:text-accent-dark font-medium">Sign in</a>
@@ -97,7 +98,7 @@
             </div>
 
             <!-- Back to Home -->
-            <div class="text-center mt-6">
+            <div class="text-center mt-4">
                 <a href="/" class="text-gray-500 hover:text-gray-700 text-sm">
                     ← Back to Home
                 </a>
@@ -106,7 +107,7 @@
     </div>
 
     <!-- Notification -->
-    <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"></div>
+    <div id="notification" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 z-50"></div>
 
     <script>
         // Registration functionality
@@ -143,7 +144,7 @@
                 if (data.success) {
                     showNotification('Account created successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = '/account';
+                        window.location.href = '/';
                     }, 1500);
                 } else {
                     showNotification(data.error || 'Registration failed', 'error');
@@ -156,16 +157,16 @@
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
-            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+            notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg transition-opacity duration-300 z-50 ${
                 type === 'success' ? 'bg-green-500 text-white' : 
                 type === 'error' ? 'bg-red-500 text-white' : 
                 'bg-blue-500 text-white'
             }`;
             
-            notification.classList.remove('translate-x-full');
+            notification.classList.remove('opacity-0');
             
             setTimeout(() => {
-                notification.classList.add('translate-x-full');
+                notification.classList.add('opacity-0');
             }, 3000);
         }
     </script>

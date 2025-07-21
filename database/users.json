@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "8a428e2c095c3d605076dc5415592a21",
+    "email": "mariaisabeljuarezgomez85@gmail.com",
+    "password": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "name": "Maria Isabel Juarez Gomez",
+    "createdAt": "2025-07-21T01:20:34.337Z",
+    "verified": false,
+    "verificationToken": "17c2ad5dce729acf910b4af792652e418ddf5ed23a529c8d86ee11551c2e504e",
+    "profile": {
+      "favorites": [],
+      "downloads": [],
+      "subscription": null
+    }
+  }
+]

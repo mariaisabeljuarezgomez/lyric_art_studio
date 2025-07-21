@@ -1,7 +1,9 @@
 // Enhanced OpenDragon Viewer with Image Protection
 // Prevents easy downloading while maintaining high-quality viewing experience
 
-class ProtectedImageViewer {
+// Prevent duplicate class declaration
+if (typeof ProtectedImageViewer === 'undefined') {
+    class ProtectedImageViewer {
     constructor() {
         this.viewer = null;
         this.isProtected = true;
@@ -34,7 +36,7 @@ class ProtectedImageViewer {
 
         // Disable drag and drop
         document.addEventListener('dragstart', (e) => {
-            if (e.target.tagName === 'IMG' || e.target.closest('.openseadragon-canvas')) {
+            if (e.target && (e.target.tagName === 'IMG' || (e.target.closest && e.target.closest('.openseadragon-canvas')))) {
                 e.preventDefault();
                 this.showProtectionMessage('Drag and drop disabled');
             }
@@ -42,14 +44,14 @@ class ProtectedImageViewer {
 
         // Disable text selection
         document.addEventListener('selectstart', (e) => {
-            if (e.target.closest('.openseadragon-canvas')) {
+            if (e.target && e.target.closest && e.target.closest('.openseadragon-canvas')) {
                 e.preventDefault();
             }
         });
 
         // Disable copy
         document.addEventListener('copy', (e) => {
-            if (e.target.closest('.openseadragon-canvas')) {
+            if (e.target && e.target.closest && e.target.closest('.openseadragon-canvas')) {
                 e.preventDefault();
                 this.showProtectionMessage('Copy disabled for image protection');
             }
@@ -330,42 +332,50 @@ class ProtectedImageViewer {
     }
 }
 
-// Add CSS animations for notifications
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-    
-    .watermark-overlay {
-        pointer-events: none;
-        user-select: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-    }
-    
-    .openseadragon-canvas {
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        -webkit-touch-callout: none;
-        -webkit-user-drag: none;
-    }
-`;
-document.head.appendChild(style);
+// Add CSS animations for notifications (only if not already added)
+if (!document.querySelector('style[data-openseadragon-protection]')) {
+    const style = document.createElement('style');
+    style.setAttribute('data-openseadragon-protection', 'true');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        .watermark-overlay {
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        .openseadragon-canvas {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+        }
+    `;
+    document.head.appendChild(style);
+}
 
-// Global instance
-window.protectedImageViewer = new ProtectedImageViewer();
+// Global instance (only if not already created)
+if (!window.protectedImageViewer) {
+    window.protectedImageViewer = new ProtectedImageViewer();
+}
 
-// Export for use in other scripts
-window.createProtectedViewer = (containerId, imageUrl, options) => {
-    return window.protectedImageViewer.createProtectedViewer(containerId, imageUrl, options);
-}; 
+// Export for use in other scripts (only if not already exported)
+if (!window.createProtectedViewer) {
+    window.createProtectedViewer = (containerId, imageUrl, options) => {
+        return window.protectedImageViewer.createProtectedViewer(containerId, imageUrl, options);
+    };
+}
+} 

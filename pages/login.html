@@ -6,7 +6,6 @@
     <title>Login - LyricArt Studio</title>
     <link rel="stylesheet" href="../css/main.css" />
     <meta name="description" content="Login to your LyricArt Studio account to access your designs and purchases." />
-    <script type="module" src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Flyricarts9704back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.6"></script>
 </head>
 <body class="bg-background text-text-primary font-inter">
     <!-- Navigation Header -->
@@ -93,27 +92,27 @@
 
     <!-- Login Section -->
     <section class="relative min-h-screen flex items-center justify-center pt-20">
-        <div class="container mx-auto px-6">
-            <div class="max-w-md mx-auto bg-surface/80 backdrop-blur-md rounded-lg border border-border-subtle p-8">
+        <div class="w-full max-w-xs mx-auto px-4">
+            <div class="w-full max-w-xs mx-auto bg-background/80 backdrop-blur-md rounded-lg border border-border-subtle p-6 shadow-lg" style="max-width: 320px; width: 100%;">
                 <!-- Logo -->
-                <div class="text-center mb-8">
-                    <h1 class="text-3xl font-bold text-text-primary">LyricArt Studio</h1>
-                    <p class="text-text-secondary mt-2">Welcome back</p>
+                <div class="text-center mb-6">
+                    <h1 class="text-2xl font-bold text-text-primary">LyricArt Studio</h1>
+                    <p class="text-text-secondary mt-1">Welcome back</p>
                 </div>
 
                 <!-- Login Form -->
-                <form id="loginForm" class="space-y-6">
+                <form id="loginForm" class="space-y-4">
                     <div>
                         <label for="email" class="block text-sm font-medium text-text-secondary mb-2">Email Address</label>
                         <input type="email" id="email" name="email" required 
-                               class="w-full px-4 py-3 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary"
+                               class="w-full px-3 py-2 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary"
                                placeholder="Enter your email">
                     </div>
 
                     <div>
                         <label for="password" class="block text-sm font-medium text-text-secondary mb-2">Password</label>
                         <input type="password" id="password" name="password" required 
-                               class="w-full px-4 py-3 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary"
+                               class="w-full px-3 py-2 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary"
                                placeholder="Enter your password">
                     </div>
 
@@ -126,30 +125,30 @@
                     </div>
 
                     <button type="submit" 
-                            class="w-full bg-accent text-background py-3 px-4 rounded-lg hover:bg-accent/90 transition-smooth font-medium">
+                            class="w-full bg-accent text-background py-2 px-4 rounded-lg hover:bg-accent/90 transition-smooth font-medium">
                         Sign In
                     </button>
                 </form>
 
                 <!-- Divider -->
-                <div class="my-6 flex items-center">
+                <div class="my-4 flex items-center">
                     <div class="flex-1 border-t border-border-subtle"></div>
                     <span class="px-4 text-text-secondary text-sm">or</span>
                     <div class="flex-1 border-t border-border-subtle"></div>
                 </div>
 
                 <!-- Social Login -->
-                <div class="space-y-3">
-                    <button class="w-full bg-surface border border-border-subtle text-text-primary py-3 px-4 rounded-lg hover:bg-surface/80 transition-smooth font-medium">
+                <div class="space-y-2">
+                    <button class="w-full bg-surface border border-border-subtle text-text-primary py-2 px-4 rounded-lg hover:bg-surface/80 transition-smooth font-medium">
                         Continue with Google
                     </button>
-                    <button class="w-full bg-surface border border-border-subtle text-text-primary py-3 px-4 rounded-lg hover:bg-surface/80 transition-smooth font-medium">
+                    <button class="w-full bg-surface border border-border-subtle text-text-primary py-2 px-4 rounded-lg hover:bg-surface/80 transition-smooth font-medium">
                         Continue with GitHub
                     </button>
                 </div>
 
                 <!-- Sign Up Link -->
-                <div class="text-center mt-8">
+                <div class="text-center mt-6">
                     <p class="text-text-secondary">
                         Don't have an account? 
                         <a href="/register" class="text-accent hover:text-accent/80 font-medium transition-smooth">Sign up</a>
@@ -157,7 +156,7 @@
                 </div>
 
                 <!-- Back to Home -->
-                <div class="text-center mt-6">
+                <div class="text-center mt-4">
                     <a href="/" class="text-text-secondary hover:text-text-primary text-sm transition-smooth">
                         ← Back to Home
                     </a>
@@ -167,7 +166,7 @@
     </section>
 
     <!-- Notification -->
-    <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"></div>
+    <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 font-bold text-lg"></div>
 
     <script>
         // Login functionality
@@ -177,7 +176,14 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
+            // Show loading state
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Signing In...';
+            submitButton.disabled = true;
+            
             try {
+                console.log('🔐 Attempting login...');
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: {
@@ -186,35 +192,47 @@
                     body: JSON.stringify({ email, password })
                 });
                 
+                console.log('📡 Response received:', response.status);
                 const data = await response.json();
+                console.log('📊 Response data:', data);
                 
                 if (data.success) {
-                    showNotification('Login successful! Redirecting...', 'success');
+                    showNotification('✅ Login successful! Redirecting to homepage...', 'success');
+                    console.log('✅ Login successful, redirecting...');
                     setTimeout(() => {
-                        window.location.href = '/account';
-                    }, 1500);
+                        window.location.href = '/homepage';
+                    }, 2000);
                 } else {
-                    showNotification(data.error || 'Login failed', 'error');
+                    showNotification('❌ ' + (data.error || 'Login failed'), 'error');
+                    console.log('❌ Login failed:', data.error);
                 }
             } catch (error) {
-                showNotification('An error occurred. Please try again.', 'error');
+                console.error('💥 Login error:', error);
+                showNotification('💥 An error occurred. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
             }
         });
 
         function showNotification(message, type = 'info') {
+            console.log('🔔 Showing notification:', message, type);
             const notification = document.getElementById('notification');
             notification.textContent = message;
-            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 font-bold text-lg ${
                 type === 'success' ? 'bg-green-500 text-white' : 
                 type === 'error' ? 'bg-red-500 text-white' : 
                 'bg-blue-500 text-white'
             }`;
             
-            notification.classList.remove('translate-x-full');
+            // Force show notification
+            notification.style.transform = 'translateX(0)';
+            notification.style.display = 'block';
             
             setTimeout(() => {
-                notification.classList.add('translate-x-full');
-            }, 3000);
+                notification.style.transform = 'translateX(100%)';
+            }, 4000);
         }
     </script>
 </body>

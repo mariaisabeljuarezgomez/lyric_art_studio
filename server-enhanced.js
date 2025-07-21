@@ -23,15 +23,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session management
+// Session management - Secure configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'lyricart-studio-secret-key',
+    secret: process.env.SESSION_SECRET || 'lyricart-studio-secret-key-2024',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+        secure: process.env.NODE_ENV === 'production', // Secure in production
+        httpOnly: true, // Prevent XSS attacks
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: 'strict' // Prevent CSRF attacks
+    },
+    name: 'lyricart-session' // Custom session name for security
 }));
 
 // Cache headers middleware
@@ -67,16 +70,21 @@ app.get('*.json', (req, res, next) => {
 // Authentication middleware
 const authenticateUser = async (req, res, next) => {
     try {
-        const sessionId = req.session.id;
-        const session = await dbManager.validateSession(sessionId);
-        
-        if (session) {
-            const user = await dbManager.getUserById(session.userId);
-            req.user = user;
+        if (req.session.userId) {
+            console.log('🔍 Checking session for user:', req.session.userId);
+            const user = await dbManager.getUserById(req.session.userId);
+            if (user) {
+                req.user = user;
+                console.log('✅ User authenticated:', user.email);
+            } else {
+                console.log('❌ User not found in database');
+            }
+        } else {
+            console.log('❌ No session userId found');
         }
-        
         next();
     } catch (error) {
+        console.error('❌ Authentication middleware error:', error);
         next();
     }
 };
@@ -177,36 +185,52 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
     try {
+        console.log('🔐 Login attempt:', req.body);
         const { email, password } = req.body;
         
         if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' });
+            console.log('❌ Missing email or password');
+            return res.status(400).json({ success: false, error: 'Email and password are required' });
         }
 
+        console.log('🔍 Authenticating user:', email);
         const user = await dbManager.authenticateUser(email, password);
-        const sessionId = await dbManager.createSession(user.id);
+        console.log('✅ User authenticated:', user.id);
         
+        // Set session data
         req.session.userId = user.id;
+        req.session.userEmail = user.email;
+        req.session.userName = user.name;
         
+        console.log('💾 Setting session data:', {
+            userId: req.session.userId,
+            userEmail: req.session.userEmail,
+            userName: req.session.userName
+        });
+        
+        // Simple response - session will be saved automatically
         res.json({ 
             success: true, 
-            user: { id: user.id, email: user.email, name: user.name },
-            sessionId 
+            user: { id: user.id, email: user.email, name: user.name }
         });
     } catch (error) {
-        res.status(401).json({ error: error.message });
+        console.error('❌ Login error:', error);
+        res.status(401).json({ success: false, error: error.message });
     }
 });
 
 app.post('/api/auth/logout', async (req, res) => {
     try {
-        const sessionId = req.session.id;
-        await dbManager.removeSession(sessionId);
-        
-        req.session.destroy();
-        res.json({ success: true });
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Logout error:', err);
+                return res.status(500).json({ success: false, error: 'Logout error' });
+            }
+            res.json({ success: true, message: 'Logged out successfully' });
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Logout error:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -220,6 +244,28 @@ app.get('/api/auth/me', (req, res) => {
 
         // Setup shopping cart routes
         cartSystem.setupRoutes(app);
+
+
+
+        app.get('/api/auth/status', (req, res) => {
+            console.log('🔍 Auth status check - Session:', req.session);
+            console.log('🔍 Auth status check - UserId:', req.session.userId);
+            console.log('🔍 Auth status check - UserEmail:', req.session.userEmail);
+            
+            if (req.session.userId) {
+                console.log('✅ User is logged in:', req.session.userEmail);
+                res.json({ 
+                    loggedIn: true, 
+                    user: { 
+                        id: req.session.userId, 
+                        email: req.session.userEmail 
+                    } 
+                });
+            } else {
+                console.log('❌ No session userId found');
+                res.json({ loggedIn: false });
+            }
+        });
 
         // Secure download routes
         app.get('/api/download/:token', imageProtection.secureDownload());
@@ -335,6 +381,137 @@ app.get('/api/health', (req, res) => {
 // Favicon route to prevent 404 errors
 app.get('/favicon.ico', (req, res) => {
     res.status(204).end();
+});
+
+// Order API
+app.post('/api/orders/create', async (req, res) => {
+    try {
+        const { items } = req.body;
+        
+        if (!items || items.length === 0) {
+            return res.json({ success: false, error: 'No items in cart' });
+        }
+        
+        // Calculate total
+        const total = items.reduce((sum, item) => sum + item.price, 0);
+        
+        // Create order
+        const order = {
+            id: Date.now().toString(),
+            items,
+            total,
+            status: 'pending',
+            date: new Date().toISOString(),
+            userId: req.session.userId || 'guest'
+        };
+        
+        // Load existing orders
+        let orders = [];
+        try {
+            const data = fs.readFileSync(path.join(__dirname, 'database', 'orders.json'), 'utf8');
+            orders = JSON.parse(data);
+        } catch (error) {
+            // File doesn't exist, start with empty array
+        }
+        
+        // Add new order
+        orders.push(order);
+        
+        // Save to file
+        fs.writeFileSync(path.join(__dirname, 'database', 'orders.json'), JSON.stringify(orders, null, 2));
+        
+        // Create PayPal order (simplified for demo)
+        const paypalUrl = `/checkout?orderId=${order.id}`;
+        
+        res.json({ success: true, orderId: order.id, paypalUrl });
+    } catch (error) {
+        console.error('Order creation error:', error);
+        res.json({ success: false, error: 'Order creation failed' });
+    }
+});
+
+app.get('/api/orders/user', async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        
+        if (!userId) {
+            return res.json([]);
+        }
+        
+        // Load orders
+        let orders = [];
+        try {
+            const data = fs.readFileSync(path.join(__dirname, 'database', 'orders.json'), 'utf8');
+            orders = JSON.parse(data);
+        } catch (error) {
+            return res.json([]);
+        }
+        
+        // Filter user orders
+        const userOrders = orders.filter(order => order.userId === userId);
+        
+        res.json(userOrders);
+    } catch (error) {
+        console.error('User orders error:', error);
+        res.json([]);
+    }
+});
+
+app.get('/api/orders/:orderId', async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        
+        // Load orders
+        let orders = [];
+        try {
+            const data = fs.readFileSync(path.join(__dirname, 'database', 'orders.json'), 'utf8');
+            orders = JSON.parse(data);
+        } catch (error) {
+            return res.json(null);
+        }
+        
+        // Find order
+        const order = orders.find(o => o.id === orderId);
+        
+        res.json(order || null);
+    } catch (error) {
+        console.error('Order fetch error:', error);
+        res.json(null);
+    }
+});
+
+app.post('/api/orders/complete', async (req, res) => {
+    try {
+        const { orderId, paymentId, paymentMethod } = req.body;
+        
+        // Load orders
+        let orders = [];
+        try {
+            const data = fs.readFileSync(path.join(__dirname, 'database', 'orders.json'), 'utf8');
+            orders = JSON.parse(data);
+        } catch (error) {
+            return res.json({ success: false, error: 'Orders not found' });
+        }
+        
+        // Find and update order
+        const orderIndex = orders.findIndex(o => o.id === orderId);
+        if (orderIndex === -1) {
+            return res.json({ success: false, error: 'Order not found' });
+        }
+        
+        orders[orderIndex].status = 'completed';
+        orders[orderIndex].completedAt = new Date().toISOString();
+        orders[orderIndex].paymentId = paymentId;
+        orders[orderIndex].paymentMethod = paymentMethod || 'demo';
+        
+        // Save updated orders
+        fs.writeFileSync(path.join(__dirname, 'database', 'orders.json'), JSON.stringify(orders, null, 2));
+        
+        res.json({ success: true, order: orders[orderIndex] });
+    } catch (error) {
+        console.error('Order completion error:', error);
+        res.json({ success: false, error: 'Order completion failed' });
+    }
 });
 
 // Handle 404s with a proper 404 page

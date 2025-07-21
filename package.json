@@ -2,10 +2,10 @@
   "name": "lyricart-studio",
   "version": "1.0.0",
   "description": "Digital marketplace for music-inspired lyric art designs",
-  "main": "server.js",
+  "main": "server-enhanced.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node server-enhanced.js",
+    "dev": "nodemon server-enhanced.js",
     "build": "echo 'No build process needed for static site'",
     "test": "echo 'No tests specified'"
   },

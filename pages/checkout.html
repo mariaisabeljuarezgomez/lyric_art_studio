@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout - LyricArt Studio</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <meta name="description" content="Complete your purchase and download your lyric art designs." />
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD&intent=capture&components=buttons"></script>
+</head>
+<body class="bg-background text-text-primary font-inter">
+    <!-- Navigation Header -->
+    <header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-border-subtle">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                        <path d="M19 15L19.5 17L21 17.5L19.5 18L19 20L18.5 18L17 17.5L18.5 17L19 15Z"/>
+                        <path d="M5 15L5.5 17L7 17.5L5.5 18L5 20L4.5 18L3 17.5L4.5 17L5 15Z"/>
+                    </svg>
+                    <span class="text-xl font-montserrat font-bold">LyricArt Studio</span>
+                </div>
+
+                <!-- Back to Home -->
+                <a href="/" class="text-text-secondary hover:text-accent transition-smooth text-sm font-medium">
+                    ← Back to Home
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Checkout Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-20">
+        <div class="container mx-auto px-6">
+            <div class="max-w-2xl mx-auto">
+                <!-- Checkout Header -->
+                <div class="text-center mb-12">
+                    <h1 class="text-4xl font-bold text-text-primary mb-4">Complete Your Purchase</h1>
+                    <p class="text-text-secondary">Secure payment powered by PayPal</p>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="bg-surface/80 backdrop-blur-md rounded-lg border border-border-subtle p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-text-primary mb-6">Order Summary</h2>
+                    
+                    <div id="order-items" class="space-y-4 mb-6">
+                        <!-- Order items will be loaded here -->
+                    </div>
+                    
+                    <div class="border-t border-border-subtle pt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-semibold text-text-primary">Total:</span>
+                            <span id="order-total" class="text-2xl font-bold text-accent">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Section -->
+                <div class="bg-surface/80 backdrop-blur-md rounded-lg border border-border-subtle p-8">
+                    <h2 class="text-2xl font-bold text-text-primary mb-6">Payment Method</h2>
+                    
+                    <div class="space-y-6">
+                        <!-- PayPal Smart Payment Buttons -->
+                        <div class="text-center">
+                            <div id="paypal-button-container"></div>
+                            <p class="text-text-secondary text-sm mt-2">Pay with PayPal, Credit Card, or Debit Card</p>
+                        </div>
+                        
+                        <!-- Alternative Payment -->
+                        <div class="text-center">
+                            <button onclick="processDemoPayment()" class="w-full bg-accent text-background py-4 px-6 rounded-lg hover:bg-accent/90 transition-smooth font-medium text-lg">
+                                Demo Payment (Skip PayPal)
+                            </button>
+                            <p class="text-text-secondary text-sm mt-2">For testing purposes only</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Notice -->
+                <div class="mt-8 text-center">
+                    <div class="flex items-center justify-center space-x-2 text-text-secondary text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        <span>Your payment information is secure and encrypted</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Notification -->
+    <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"></div>
+
+    <script>
+        let currentOrder = null;
+
+        // Load order details on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            
+            if (orderId) {
+                loadOrderDetails(orderId);
+            } else {
+                showNotification('No order found', 'error');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            }
+        });
+
+        // Load order details
+        async function loadOrderDetails(orderId) {
+            try {
+                const response = await fetch(`/api/orders/${orderId}`);
+                const order = await response.json();
+                
+                if (order) {
+                    displayOrderItems(order);
+                } else {
+                    showNotification('Order not found', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading order:', error);
+                showNotification('Error loading order', 'error');
+            }
+        }
+
+        // Display order items
+        function displayOrderItems(order) {
+            currentOrder = order;
+            const orderItems = document.getElementById('order-items');
+            const orderTotal = document.getElementById('order-total');
+            
+            orderItems.innerHTML = order.items.map(item => `
+                <div class="flex justify-between items-center py-3 border-b border-border-subtle last:border-b-0">
+                    <div class="flex-1">
+                        <h4 class="font-medium text-text-primary">${item.title}</h4>
+                        <p class="text-text-secondary text-sm">Design Download</p>
+                    </div>
+                    <span class="font-semibold text-accent">$${item.price.toFixed(2)}</span>
+                </div>
+            `).join('');
+            
+            orderTotal.textContent = `$${order.total.toFixed(2)}`;
+            
+            // Initialize PayPal buttons after order is loaded
+            initializePayPal();
+        }
+
+        // Initialize PayPal Smart Payment Buttons
+        function initializePayPal() {
+            if (!currentOrder) return;
+            
+            paypal.Buttons({
+                // Sets up the transaction when a payment button is clicked
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: currentOrder.total.toFixed(2),
+                                currency_code: 'USD'
+                            },
+                            description: `LyricArt Studio - ${currentOrder.items.length} design(s)`,
+                            custom_id: currentOrder.id
+                        }]
+                    });
+                },
+
+                // Finalize the transaction after payer approval
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        // Handle successful payment
+                        console.log('Payment completed:', details);
+                        
+                        // Update order status
+                        completeOrder(currentOrder.id, details.id);
+                        
+                        showNotification('Payment successful! Redirecting to downloads...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/downloads';
+                        }, 2000);
+                    });
+                },
+
+                // Handle errors
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    showNotification('Payment failed. Please try again.', 'error');
+                },
+
+                // Handle cancellation
+                onCancel: function(data) {
+                    showNotification('Payment cancelled', 'info');
+                }
+            }).render('#paypal-button-container');
+        }
+
+        // Complete order after successful payment
+        async function completeOrder(orderId, paymentId) {
+            try {
+                const response = await fetch('/api/orders/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        orderId, 
+                        paymentId,
+                        paymentMethod: 'paypal'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    console.error('Order completion failed:', data.error);
+                }
+            } catch (error) {
+                console.error('Error completing order:', error);
+            }
+        }
+
+        // Process demo payment
+        async function processDemoPayment() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const orderId = urlParams.get('orderId');
+                
+                const response = await fetch('/api/orders/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Payment successful! Redirecting to downloads...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/downloads';
+                    }, 2000);
+                } else {
+                    showNotification(data.error || 'Payment failed', 'error');
+                }
+            } catch (error) {
+                showNotification('Payment failed', 'error');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            
+            notification.classList.remove('translate-x-full');
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

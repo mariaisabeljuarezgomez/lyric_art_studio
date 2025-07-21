@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Downloads - LyricArt Studio</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <meta name="description" content="Download your purchased lyric art designs." />
+</head>
+<body class="bg-background text-text-primary font-inter">
+    <!-- Navigation Header -->
+    <header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-border-subtle">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                        <path d="M19 15L19.5 17L21 17.5L19.5 18L19 20L18.5 18L17 17.5L18.5 17L19 15Z"/>
+                        <path d="M5 15L5.5 17L7 17.5L5.5 18L5 20L4.5 18L3 17.5L4.5 17L5 15Z"/>
+                    </svg>
+                    <span class="text-xl font-montserrat font-bold">LyricArt Studio</span>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-accent font-medium">Home</a>
+                    <a href="/account" class="text-text-secondary hover:text-accent transition-smooth">My Account</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Downloads Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-20">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto">
+                <!-- Downloads Header -->
+                <div class="text-center mb-12">
+                    <h1 class="text-4xl font-bold text-text-primary mb-4">Your Downloads</h1>
+                    <p class="text-text-secondary">Access your purchased lyric art designs</p>
+                </div>
+
+                <!-- Completed Orders -->
+                <div id="completed-orders" class="space-y-6">
+                    <!-- Orders will be loaded here -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="text-center py-12 hidden">
+                    <div class="w-24 h-24 mx-auto mb-6 bg-accent/20 rounded-full flex items-center justify-center">
+                        <svg class="w-12 h-12 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-text-primary mb-2">No Downloads Yet</h3>
+                    <p class="text-text-secondary mb-6">Purchase some designs to see them here</p>
+                    <a href="/" class="bg-accent text-background px-6 py-3 rounded-lg hover:bg-accent/90 transition-smooth font-medium">
+                        Browse Designs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Notification -->
+    <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"></div>
+
+    <script>
+        // Load completed orders on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCompletedOrders();
+        });
+
+        // Load completed orders
+        async function loadCompletedOrders() {
+            try {
+                const response = await fetch('/api/orders/user');
+                const orders = await response.json();
+                
+                const completedOrders = orders.filter(order => order.status === 'completed');
+                
+                if (completedOrders.length === 0) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    return;
+                }
+                
+                displayCompletedOrders(completedOrders);
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showNotification('Error loading downloads', 'error');
+            }
+        }
+
+        // Display completed orders
+        function displayCompletedOrders(orders) {
+            const container = document.getElementById('completed-orders');
+            
+            container.innerHTML = orders.map(order => `
+                <div class="bg-surface/80 backdrop-blur-md rounded-lg border border-border-subtle p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-text-primary">Order #${order.id}</h3>
+                            <p class="text-text-secondary text-sm">Completed: ${new Date(order.completedAt).toLocaleDateString()}</p>
+                            <p class="text-text-secondary text-sm">Payment: ${order.paymentMethod === 'paypal' ? 'PayPal' : 'Demo Payment'}</p>
+                        </div>
+                        <span class="text-accent font-semibold">$${order.total.toFixed(2)}</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        ${order.items.map(item => {
+                            if (item.type === 'custom-design') {
+                                return `
+                                    <div class="flex justify-between items-center p-3 bg-background rounded-lg">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-text-primary">${item.title}</h4>
+                                            <p class="text-text-secondary text-sm">Custom Design Request</p>
+                                            <p class="text-text-secondary text-xs">Style: ${item.commissionData.designStyle}</p>
+                                            <p class="text-text-secondary text-xs">Status: In Progress</p>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button onclick="viewCustomDesignDetails('${item.id}')" class="bg-accent text-background px-3 py-1 rounded text-sm hover:bg-accent/90 transition-smooth">
+                                                View Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                return `
+                                    <div class="flex justify-between items-center p-3 bg-background rounded-lg">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-text-primary">${item.title}</h4>
+                                            <p class="text-text-secondary text-sm">Design Download</p>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button onclick="downloadDesign('${item.title}', 'svg')" class="bg-accent text-background px-3 py-1 rounded text-sm hover:bg-accent/90 transition-smooth">
+                                                SVG
+                                            </button>
+                                            <button onclick="downloadDesign('${item.title}', 'pdf')" class="bg-accent text-background px-3 py-1 rounded text-sm hover:bg-accent/90 transition-smooth">
+                                                PDF
+                                            </button>
+                                            <button onclick="downloadDesign('${item.title}', 'png')" class="bg-accent text-background px-3 py-1 rounded text-sm hover:bg-accent/90 transition-smooth">
+                                                PNG
+                                            </button>
+                                            <button onclick="downloadDesign('${item.title}', 'eps')" class="bg-accent text-background px-3 py-1 rounded text-sm hover:bg-accent/90 transition-smooth">
+                                                EPS
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Download design
+        function downloadDesign(title, format) {
+            // In a real implementation, this would trigger the actual file download
+            // For now, we'll show a notification
+            showNotification(`Downloading ${title}.${format}...`, 'success');
+            
+            // Simulate download delay
+            setTimeout(() => {
+                showNotification(`${title}.${format} downloaded successfully!`, 'success');
+            }, 1000);
+        }
+
+        // View custom design details
+        function viewCustomDesignDetails(itemId) {
+            // Find the item in completed orders
+            const orders = JSON.parse(localStorage.getItem('completedOrders') || '[]');
+            const item = orders.find(order => 
+                order.items.some(item => item.id === itemId)
+            )?.items.find(item => item.id === itemId);
+            
+            if (item && item.type === 'custom-design') {
+                const detailsHTML = `
+                    <div class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.8);">
+                        <div class="bg-background rounded-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold text-text-primary">Custom Design Details</h3>
+                                <button onclick="closeDetailsModal()" class="text-text-secondary hover:text-accent transition-smooth">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-text-secondary mb-1">Design Style</label>
+                                    <p class="text-text-primary">${item.commissionData.designStyle}</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-text-secondary mb-1">Artist</label>
+                                    <p class="text-text-primary">${item.commissionData.artistName}</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-text-secondary mb-1">Song</label>
+                                    <p class="text-text-primary">${item.commissionData.songTitle}</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-text-secondary mb-1">Lyrics</label>
+                                    <p class="text-text-primary text-sm">${item.commissionData.lyrics}</p>
+                                </div>
+                                
+                                ${item.commissionData.additionalNotes ? `
+                                    <div>
+                                        <label class="block text-sm font-medium text-text-secondary mb-1">Additional Notes</label>
+                                        <p class="text-text-primary text-sm">${item.commissionData.additionalNotes}</p>
+                                    </div>
+                                ` : ''}
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-text-secondary mb-1">Status</label>
+                                    <p class="text-accent font-medium">In Progress - Maria will contact you soon</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 pt-4 border-t border-border-subtle">
+                                <button onclick="closeDetailsModal()" class="w-full bg-accent text-background py-2 px-4 rounded-lg hover:bg-accent/90 transition-smooth font-medium">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', detailsHTML);
+            }
+        }
+
+        function closeDetailsModal() {
+            const modal = document.querySelector('.fixed.inset-0.z-50');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            
+            notification.classList.remove('translate-x-full');
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 
