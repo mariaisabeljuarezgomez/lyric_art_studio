@@ -8,6 +8,7 @@ const session = require('express-session');
 const { DatabaseManager } = require('./database-setup');
 const { ShoppingCartSystem } = require('./shopping-cart-system');
 const PerformanceOptimizer = require('./performance-optimization');
+const ImageProtectionMiddleware = require('./image-protection-middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3001;
 // Initialize systems
 const dbManager = new DatabaseManager();
 const cartSystem = new ShoppingCartSystem();
+const imageProtection = new ImageProtectionMiddleware();
 
 // Middleware
 app.use(cors());
@@ -49,7 +51,11 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve static files from the root directory
+// Image protection middleware (must come before static file serving)
+app.use(imageProtection.protectImages());
+app.use(imageProtection.rateLimit());
+
+// Serve static files from the root directory (with protection)
 app.use(express.static(__dirname));
 
 // Serve JSON files with proper MIME type
@@ -212,8 +218,35 @@ app.get('/api/auth/me', (req, res) => {
     }
 });
 
-// Setup shopping cart routes
-cartSystem.setupRoutes(app);
+        // Setup shopping cart routes
+        cartSystem.setupRoutes(app);
+
+        // Secure download routes
+        app.get('/api/download/:token', imageProtection.secureDownload());
+        app.get('/api/preview/:token', imageProtection.secureDownload());
+        
+        // Generate secure download URLs
+        app.post('/api/generate-download-url', (req, res) => {
+            try {
+                const { imagePath } = req.body;
+                const userId = req.user?.id;
+                
+                if (!userId) {
+                    return res.status(401).json({ error: 'Authentication required' });
+                }
+                
+                // Verify user has purchased this design
+                // This would check the user's purchase history
+                
+                const downloadUrl = imageProtection.generateDownloadUrl(imagePath, userId);
+                res.json({ 
+                    downloadUrl,
+                    expiresIn: '5 minutes'
+                });
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        });
 
 // Subscription API routes
 app.post('/api/subscription/create', async (req, res) => {

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - LyricArt Studio</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <meta name="description" content="Login to your LyricArt Studio account to access your designs and purchases." />
+    <script type="module" src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Flyricarts9704back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.6"></script>
+</head>
+<body class="bg-background text-text-primary font-inter">
+    <!-- Navigation Header -->
+    <header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-border-subtle">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                        <path d="M19 15L19.5 17L21 17.5L19.5 18L19 20L18.5 18L17 17.5L18.5 17L19 15Z"/>
+                        <path d="M5 15L5.5 17L7 17.5L5.5 18L5 20L4.5 18L3 17.5L4.5 17L5 15Z"/>
+                    </svg>
+                    <span class="text-xl font-montserrat font-bold">LyricArt Studio</span>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/homepage" class="text-text-secondary hover:text-accent transition-smooth">Home</a>
+                    <a href="/browse" class="text-text-secondary hover:text-accent transition-smooth">Browse Gallery</a>
+                    <a href="/artist-profiles" class="text-text-secondary hover:text-accent transition-smooth">Artists</a>
+                    <a href="/my-collection" class="text-text-secondary hover:text-accent transition-smooth">My Collection</a>
+                </div>
+
+                <!-- Search & User Actions -->
+                <div class="flex items-center space-x-4">
+                    <button class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </button>
+                    <button class="p-2 text-text-secondary hover:text-accent transition-smooth">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                    </button>
+                    <!-- Mobile Menu Button -->
+                    <button class="md:hidden p-2 text-text-secondary hover:text-accent transition-smooth">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Enhanced Particle Background -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <!-- Large floating particles -->
+        <div class="absolute top-20 left-10 w-3 h-3 bg-accent rounded-full opacity-80 animate-particle-slow shadow-lg shadow-accent/50"></div>
+        <div class="absolute top-40 right-20 w-2 h-2 bg-accent rounded-full opacity-70 animate-particle-medium shadow-lg shadow-accent/40"></div>
+        <div class="absolute top-60 left-1/4 w-2.5 h-2.5 bg-accent rounded-full opacity-90 animate-particle-fast shadow-lg shadow-accent/60"></div>
+        <div class="absolute bottom-40 right-1/3 w-3 h-3 bg-accent rounded-full opacity-75 animate-particle-slow shadow-lg shadow-accent/50"></div>
+        <div class="absolute bottom-60 left-1/2 w-2 h-2 bg-accent rounded-full opacity-85 animate-particle-medium shadow-lg shadow-accent/45"></div>
+        <div class="absolute top-1/3 right-10 w-2.5 h-2.5 bg-accent rounded-full opacity-80 animate-particle-fast shadow-lg shadow-accent/55"></div>
+        
+        <!-- Medium particles -->
+        <div class="absolute top-32 left-1/3 w-1.5 h-1.5 bg-accent rounded-full opacity-60 animate-particle-medium shadow-md shadow-accent/30"></div>
+        <div class="absolute top-80 right-1/4 w-1.5 h-1.5 bg-accent rounded-full opacity-65 animate-particle-slow shadow-md shadow-accent/35"></div>
+        <div class="absolute bottom-80 left-1/5 w-1.5 h-1.5 bg-accent rounded-full opacity-70 animate-particle-fast shadow-md shadow-accent/40"></div>
+        <div class="absolute top-1/2 right-1/6 w-1.5 h-1.5 bg-accent rounded-full opacity-55 animate-particle-medium shadow-md shadow-accent/25"></div>
+        
+        <!-- Small particles -->
+        <div class="absolute top-16 left-1/2 w-1 h-1 bg-accent rounded-full opacity-50 animate-particle-fast"></div>
+        <div class="absolute top-48 right-1/2 w-1 h-1 bg-accent rounded-full opacity-45 animate-particle-slow"></div>
+        <div class="absolute bottom-32 left-1/3 w-1 h-1 bg-accent rounded-full opacity-60 animate-particle-medium"></div>
+        <div class="absolute bottom-80 right-1/5 w-1 h-1 bg-accent rounded-full opacity-55 animate-particle-fast"></div>
+        <div class="absolute top-3/4 left-1/6 w-1 h-1 bg-accent rounded-full opacity-50 animate-particle-slow"></div>
+        <div class="absolute top-1/4 right-1/3 w-1 h-1 bg-accent rounded-full opacity-65 animate-particle-medium"></div>
+        
+        <!-- Additional particles for more density -->
+        <div class="absolute top-96 left-1/4 w-1.5 h-1.5 bg-accent rounded-full opacity-70 animate-particle-slow shadow-md shadow-accent/30"></div>
+        <div class="absolute top-64 right-1/3 w-1 h-1 bg-accent rounded-full opacity-50 animate-particle-fast"></div>
+        <div class="absolute bottom-96 left-2/3 w-2 h-2 bg-accent rounded-full opacity-80 animate-particle-medium shadow-lg shadow-accent/40"></div>
+        <div class="absolute top-1/3 left-1/6 w-1 h-1 bg-accent rounded-full opacity-55 animate-particle-slow"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-1.5 h-1.5 bg-accent rounded-full opacity-75 animate-particle-fast shadow-md shadow-accent/35"></div>
+        
+        <!-- Glowing orbs for extra effect -->
+        <div class="absolute top-1/4 left-1/5 w-4 h-4 bg-accent rounded-full opacity-30 animate-pulse blur-sm"></div>
+        <div class="absolute bottom-1/4 right-1/5 w-3 h-3 bg-accent rounded-full opacity-25 animate-pulse blur-sm"></div>
+        <div class="absolute top-1/2 left-1/2 w-2 h-2 bg-accent rounded-full opacity-20 animate-pulse blur-sm"></div>
+    </div>
+
+    <!-- Login Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-20">
+        <div class="container mx-auto px-6">
+            <div class="max-w-md mx-auto bg-surface/80 backdrop-blur-md rounded-lg border border-border-subtle p-8">
+                <!-- Logo -->
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-text-primary">LyricArt Studio</h1>
+                    <p class="text-text-secondary mt-2">Welcome back</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-text-secondary mb-2">Email Address</label>
+                        <input type="email" id="email" name="email" required 
+                               class="w-full px-4 py-3 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary"
+                               placeholder="Enter your email">
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-text-secondary mb-2">Password</label>
+                        <input type="password" id="password" name="password" required 
+                               class="w-full px-4 py-3 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary"
+                               placeholder="Enter your password">
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded border-border-subtle text-accent focus:ring-accent bg-background">
+                            <span class="ml-2 text-sm text-text-secondary">Remember me</span>
+                        </label>
+                        <a href="/forgot-password" class="text-sm text-accent hover:text-accent/80 transition-smooth">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full bg-accent text-background py-3 px-4 rounded-lg hover:bg-accent/90 transition-smooth font-medium">
+                        Sign In
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="my-6 flex items-center">
+                    <div class="flex-1 border-t border-border-subtle"></div>
+                    <span class="px-4 text-text-secondary text-sm">or</span>
+                    <div class="flex-1 border-t border-border-subtle"></div>
+                </div>
+
+                <!-- Social Login -->
+                <div class="space-y-3">
+                    <button class="w-full bg-surface border border-border-subtle text-text-primary py-3 px-4 rounded-lg hover:bg-surface/80 transition-smooth font-medium">
+                        Continue with Google
+                    </button>
+                    <button class="w-full bg-surface border border-border-subtle text-text-primary py-3 px-4 rounded-lg hover:bg-surface/80 transition-smooth font-medium">
+                        Continue with GitHub
+                    </button>
+                </div>
+
+                <!-- Sign Up Link -->
+                <div class="text-center mt-8">
+                    <p class="text-text-secondary">
+                        Don't have an account? 
+                        <a href="/register" class="text-accent hover:text-accent/80 font-medium transition-smooth">Sign up</a>
+                    </p>
+                </div>
+
+                <!-- Back to Home -->
+                <div class="text-center mt-6">
+                    <a href="/" class="text-text-secondary hover:text-text-primary text-sm transition-smooth">
+                        ← Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Notification -->
+    <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"></div>
+
+    <script>
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/account';
+                    }, 1500);
+                } else {
+                    showNotification(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showNotification('An error occurred. Please try again.', 'error');
+            }
+        });
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            
+            notification.classList.remove('translate-x-full');
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 
