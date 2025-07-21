@@ -30,36 +30,8 @@ pool.query(`
     );
 `).catch(err => console.error('Error creating session table:', err));
 
-// Simple session store for PostgreSQL
-const PostgresSessionStore = function() {
-    this.get = function(sid, callback) {
-        pool.query('SELECT sess FROM session WHERE sid = $1 AND expire > NOW()', [sid])
-            .then(result => {
-                if (result.rows.length > 0) {
-                    callback(null, result.rows[0].sess);
-                } else {
-                    callback(null, null);
-                }
-            })
-            .catch(err => callback(err));
-    };
-
-    this.set = function(sid, sess, callback) {
-        const expire = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-        pool.query(
-            'INSERT INTO session (sid, sess, expire) VALUES ($1, $2, $3) ON CONFLICT (sid) DO UPDATE SET sess = $2, expire = $3',
-            [sid, sess, expire]
-        )
-        .then(() => callback())
-        .catch(err => callback(err));
-    };
-
-    this.destroy = function(sid, callback) {
-        pool.query('DELETE FROM session WHERE sid = $1', [sid])
-            .then(() => callback())
-            .catch(err => callback(err));
-    };
-};
+// Use connect-pg-simple for PostgreSQL session storage
+const pgSession = require('connect-pg-simple')(session);
 
 // Middleware
 app.use(cors({
@@ -79,7 +51,10 @@ app.use((req, res, next) => {
 
 // Session configuration using PostgreSQL
 app.use(session({
-    store: new PostgresSessionStore(),
+    store: new pgSession({
+        pool: pool,
+        tableName: 'session'
+    }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
