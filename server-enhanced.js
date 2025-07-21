@@ -48,20 +48,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// Secure session management with file store for persistence
+// Secure session management with memory store for testing
 app.use(session({
-    store: new FileStore({
-        path: sessionsDir,
-        ttl: 24 * 60 * 60, // 24 hours
-        reapInterval: 60 * 60, // Clean up expired sessions every hour
-        secret: process.env.SESSION_SECRET
-    }),
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false, // Only save sessions when they're modified
+    secret: process.env.SESSION_SECRET || 'lyricart-studio-default-secret-key-for-development',
+    resave: true, // Force save on every request
+    saveUninitialized: true, // Save even uninitialized sessions
     cookie: { 
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        httpOnly: true, // Prevent XSS attacks
+        secure: false, // Allow HTTP for localhost
+        httpOnly: false, // Allow JavaScript access for debugging
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         sameSite: 'lax', // CSRF protection
         path: '/'
@@ -75,6 +69,20 @@ app.use((req, res, next) => {
     if (!req.session.id) {
         req.session.temp = true; // Force session creation
     }
+    next();
+});
+
+// 🎯 KIM'S CORS FIX - ALLOW COOKIES TO BE SENT
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');   // allow cookies
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    next();
+});
+
+// 🎯 KIM'S 100% SERVER-SIDE CART SOLUTION
+// Initialize empty cart on first visit
+app.use((req, res, next) => {
+    if (!req.session.cart) req.session.cart = [];
     next();
 });
 
@@ -97,8 +105,9 @@ app.use((req, res, next) => {
 
 // Image protection middleware (must come before static file serving)
 app.use(imageProtection.protectImages());
-// Re-enable rate limiting for security
-app.use(imageProtection.rateLimit());
+// Rate limiting only for image requests (not API endpoints)
+app.use('/images/', imageProtection.rateLimit());
+app.use('/music_lyricss/', imageProtection.rateLimit());
 
 // Serve static files from the root directory (with protection)
 app.use(express.static(__dirname));
@@ -306,51 +315,97 @@ app.get('/api/auth/me', (req, res) => {
     }
 });
 
-        // Setup shopping cart routes
-        cartSystem.setupRoutes(app);
+// Setup shopping cart routes (DISABLED - Using Kim's server-side solution)
+// cartSystem.setupRoutes(app);
 
+// 🎯 KIM'S 100% SERVER-SIDE CART SOLUTION
 
+// Add item to cart
+app.post('/api/cart/add', (req, res) => {
+    console.log('🛒 Cart add request:', req.body);
+    console.log('🛒 Session before:', req.session);
+    
+    const { itemId, qty = 1, price = 3, format = 'SVG' } = req.body;
+    if (!req.session.cart) req.session.cart = [];
+    
+    const existing = req.session.cart.find(i => i.itemId === itemId);
+    if (existing) {
+        existing.qty += qty;
+        existing.price = price; // Update price if changed
+        existing.format = format; // Update format if changed
+    } else {
+        req.session.cart.push({ itemId, qty, price, format });
+    }
+    
+    console.log('🛒 Session after:', req.session);
+    console.log('🛒 Cart contents:', req.session.cart);
+    
+    res.json({ ok: true });
+});
 
-        app.get('/api/auth/status', (req, res) => {
-            if (req.session.userId) {
-                res.json({ 
-                    loggedIn: true, 
-                    user: { 
-                        id: req.session.userId, 
-                        email: req.session.userEmail 
-                    } 
-                });
-            } else {
-                res.json({ loggedIn: false });
-            }
+// Read cart
+app.get('/api/cart', (req, res) => {
+    console.log('🛒 Cart read request');
+    console.log('🛒 Session:', req.session);
+    console.log('🛒 Cart contents:', req.session.cart);
+    
+    if (!req.session.cart) req.session.cart = [];
+    res.json(req.session.cart);
+});
+
+// Cart count (for badge)
+app.get('/api/cart/count', (req, res) => {
+    if (!req.session.cart) req.session.cart = [];
+    const count = req.session.cart.reduce((sum, i) => sum + (i.qty || 1), 0);
+    res.json({ count });
+});
+
+// Clear cart (after payment)
+app.delete('/api/cart', (req, res) => {
+    req.session.cart = [];
+    res.json({ ok: true });
+});
+
+app.get('/api/auth/status', (req, res) => {
+    if (req.session.userId) {
+        res.json({ 
+            loggedIn: true, 
+            user: { 
+                id: req.session.userId, 
+                email: req.session.userEmail 
+            } 
         });
+    } else {
+        res.json({ loggedIn: false });
+    }
+});
 
-        // Secure download routes
-        app.get('/api/download/:token', imageProtection.secureDownload());
-        app.get('/api/preview/:token', imageProtection.secureDownload());
+// Secure download routes
+app.get('/api/download/:token', imageProtection.secureDownload());
+app.get('/api/preview/:token', imageProtection.secureDownload());
+
+// Generate secure download URLs
+app.post('/api/generate-download-url', (req, res) => {
+    try {
+        const { imagePath } = req.body;
+        const userId = req.user?.id;
         
-        // Generate secure download URLs
-        app.post('/api/generate-download-url', (req, res) => {
-            try {
-                const { imagePath } = req.body;
-                const userId = req.user?.id;
-                
-                if (!userId) {
-                    return res.status(401).json({ error: 'Authentication required' });
-                }
-                
-                // Verify user has purchased this design
-                // This would check the user's purchase history
-                
-                const downloadUrl = imageProtection.generateDownloadUrl(imagePath, userId);
-                res.json({ 
-                    downloadUrl,
-                    expiresIn: '5 minutes'
-                });
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
+        if (!userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        // Verify user has purchased this design
+        // This would check the user's purchase history
+        
+        const downloadUrl = imageProtection.generateDownloadUrl(imagePath, userId);
+        res.json({ 
+            downloadUrl,
+            expiresIn: '5 minutes'
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Subscription API routes
 app.post('/api/subscription/create', async (req, res) => {

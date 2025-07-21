@@ -46,6 +46,7 @@ class SongCatalogManager {
         this.setupEventListeners();
         this.renderCatalog();
         this.updateFilters();
+        updateCartBadge(); // Initialize cart badge
     }
 
     async loadSongData() {
@@ -752,94 +753,29 @@ function closeDesignModal() {
 
 // Add to cart functionality
 async function addToCart(songTitle, price) {
-    try {
-        console.log('🛒 Add to Cart clicked for:', songTitle, 'at price:', price);
-        const designId = songTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        console.log('🛒 Design ID:', designId);
-        
-        const response = await fetch('/api/cart/add', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                designId: designId,
-                format: 'digital-download',
-                price: price
-            })
-        });
-        
-        console.log('🛒 Add to cart response status:', response.status);
-        const data = await response.json();
-        console.log('🛒 Add to cart response data:', data);
-        
-        // The server returns the cart object directly, not wrapped in a success property
-        if (response.ok && data.items && data.itemCount !== undefined) {
-            console.log('✅ Successfully added to cart!');
-            showNotification('Added to cart!', 'success');
-            updateCartCount();
-            closeDesignModal();
-        } else {
-            console.error('❌ Failed to add to cart:', data.error || 'Unknown error');
-            showNotification('Failed to add to cart', 'error');
-        }
-    } catch (error) {
-        console.error('❌ Error in addToCart:', error);
-        showNotification('Error adding to cart', 'error');
-    }
+    const id = songTitle.toLowerCase().replace(/\s+/g, '-');
+    await fetch('/api/cart/add', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId: id, qty: 1, price })
+    });
+    updateCartBadge();
 }
 
 // Buy now functionality
 async function buyNow(songTitle, price) {
-    try {
-        console.log('🛒 Buy Now clicked for:', songTitle, 'at price:', price);
-        const designId = songTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        console.log('🛒 Design ID:', designId);
-        
-        const addResponse = await fetch('/api/cart/add', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                designId: designId,
-                format: 'digital-download',
-                price: price
-            })
-        });
-        
-        console.log('🛒 Add to cart response status:', addResponse.status);
-        const addData = await addResponse.json();
-        console.log('🛒 Add to cart response data:', addData);
-        
-        if (addResponse.ok && addData.items && addData.itemCount !== undefined) { // Corrected condition
-            console.log('✅ Successfully added to cart!');
-            showNotification('Added to cart! Redirecting to checkout...', 'success');
-            updateCartCount();
-            closeDesignModal();
-            
-            // Immediately redirect to checkout page
-            setTimeout(() => {
-                console.log('🔄 Redirecting to checkout...');
-                window.location.href = '/pages/checkout.html';
-            }, 1000);
-        } else {
-            console.error('❌ Failed to add to cart:', addData.error || 'Unknown error'); // Corrected error message
-            showNotification('Failed to add to cart', 'error');
-        }
-    } catch (error) {
-        console.error('❌ Error in buyNow:', error);
-        showNotification('Error processing purchase', 'error');
-    }
+    await addToCart(songTitle, price);
+    location.href = '/checkout';
 }
 
-// Update cart count function
-async function updateCartCount() {
+// Update cart badge function
+async function updateCartBadge() {
     try {
-        console.log('🛒 Updating cart count...');
-        const response = await fetch('/api/cart');
+        console.log('🛒 Updating cart badge...');
+        const response = await fetch('/api/cart/count', { credentials: 'include' });
         const data = await response.json();
-        console.log('🛒 Cart data:', data);
+        console.log('🛒 Cart count data:', data);
         
         const cartCount = document.getElementById('cart-count');
         if (!cartCount) {
@@ -847,7 +783,7 @@ async function updateCartCount() {
             return;
         }
         
-        const count = data.cart && data.cart.itemCount ? data.cart.itemCount : 0;
+        const count = data.count || 0;
         console.log('🛒 Cart count:', count);
         
         cartCount.textContent = count;

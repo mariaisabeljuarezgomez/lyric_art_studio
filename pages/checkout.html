@@ -147,28 +147,18 @@
             try {
                 console.log('🛒 Loading cart data...');
                 
-                // Add cache-busting parameter
-                const timestamp = new Date().getTime();
-                const response = await fetch(`/api/cart?t=${timestamp}`, {
-                    method: 'GET',
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
-                });
-                
-                const data = await response.json();
-                console.log('🛒 Cart data received:', data);
+                const cart = await fetch('/api/cart', { credentials: 'include' }).then(r => r.json());
+                console.log('🛒 Cart data received:', cart);
                 
                 document.getElementById('loading').style.display = 'none';
                 
-                if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
+                if (!cart.length) {
                     document.getElementById('empty-cart').style.display = 'block';
                     return;
                 }
                 
-                displayCartItems(data.cart.items);
-                displayOrderSummary(data.cart);
+                displayCartItems(cart);
+                displayOrderSummary(cart);
                 document.getElementById('checkout-content').style.display = 'block';
                 
             } catch (error) {
@@ -182,14 +172,15 @@
             const container = document.getElementById('cart-items-container');
             
             const itemsHtml = items.map(item => {
-                const designName = item.designId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const designName = item.itemId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const price = item.price || 3.00; // Use real price from cart item
                 return `
                     <div class="flex justify-between items-center py-4 border-b border-border-subtle last:border-b-0">
                         <div class="flex-1">
                             <h4 class="font-medium text-text-primary">${designName}</h4>
-                            <p class="text-text-secondary text-sm">Digital Download</p>
+                            <p class="text-text-secondary text-sm">Digital Download (${item.format || 'SVG'}) - Qty: ${item.qty}</p>
                         </div>
-                        <span class="font-semibold text-accent">$${item.price.toFixed(2)}</span>
+                        <span class="font-semibold text-accent">$${(price * item.qty).toFixed(2)}</span>
                     </div>
                 `;
             }).join('');
@@ -200,7 +191,7 @@
         function displayOrderSummary(cart) {
             const container = document.getElementById('summary-container');
             
-            const subtotal = cart.total;
+            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 3.00) * item.qty), 0);
             const tax = subtotal * 0.08; // 8% tax
             const total = subtotal + tax;
             
@@ -230,17 +221,11 @@
             try {
                 console.log('🛒 Processing checkout...');
                 
-                // Get cart data with cache busting
-                const timestamp = new Date().getTime();
-                const cartResponse = await fetch(`/api/cart?t=${timestamp}`, {
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
-                });
-                const cartData = await cartResponse.json();
+                // Get cart data
+                const cartResponse = await fetch('/api/cart', { credentials: 'include' });
+                const cart = await cartResponse.json();
                 
-                if (!cartData.cart || !cartData.cart.items || cartData.cart.items.length === 0) {
+                if (!cart.length) {
                     showError('Your cart is empty.');
                     button.disabled = false;
                     button.textContent = 'Proceed to Payment';
@@ -248,6 +233,9 @@
                 }
                 
                 console.log('✅ Cart has items, creating PayPal order...');
+                
+                // Calculate total using real prices
+                const total = cart.reduce((sum, item) => sum + ((item.price || 3.00) * item.qty), 0);
                 
                 // Create PayPal order
                 const paypalResponse = await fetch('/api/payment/create-paypal-order', {
@@ -258,29 +246,30 @@
                         'Pragma': 'no-cache'
                     },
                     body: JSON.stringify({
-                        items: cartData.cart.items,
-                        total: cartData.cart.total
+                        items: cart,
+                        total: total
                     })
                 });
-                
-                const paypalData = await paypalResponse.json();
-                
-                if (paypalData.paypalOrder && paypalData.paypalOrder.links) {
-                    const approveLink = paypalData.paypalOrder.links.find(link => link.rel === 'approve');
-                    if (approveLink) {
-                        showSuccess('Order created successfully! Redirecting to payment...');
-                        setTimeout(() => {
-                            window.location.href = approveLink.href;
-                        }, 2000);
-                    } else {
-                        showError('Failed to get payment link. Please try again.');
-                        button.disabled = false;
-                        button.textContent = 'Proceed to Payment';
+
+                if (paypalResponse.ok) {
+                    const orderData = await paypalResponse.json();
+                    console.log('✅ PayPal order created:', orderData);
+                    
+                    // Clear cart after successful payment creation
+                    try {
+                        await fetch('/api/cart', { 
+                            method: 'DELETE', 
+                            credentials: 'include' 
+                        });
+                        console.log('✅ Cart cleared after payment creation');
+                    } catch (clearError) {
+                        console.warn('⚠️ Could not clear cart:', clearError);
                     }
+                    
+                    // Redirect to PayPal
+                    window.location.href = orderData.approvalUrl;
                 } else {
-                    showError('Failed to create order. Please try again.');
-                    button.disabled = false;
-                    button.textContent = 'Proceed to Payment';
+                    throw new Error('Failed to create PayPal order');
                 }
                 
             } catch (error) {

@@ -280,7 +280,7 @@ class ImageProtectionMiddleware {
             const ip = req.ip;
             const now = Date.now();
             const windowMs = 60000; // 1 minute
-            const maxRequests = 100; // Max 100 requests per minute
+            const maxRequests = 500; // Increased to 500 requests per minute for better UX
 
             if (!requests.has(ip)) {
                 requests.set(ip, []);
@@ -292,7 +292,7 @@ class ImageProtectionMiddleware {
             if (validRequests.length >= maxRequests) {
                 return res.status(429).json({
                     error: 'Too many requests',
-                    message: 'Rate limit exceeded'
+                    message: 'Rate limit exceeded. Please wait a moment and try again.'
                 });
             }
 

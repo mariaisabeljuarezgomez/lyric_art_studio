@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+    <title>Debug Cart Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        #badge { background: red; color: white; padding: 5px 10px; border-radius: 50%; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Cart Debug Test</h1>
+    <button id="add">Add Test Item</button>
+    <span id="badge">0</span>
+    
+    <div id="status" style="margin-top: 20px; padding: 10px; background: #f0f0f0;"></div>
+
+    <script>
+        const addBtn = document.getElementById('add');
+        const badge = document.getElementById('badge');
+        const status = document.getElementById('status');
+
+        async function add() {
+            try {
+                status.textContent = 'Adding item...';
+                
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({itemId: 'abc', qty: 1})
+                });
+                
+                const result = await response.json();
+                status.textContent = `Add response: ${JSON.stringify(result)}`;
+                
+                // Update badge
+                const countResponse = await fetch('/api/cart/count', { credentials: 'include' });
+                const countData = await countResponse.json();
+                badge.textContent = countData.count;
+                
+                status.textContent += ` | Count: ${countData.count}`;
+                
+            } catch (error) {
+                status.textContent = `Error: ${error.message}`;
+                console.error('Error:', error);
+            }
+        }
+
+        addBtn.onclick = add;
+        
+        // Load initial count
+        fetch('/api/cart/count', { credentials: 'include' })
+            .then(r => r.json())
+            .then(data => {
+                badge.textContent = data.count;
+                status.textContent = `Initial count: ${data.count}`;
+            })
+            .catch(error => {
+                status.textContent = `Error loading count: ${error.message}`;
+            });
+    </script>
+</body>
+</html> 
