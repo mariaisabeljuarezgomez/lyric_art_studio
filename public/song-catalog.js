@@ -773,13 +773,14 @@ async function addToCart(songTitle, price) {
         const data = await response.json();
         console.log('🛒 Add to cart response data:', data);
         
-        if (data.success) {
+        // The server returns the cart object directly, not wrapped in a success property
+        if (response.ok && data.items && data.itemCount !== undefined) {
             console.log('✅ Successfully added to cart!');
             showNotification('Added to cart!', 'success');
             updateCartCount();
             closeDesignModal();
         } else {
-            console.error('❌ Failed to add to cart:', data.error);
+            console.error('❌ Failed to add to cart:', data.error || 'Unknown error');
             showNotification('Failed to add to cart', 'error');
         }
     } catch (error) {

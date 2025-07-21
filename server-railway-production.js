@@ -37,7 +37,7 @@ const pgSession = require('connect-pg-simple')(session);
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' ? ['https://lyricartstudio-production.up.railway.app'] : true,
     credentials: true
-} ));
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -67,11 +67,11 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         maxAge: 24 * 60 * 60 * 1000, // 1 day
-        httpOnly: false, // Allow JavaScript access for Railway
-        secure: process.env.NODE_ENV === 'production',
+        httpOnly: false, // Allow JavaScript access
+        secure: false, // Set to false for Railway debugging
         sameSite: 'lax'
     }
-} ));
+}));
 
 // Initialize database with users
 const initializeDatabase = async () => {
@@ -485,6 +485,7 @@ app.use((req, res) => {
 
 module.exports = app;
 
+
 // Start server
 app.listen(PORT, () => {
     console.log(`🚀 LyricArt Studio Server running on port ${PORT}`);
@@ -494,3 +495,4 @@ app.listen(PORT, () => {
     console.log('🔐 User authentication active');
     console.log('⚡ Performance optimizations applied');
 });
+
