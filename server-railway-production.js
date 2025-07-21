@@ -234,6 +234,46 @@ app.post('/api/cart/add', (req, res) => {
     res.json(req.session.cart);
 });
 
+// Cart count endpoint (for badge)
+app.get('/api/cart/count', (req, res) => {
+    if (!req.session.cart) {
+        req.session.cart = { items: [], total: 0, itemCount: 0 };
+    }
+    const count = req.session.cart.itemCount || 0;
+    console.log('🛒 Cart count requested:', count);
+    res.json({ count });
+});
+
+// Remove item from cart
+app.delete('/api/cart/remove', (req, res) => {
+    const { designId, format } = req.body;
+    
+    if (!req.session.cart) {
+        req.session.cart = { items: [], total: 0, itemCount: 0 };
+    }
+
+    req.session.cart.items = req.session.cart.items.filter(item => 
+        !(item.itemId === designId && item.format === format)
+    );
+
+    req.session.cart.total = req.session.cart.items.reduce((sum, item) => 
+        sum + (item.price * item.quantity), 0
+    );
+    req.session.cart.itemCount = req.session.cart.items.reduce((sum, item) => 
+        sum + item.quantity, 0
+    );
+
+    console.log('🗑️ Item removed from cart:', designId);
+    res.json({ success: true, cart: req.session.cart });
+});
+
+// Clear entire cart
+app.delete('/api/cart/clear', (req, res) => {
+    req.session.cart = { items: [], total: 0, itemCount: 0 };
+    console.log('🧹 Cart cleared');
+    res.json({ success: true });
+});
+
 // PayPal payment routes
 app.post('/api/payment/create-paypal-order', async (req, res) => {
     try {
