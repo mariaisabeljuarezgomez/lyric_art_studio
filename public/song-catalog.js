@@ -6,7 +6,7 @@ class SongCatalogManager {
         this.genres = new Map();
         this.artists = new Map();
         this.currentFilters = {
-            search: "".
+            search: '',
             genres: [],
             instruments: [],
             artists: [],
