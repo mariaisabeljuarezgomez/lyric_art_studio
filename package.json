@@ -2,11 +2,11 @@
   "name": "lyricart-studio-website",
   "version": "1.0.0",
   "description": "LyricArt Studio - Custom Lyric Art Designs",
-  "main": "server-enhanced.js",
+  "main": "server-railway-production.js",
   "scripts": {
-    "start": "node server-enhanced.js",
+    "start": "node server-railway-production.js",
     "dev": "node server-enhanced.js",
-    "railway": "node server-enhanced.js"
+    "railway": "node server-railway-production.js"
   },
   "dependencies": {
     "connect-pg-simple": "^10.0.0",
