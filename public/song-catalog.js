@@ -6,7 +6,7 @@ class SongCatalogManager {
         this.genres = new Map();
         this.artists = new Map();
         this.currentFilters = {
-            search: '',
+            search: "".
             genres: [],
             instruments: [],
             artists: [],
@@ -250,7 +250,7 @@ class SongCatalogManager {
         ];
         
         // Use hash of artist + song to consistently return same image for same song
-        const hash = (artist + song).split('').reduce((a, b) => {
+        const hash = (artist + song ).split('').reduce((a, b) => {
             a = ((a << 5) - a) + b.charCodeAt(0);
             return a & a;
         }, 0);
@@ -724,7 +724,7 @@ function openDesignModal(imageSrc, songTitle, artistName, shape, price, highResP
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     
     // Prevent body scroll when modal is open
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = '';
     
     // Add click outside to close functionality
     const modal = document.getElementById('design-modal');
@@ -812,7 +812,7 @@ async function buyNow(songTitle, price) {
         const addData = await addResponse.json();
         console.log('🛒 Add to cart response data:', addData);
         
-        if (addData.success) {
+        if (addResponse.ok && addData.items && addData.itemCount !== undefined) { // Corrected condition
             console.log('✅ Successfully added to cart!');
             showNotification('Added to cart! Redirecting to checkout...', 'success');
             updateCartCount();
@@ -824,7 +824,7 @@ async function buyNow(songTitle, price) {
                 window.location.href = '/pages/checkout.html';
             }, 1000);
         } else {
-            console.error('❌ Failed to add to cart:', addData.error);
+            console.error('❌ Failed to add to cart:', addData.error || 'Unknown error'); // Corrected error message
             showNotification('Failed to add to cart', 'error');
         }
     } catch (error) {
