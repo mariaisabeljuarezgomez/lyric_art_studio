@@ -202,7 +202,9 @@ app.get('/api/cart', (req, res) => {
     if (!req.session.cart) {
         req.session.cart = { items: [], total: 0, itemCount: 0 };
     }
-    res.json(req.session.cart);
+    console.log('🛒 Cart requested - full session cart:', JSON.stringify(req.session.cart, null, 2));
+    console.log('🛒 Cart items count:', req.session.cart.items.length);
+    res.json({ cart: req.session.cart });
 });
 
 app.post('/api/cart/add', (req, res) => {
@@ -244,17 +246,72 @@ app.get('/api/cart/count', (req, res) => {
     res.json({ count });
 });
 
+// Debug endpoint to check session
+app.get('/api/debug/session', (req, res) => {
+    console.log('🔍 Debug session requested');
+    console.log('🔍 Session ID:', req.sessionID);
+    console.log('🔍 Session exists:', !!req.session);
+    console.log('🔍 Session cart:', JSON.stringify(req.session.cart, null, 2));
+    res.json({ 
+        sessionID: req.sessionID,
+        sessionExists: !!req.session,
+        cart: req.session.cart
+    });
+});
+
 // Remove item from cart
 app.delete('/api/cart/remove', (req, res) => {
+    console.log('🗑️ Remove endpoint called');
+    console.log('🗑️ Request body:', req.body);
+    console.log('🗑️ Session cart before:', JSON.stringify(req.session.cart, null, 2));
+    console.log('🗑️ Session ID:', req.sessionID);
+    console.log('🗑️ Session exists:', !!req.session);
+    
     const { designId, format } = req.body;
+    console.log('🗑️ Extracted designId:', designId, 'format:', format);
     
     if (!req.session.cart) {
         req.session.cart = { items: [], total: 0, itemCount: 0 };
     }
 
-    req.session.cart.items = req.session.cart.items.filter(item => 
-        !(item.itemId === designId && item.format === format)
-    );
+    // Handle both designId and itemId for compatibility
+    const itemId = designId;
+    console.log('🗑️ Looking for itemId:', itemId, 'format:', format);
+    
+    const originalLength = req.session.cart.items.length;
+    
+    // More robust filtering - try multiple matching strategies
+    console.log('🗑️ Starting filter process for itemId:', itemId, 'format:', format);
+    console.log('🗑️ Current cart items before filter:', JSON.stringify(req.session.cart.items, null, 2));
+    
+    req.session.cart.items = req.session.cart.items.filter(item => {
+        console.log('🗑️ Checking item:', JSON.stringify(item, null, 2));
+        
+        // Strategy 1: Exact match with format
+        if (format && item.format === format && item.itemId === itemId) {
+            console.log('🗑️ REMOVING item (exact match):', item.itemId, item.format);
+            return false;
+        }
+        
+        // Strategy 2: Match by itemId only (ignore format)
+        if (item.itemId === itemId) {
+            console.log('🗑️ REMOVING item (itemId match):', item.itemId, item.format);
+            return false;
+        }
+        
+        // Strategy 3: Match by designId if it exists
+        if (item.designId === itemId) {
+            console.log('🗑️ REMOVING item (designId match):', item.designId, item.format);
+            return false;
+        }
+        
+        console.log('🗑️ KEEPING item:', item.itemId || item.designId, item.format);
+        return true;
+    });
+    
+    console.log('🗑️ Cart items after filter:', JSON.stringify(req.session.cart.items, null, 2));
+    
+    console.log('🗑️ Items before:', originalLength, 'after:', req.session.cart.items.length);
 
     req.session.cart.total = req.session.cart.items.reduce((sum, item) => 
         sum + (item.price * item.quantity), 0
@@ -263,15 +320,36 @@ app.delete('/api/cart/remove', (req, res) => {
         sum + item.quantity, 0
     );
 
-    console.log('🗑️ Item removed from cart:', designId);
-    res.json({ success: true, cart: req.session.cart });
+    console.log('🗑️ Item removed from cart:', itemId);
+    console.log('🗑️ Session cart after:', req.session.cart);
+    
+    // Force session save
+    req.session.save((err) => {
+        if (err) {
+            console.error('❌ Session save error:', err);
+            res.status(500).json({ error: 'Failed to save session' });
+        } else {
+            console.log('✅ Session saved successfully');
+            res.json({ success: true, cart: req.session.cart });
+        }
+    });
 });
 
 // Clear entire cart
 app.delete('/api/cart/clear', (req, res) => {
     req.session.cart = { items: [], total: 0, itemCount: 0 };
     console.log('🧹 Cart cleared');
-    res.json({ success: true });
+    
+    // Force session save
+    req.session.save((err) => {
+        if (err) {
+            console.error('❌ Session save error:', err);
+            res.status(500).json({ error: 'Failed to save session' });
+        } else {
+            console.log('✅ Session saved successfully');
+            res.json({ success: true });
+        }
+    });
 });
 
 // PayPal payment routes
