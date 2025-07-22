@@ -216,9 +216,11 @@
                 
                 if (!items || items.length === 0) {
                     document.getElementById('empty-cart').style.display = 'block';
+                    document.getElementById('checkout-content').style.display = 'none';
                     return;
                 }
                 
+                document.getElementById('empty-cart').style.display = 'none';
                 displayCartItems(items);
                 displayOrderSummary(items);
                 document.getElementById('checkout-content').style.display = 'block';
