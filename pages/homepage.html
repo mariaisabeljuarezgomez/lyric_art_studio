@@ -57,7 +57,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
-                        <span id="cart-count" class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-sm font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-lg border-2 border-white">0</span>
                     </button>
                     
                     <!-- User Authentication -->
@@ -1292,7 +1292,7 @@
                 
                 if (response.ok && data.ok) {
                     console.log('✅ Successfully added to cart!');
-                    showNotification('Added to cart!', 'success');
+                    showNotification(`"${songTitle}" successfully added to cart!`, 'success');
                     updateCartBadge();
                 } else {
                     console.error('❌ Failed to add to cart:', data.error || 'Unknown error');
@@ -1442,17 +1442,38 @@
 
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 ${
-                type === 'success' ? 'bg-green-500 text-white' : 
-                type === 'error' ? 'bg-red-500 text-white' : 
-                'bg-blue-500 text-white'
-            }`;
+            
+            // Create a more prominent notification with icon
+            let icon = '';
+            let bgColor = '';
+            
+            if (type === 'success') {
+                icon = '✅';
+                bgColor = 'bg-green-500';
+            } else if (type === 'error') {
+                icon = '❌';
+                bgColor = 'bg-red-500';
+            } else {
+                icon = 'ℹ️';
+                bgColor = 'bg-blue-500';
+            }
+            
+            notification.innerHTML = `${icon} ${message}`;
+            notification.className = `fixed top-6 right-6 px-6 py-4 rounded-lg shadow-xl transform translate-x-full transition-all duration-500 z-50 ${bgColor} text-white font-semibold text-lg border-2 border-white`;
             notification.classList.remove('translate-x-full');
+            
+            // Add a subtle bounce effect
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0) scale(1.05)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0) scale(1)';
+            }, 200);
             
             setTimeout(() => {
                 notification.classList.add('translate-x-full');
-            }, 3000);
+            }, 4000);
         }
 
         // Secure User Authentication Functions
