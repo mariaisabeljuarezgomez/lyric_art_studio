@@ -147,18 +147,22 @@
             try {
                 console.log('🛒 Loading cart data...');
                 
-                const cart = await fetch('/api/cart', { credentials: 'include' }).then(r => r.json());
-                console.log('🛒 Cart data received:', cart);
+                const cartResponse = await fetch('/api/cart', { credentials: 'include' });
+                const cartData = await cartResponse.json();
+                console.log('🛒 Cart data received:', cartData);
                 
                 document.getElementById('loading').style.display = 'none';
                 
-                if (!cart.length) {
+                // Handle both old format (array) and new format (object with items)
+                const items = cartData.items || cartData;
+                
+                if (!items || items.length === 0) {
                     document.getElementById('empty-cart').style.display = 'block';
                     return;
                 }
                 
-                displayCartItems(cart);
-                displayOrderSummary(cart);
+                displayCartItems(items);
+                displayOrderSummary(items);
                 document.getElementById('checkout-content').style.display = 'block';
                 
             } catch (error) {
@@ -174,13 +178,14 @@
             const itemsHtml = items.map(item => {
                 const designName = item.itemId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const price = item.price || 3.00; // Use real price from cart item
+                const quantity = item.qty || item.quantity || 1; // Handle both property names
                 return `
                     <div class="flex justify-between items-center py-4 border-b border-border-subtle last:border-b-0">
                         <div class="flex-1">
                             <h4 class="font-medium text-text-primary">${designName}</h4>
-                            <p class="text-text-secondary text-sm">Digital Download (${item.format || 'SVG'}) - Qty: ${item.qty}</p>
+                            <p class="text-text-secondary text-sm">Digital Download (${item.format || 'SVG'}) - Qty: ${quantity}</p>
                         </div>
-                        <span class="font-semibold text-accent">$${(price * item.qty).toFixed(2)}</span>
+                        <span class="font-semibold text-accent">$${(price * quantity).toFixed(2)}</span>
                     </div>
                 `;
             }).join('');
@@ -191,7 +196,7 @@
         function displayOrderSummary(cart) {
             const container = document.getElementById('summary-container');
             
-            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 3.00) * item.qty), 0);
+            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
             const tax = subtotal * 0.08; // 8% tax
             const total = subtotal + tax;
             
@@ -223,9 +228,12 @@
                 
                 // Get cart data
                 const cartResponse = await fetch('/api/cart', { credentials: 'include' });
-                const cart = await cartResponse.json();
+                const cartData = await cartResponse.json();
                 
-                if (!cart.length) {
+                // Handle both old format (array) and new format (object with items)
+                const items = cartData.items || cartData;
+                
+                if (!items || items.length === 0) {
                     showError('Your cart is empty.');
                     button.disabled = false;
                     button.textContent = 'Proceed to Payment';
@@ -235,7 +243,7 @@
                 console.log('✅ Cart has items, creating PayPal order...');
                 
                 // Calculate total using real prices
-                const total = cart.reduce((sum, item) => sum + ((item.price || 3.00) * item.qty), 0);
+                const total = items.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity)), 0);
                 
                 // Create PayPal order
                 const paypalResponse = await fetch('/api/payment/create-paypal-order', {
