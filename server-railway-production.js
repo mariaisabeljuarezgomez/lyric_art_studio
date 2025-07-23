@@ -1289,6 +1289,8 @@ app.post('/api/paypal/webhook', async (req, res) => {
 app.get('/api/download/:designId/:format', authenticateUser, async (req, res) => {
     const { designId, format } = req.params;
     console.log(`🎯 Download request for ${designId}.${format} by user:`, req.session.userId);
+    console.log(`🔍 Session user ID:`, req.session.userId);
+    console.log(`🔍 Request headers:`, req.headers);
     
     try {
         // Verify user owns this design
@@ -1297,12 +1299,16 @@ app.get('/api/download/:designId/:format', authenticateUser, async (req, res) =>
             WHERE user_id = $1 AND design_id = $2
         `, [req.session.userId, designId]);
         
+        console.log(`🔍 Purchase check result:`, purchaseCheck.rows.length, 'purchases found');
+        
         if (purchaseCheck.rows.length === 0) {
+            console.log(`❌ User ${req.session.userId} does not own design ${designId}`);
             return res.status(403).send('You do not own this design');
         }
         
         // Construct file path - use music_lyricss folder for actual files
         const designPath = path.join(__dirname, 'music_lyricss', designId);
+        console.log(`🔍 Looking for files in:`, designPath);
         
         // Check if design folder exists
         if (!fs.existsSync(designPath)) {
@@ -1313,11 +1319,13 @@ app.get('/api/download/:designId/:format', authenticateUser, async (req, res) =>
         // Look for the specific file format requested
         let fileName = `${designId}.${format}`;
         let filePath = path.join(designPath, fileName);
+        console.log(`🔍 Looking for file:`, filePath);
         
         // If the specific format doesn't exist, try to find any available file
         if (!fs.existsSync(filePath)) {
             console.log(`⚠️ Requested format ${format} not found, looking for available files...`);
             const files = fs.readdirSync(designPath);
+            console.log(`🔍 Available files:`, files);
             const availableFile = files.find(file => file.startsWith(designId));
             
             if (availableFile) {
@@ -1330,9 +1338,12 @@ app.get('/api/download/:designId/:format', authenticateUser, async (req, res) =>
             }
         }
         
+        console.log(`✅ Serving file: ${filePath}`);
+        
         // Set headers for download
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         res.setHeader('Content-Type', getContentType(format));
+        console.log(`📋 Content-Type:`, getContentType(format));
         
         // Stream the file
         const fileStream = fs.createReadStream(filePath);

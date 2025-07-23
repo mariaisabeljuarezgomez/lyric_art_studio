@@ -943,50 +943,58 @@
         // Download design function
         async function downloadDesign(designId) {
             try {
+                console.log('🎯 Requesting download links for:', designId);
                 const response = await fetch(`/api/my-collection/download/${designId}`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
                 
+                console.log('📡 Download links response:', data);
+                
                 if (data.success) {
+                    console.log('✅ Download links received:', data.downloadLinks);
                     // Show download options modal
                     showDownloadOptions(designId, data.downloadLinks);
                 } else {
+                    console.error('❌ Download links failed:', data.message);
                     showError(data.message || 'Download failed');
                 }
             } catch (error) {
-                console.error('Download error:', error);
+                console.error('❌ Download error:', error);
                 showError('Download failed');
             }
         }
         
         // Show download options modal
         function showDownloadOptions(designId, downloadLinks) {
+            console.log('🎯 Creating download modal for:', designId);
+            console.log('📦 Download links object:', downloadLinks);
+            
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
             modal.innerHTML = `
                 <div class="bg-surface rounded-lg p-6 max-w-md w-full mx-4">
                     <h3 class="text-lg font-montserrat font-semibold mb-4">Choose Download Format</h3>
                     <div class="space-y-3">
-                        <button onclick="downloadFile('${downloadLinks.svg}', '${designId}.svg')" class="w-full bg-accent text-primary px-4 py-3 rounded-lg hover:bg-accent/90 transition-smooth flex items-center justify-between">
+                        <button onclick="downloadFile('${downloadLinks.svg || ''}', '${designId}.svg')" class="w-full bg-accent text-primary px-4 py-3 rounded-lg hover:bg-accent/90 transition-smooth flex items-center justify-between">
                             <span>SVG Vector Format</span>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </button>
-                        <button onclick="downloadFile('${downloadLinks.png}', '${designId}.png')" class="w-full bg-accent text-primary px-4 py-3 rounded-lg hover:bg-accent/90 transition-smooth flex items-center justify-between">
+                        <button onclick="downloadFile('${downloadLinks.png || ''}', '${designId}.png')" class="w-full bg-accent text-primary px-4 py-3 rounded-lg hover:bg-accent/90 transition-smooth flex items-center justify-between">
                             <span>PNG Image Format</span>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </button>
-                        <button onclick="downloadFile('${downloadLinks.pdf}', '${designId}.pdf')" class="w-full bg-accent text-primary px-4 py-3 rounded-lg hover:bg-accent/90 transition-smooth flex items-center justify-between">
+                        <button onclick="downloadFile('${downloadLinks.pdf || ''}', '${designId}.pdf')" class="w-full bg-accent text-primary px-4 py-3 rounded-lg hover:bg-accent/90 transition-smooth flex items-center justify-between">
                             <span>PDF Document</span>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </button>
-                        <button onclick="downloadFile('${downloadLinks.eps}', '${designId}.eps')" class="w-full bg-accent text-primary px-4 py-3 rounded-lg hover:bg-accent/90 transition-smooth flex items-center justify-between">
+                        <button onclick="downloadFile('${downloadLinks.eps || ''}', '${designId}.eps')" class="w-full bg-accent text-primary px-4 py-3 rounded-lg hover:bg-accent/90 transition-smooth flex items-center justify-between">
                             <span>EPS Vector Format</span>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1000,15 +1008,46 @@
         }
         
         // Download specific file
-        function downloadFile(url, filename) {
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            closeDownloadModal();
-            showSuccess('Download started!');
+        async function downloadFile(url, filename) {
+            try {
+                console.log('🔄 Starting download:', url);
+                
+                // Fetch the file with credentials
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': '*/*'
+                    }
+                });
+                
+                console.log('📡 Download response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+                }
+                
+                // Get the blob from the response
+                const blob = await response.blob();
+                
+                // Create a download link
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Clean up the object URL
+                window.URL.revokeObjectURL(link.href);
+                
+                closeDownloadModal();
+                showSuccess('Download started!');
+                
+            } catch (error) {
+                console.error('❌ Download error:', error);
+                showError('Download failed: ' + error.message);
+            }
         }
         
         // Close download modal
