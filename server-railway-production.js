@@ -13,6 +13,8 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const paypal = require('@paypal/checkout-server-sdk');
+const FileDeliveryService = require('./file-delivery-service');
+const fs = require('fs').promises;
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -304,6 +306,9 @@ const paypalClient = new paypal.core.PayPalHttpClient(environment);
 
 // PayPal Helper Functions
 const createPayPalOrder = async (items, total) => {
+    // Extract design ID from items (assuming single item for now)
+    const designId = items[0]?.itemId || 'unknown';
+    
     try {
         const request = new paypal.orders.OrdersCreateRequest();
         request.prefer("return=representation");
@@ -320,6 +325,7 @@ const createPayPalOrder = async (items, total) => {
                         }
                     }
                 },
+                custom_id: `order_${Date.now()}_${designId}`,
                 items: items.map(item => ({
                     name: item.title || 'LyricArt Design',
                     unit_amount: {
@@ -415,6 +421,20 @@ app.use(session({
         sameSite: 'lax'
     }
 }));
+
+// Initialize file delivery service
+const fileDeliveryService = new FileDeliveryService();
+
+// Get design info from database
+const getDesignInfo = async (designId) => {
+    try {
+        const designsData = JSON.parse(await fs.readFile('designs-database.json', 'utf8'));
+        return designsData.find(design => design.id === designId);
+    } catch (error) {
+        console.error(`❌ Error getting design info for ${designId}:`, error);
+        return null;
+    }
+};
 
 // Initialize database with users
 const initializeDatabase = async () => {
@@ -924,11 +944,48 @@ app.post('/api/paypal/webhook', async (req, res) => {
                 const orderId = webhookBody.resource.supplementary_data?.related_ids?.order_id;
                 const amount = webhookBody.resource.amount?.value;
                 
-                // Here you would typically:
-                // 1. Update order status in database
-                // 2. Send confirmation email
-                // 3. Generate download links
-                // 4. Update inventory
+                // Get design info from custom_id (format: order_timestamp_designId)
+                const customId = webhookBody.resource.custom_id;
+                const designId = customId ? customId.split('_')[2] : null;
+                
+                if (designId) {
+                    try {
+                        // Get design info from database
+                        const designInfo = await getDesignInfo(designId);
+                        
+                        if (designInfo) {
+                            // Prepare order data for file delivery
+                            const orderData = {
+                                orderId: orderId || `order_${Date.now()}`,
+                                designId: designId,
+                                designName: designInfo.title || designId,
+                                customerEmail: 'customer@example.com', // This should come from the order
+                                customerName: 'Customer', // This should come from the order
+                                amount: amount,
+                                paymentId: paymentId
+                            };
+                            
+                            // Automatically send design files
+                            console.log(`📦 Sending design files for order ${orderData.orderId}`);
+                            await fileDeliveryService.processOrder(orderData);
+                            
+                            // Send order confirmation email
+                            await sendEmail(
+                                orderData.customerEmail,
+                                'orderConfirmation',
+                                orderData
+                            );
+                            
+                            console.log(`✅ Order ${orderData.orderId} processed and files sent`);
+                        } else {
+                            console.warn(`⚠️ Design info not found for ${designId}`);
+                        }
+                    } catch (error) {
+                        console.error(`❌ Error processing order ${orderId}:`, error);
+                    }
+                } else {
+                    console.warn(`⚠️ No design ID found in payment ${paymentId}`);
+                }
                 
                 console.log('💰 Payment details:', { paymentId, orderId, amount });
                 break;
