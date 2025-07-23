@@ -9,6 +9,7 @@
     "railway": "node server-railway-production.js"
   },
   "dependencies": {
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "bcrypt": "^5.1.1",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",

@@ -12,6 +12,7 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+const paypal = require('@paypal/checkout-server-sdk');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -292,6 +293,87 @@ const sendEmail = async (to, template, data = {}) => {
         console.error('❌ Email sending failed:', error);
         return { success: false, error: error.message };
     }
+};
+
+// PayPal Configuration
+const environment = process.env.NODE_ENV === 'production' 
+    ? new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
+    : new paypal.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
+
+const paypalClient = new paypal.core.PayPalHttpClient(environment);
+
+// PayPal Helper Functions
+const createPayPalOrder = async (items, total) => {
+    try {
+        const request = new paypal.orders.OrdersCreateRequest();
+        request.prefer("return=representation");
+        request.requestBody({
+            intent: 'CAPTURE',
+            purchase_units: [{
+                amount: {
+                    currency_code: 'USD',
+                    value: total.toFixed(2),
+                    breakdown: {
+                        item_total: {
+                            currency_code: 'USD',
+                            value: total.toFixed(2)
+                        }
+                    }
+                },
+                items: items.map(item => ({
+                    name: item.title || 'LyricArt Design',
+                    unit_amount: {
+                        currency_code: 'USD',
+                        value: item.price.toFixed(2)
+                    },
+                    quantity: item.quantity || 1,
+                    category: 'DIGITAL_GOODS'
+                }))
+            }],
+            application_context: {
+                return_url: `${process.env.SITE_URL || 'https://lyricartstudio.shop'}/payment/success`,
+                cancel_url: `${process.env.SITE_URL || 'https://lyricartstudio.shop'}/payment/cancel`,
+                brand_name: 'LyricArt Studio',
+                landing_page: 'BILLING',
+                user_action: 'PAY_NOW',
+                shipping_preference: 'NO_SHIPPING'
+            }
+        });
+
+        const order = await paypalClient.execute(request);
+        console.log('✅ PayPal order created:', order.result.id);
+        return { success: true, order: order.result };
+    } catch (error) {
+        console.error('❌ PayPal order creation error:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+const capturePayPalOrder = async (orderId) => {
+    try {
+        const request = new paypal.orders.OrdersCaptureRequest(orderId);
+        request.requestBody({});
+        
+        const capture = await paypalClient.execute(request);
+        console.log('✅ PayPal order captured:', capture.result.id);
+        return { success: true, capture: capture.result };
+    } catch (error) {
+        console.error('❌ PayPal order capture error:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+const verifyPayPalWebhook = (headers, body) => {
+    // In production, you should verify the webhook signature
+    // For now, we'll do basic validation
+    const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+    if (!webhookId) {
+        console.warn('⚠️ PAYPAL_WEBHOOK_ID not set, skipping webhook verification');
+        return true;
+    }
+    
+    // Basic validation - in production, verify the signature
+    return headers['paypal-transmission-id'] && headers['paypal-cert-url'];
 };
 
 // Middleware
@@ -757,113 +839,246 @@ app.post('/api/payment/create-paypal-order', async (req, res) => {
             return res.status(400).json({ error: 'No items in cart' });
         }
 
-        // Create a mock PayPal order for now
-        const paypalOrder = {
-            id: `ORDER_${Date.now()}`,
-            status: 'CREATED',
-            links: [
-                {
-                    href: `/payment/approve?orderId=ORDER_${Date.now()}`,
-                    rel: 'approve',
-                    method: 'GET'
-                }
-            ],
-            purchase_units: [{
-                amount: {
-                    currency_code: 'USD',
-                    value: total.toFixed(2)
-                }
-            }]
-        };
-
-        console.log('✅ PayPal order created:', paypalOrder);
-        res.json({ success: true, paypalOrder });
+        // Create real PayPal order
+        const paypalResult = await createPayPalOrder(items, total);
+        
+        if (paypalResult.success) {
+            console.log('✅ PayPal order created successfully:', paypalResult.order.id);
+            res.json({ success: true, order: paypalResult.order });
+        } else {
+            console.error('❌ PayPal order creation failed:', paypalResult.error);
+            res.status(500).json({ error: paypalResult.error });
+        }
     } catch (error) {
         console.error('❌ PayPal order creation error:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-app.get('/payment/approve', async (req, res) => {
-    const { orderId } = req.query;
-    
-    // Get cart data from session
-    const cart = req.session.cart || { items: [], total: 0 };
-    
-    // Send order confirmation email if user is logged in
-    if (req.session.userEmail && cart.items.length > 0) {
-        try {
-            const emailResult = await sendEmail(req.session.userEmail, 'orderConfirmation', {
-                customerEmail: req.session.userEmail,
-                customerName: req.session.userName || 'Valued Customer',
-                orderId: orderId,
-                items: cart.items,
-                total: cart.total
-            });
+app.post('/api/payment/capture-paypal-order', async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        
+        if (!orderId) {
+            return res.status(400).json({ error: 'Order ID is required' });
+        }
+
+        // Capture the PayPal order
+        const captureResult = await capturePayPalOrder(orderId);
+        
+        if (captureResult.success) {
+            console.log('✅ PayPal order captured successfully:', captureResult.capture.id);
             
-            if (emailResult.success) {
-                console.log('✅ Order confirmation email sent for order:', orderId);
-            } else {
-                console.error('❌ Failed to send order confirmation email:', emailResult.error);
+            // Send order confirmation email
+            if (req.session.userEmail) {
+                const cart = req.session.cart || { items: [], total: 0 };
+                try {
+                    await sendEmail(req.session.userEmail, 'orderConfirmation', {
+                        customerEmail: req.session.userEmail,
+                        customerName: req.session.userName || 'Valued Customer',
+                        orderId: captureResult.capture.id,
+                        items: cart.items,
+                        total: cart.total
+                    });
+                    console.log('✅ Order confirmation email sent');
+                } catch (emailError) {
+                    console.error('❌ Failed to send order confirmation email:', emailError);
+                }
             }
-        } catch (error) {
-            console.error('❌ Error sending order confirmation email:', error);
+            
+            // Clear cart after successful payment
+            req.session.cart = { items: [], total: 0, itemCount: 0 };
+            
+            res.json({ success: true, capture: captureResult.capture });
+        } else {
+            console.error('❌ PayPal order capture failed:', captureResult.error);
+            res.status(500).json({ error: captureResult.error });
+        }
+    } catch (error) {
+        console.error('❌ PayPal order capture error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// PayPal Webhook Handler
+app.post('/api/payment/paypal-webhook', async (req, res) => {
+    try {
+        const webhookBody = req.body;
+        const headers = req.headers;
+        
+        console.log('📡 PayPal webhook received:', webhookBody.event_type);
+        
+        // Verify webhook (basic validation for now)
+        if (!verifyPayPalWebhook(headers, webhookBody)) {
+            console.warn('⚠️ Webhook verification failed');
+            return res.status(400).json({ error: 'Webhook verification failed' });
         }
         
-        // Clear cart after successful payment
-        req.session.cart = { items: [], total: 0, itemCount: 0 };
+        // Handle different webhook events
+        switch (webhookBody.event_type) {
+            case 'PAYMENT.CAPTURE.COMPLETED':
+                console.log('✅ Payment completed via webhook:', webhookBody.resource.id);
+                
+                // Extract order details from webhook
+                const paymentId = webhookBody.resource.id;
+                const orderId = webhookBody.resource.supplementary_data?.related_ids?.order_id;
+                const amount = webhookBody.resource.amount?.value;
+                
+                // Here you would typically:
+                // 1. Update order status in database
+                // 2. Send confirmation email
+                // 3. Generate download links
+                // 4. Update inventory
+                
+                console.log('💰 Payment details:', { paymentId, orderId, amount });
+                break;
+                
+            case 'PAYMENT.CAPTURE.DENIED':
+                console.log('❌ Payment denied via webhook:', webhookBody.resource.id);
+                break;
+                
+            case 'PAYMENT.CAPTURE.PENDING':
+                console.log('⏳ Payment pending via webhook:', webhookBody.resource.id);
+                break;
+                
+            case 'PAYMENT.CAPTURE.REFUNDED':
+                console.log('↩️ Payment refunded via webhook:', webhookBody.resource.id);
+                break;
+                
+            default:
+                console.log('📡 Unhandled webhook event:', webhookBody.event_type);
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ PayPal webhook error:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
+app.get('/payment/success', async (req, res) => {
+    const { token, PayerID } = req.query;
+    
+    if (!token) {
+        return res.redirect('/payment/cancel?error=no_token');
     }
     
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Payment Approved | LyricArt Studio</title>
-            <style>
-                body { 
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-                    text-align: center; 
-                    padding: 50px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    height: 100vh;
-                    margin: 0;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
+    try {
+        // Capture the PayPal order
+        const captureResult = await capturePayPalOrder(token);
+        
+        if (captureResult.success) {
+            console.log('✅ Payment completed successfully:', captureResult.capture.id);
+            
+            // Send order confirmation email if user is logged in
+            if (req.session.userEmail) {
+                const cart = req.session.cart || { items: [], total: 0 };
+                try {
+                    await sendEmail(req.session.userEmail, 'orderConfirmation', {
+                        customerEmail: req.session.userEmail,
+                        customerName: req.session.userName || 'Valued Customer',
+                        orderId: captureResult.capture.id,
+                        items: cart.items,
+                        total: cart.total
+                    });
+                    console.log('✅ Order confirmation email sent');
+                } catch (emailError) {
+                    console.error('❌ Failed to send order confirmation email:', emailError);
                 }
-                h1 { font-size: 3rem; margin-bottom: 1rem; color: #4ade80; }
-                p { font-size: 1.2rem; margin-bottom: 2rem; }
-                a { 
-                    color: white; 
-                    text-decoration: none; 
-                    padding: 12px 24px;
-                    background: rgba(255,255,255,0.2);
-                    border-radius: 8px;
-                    transition: all 0.3s ease;
-                    margin: 0 10px;
-                }
-                a:hover { 
-                    background: rgba(255,255,255,0.3);
-                    transform: translateY(-2px);
-                }
-            </style>
-        </head>
-        <body>
-            <h1>✅ Payment Approved!</h1>
-            <p>Your order ${orderId} has been successfully processed.</p>
-            <p>You will receive an email with download links shortly.</p>
-            <div>
-                <a href="/homepage">Continue Shopping</a>
-                <a href="/my-collection">View My Collection</a>
-            </div>
-        </body>
-        </html>
-    `);
+            }
+            
+            // Clear cart after successful payment
+            req.session.cart = { items: [], total: 0, itemCount: 0 };
+            
+            res.send(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Payment Successful | LyricArt Studio</title>
+                    <style>
+                        body { 
+                            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+                            text-align: center; 
+                            padding: 50px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            height: 100vh;
+                            margin: 0;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            align-items: center;
+                        }
+                        h1 { font-size: 3rem; margin-bottom: 1rem; color: #4ade80; }
+                        p { font-size: 1.2rem; margin-bottom: 2rem; }
+                        .order-details { 
+                            background: rgba(255,255,255,0.1); 
+                            padding: 20px; 
+                            border-radius: 10px; 
+                            margin: 20px 0;
+                            backdrop-filter: blur(10px);
+                        }
+                        a { 
+                            color: white; 
+                            text-decoration: none; 
+                            padding: 12px 24px;
+                            background: rgba(255,255,255,0.2);
+                            border-radius: 8px;
+                            transition: all 0.3s ease;
+                            margin: 0 10px;
+                        }
+                        a:hover { 
+                            background: rgba(255,255,255,0.3);
+                            transform: translateY(-2px);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>✅ Payment Successful!</h1>
+                    <div class="order-details">
+                        <p><strong>Order ID:</strong> ${captureResult.capture.id}</p>
+                        <p><strong>Amount:</strong> $${captureResult.capture.amount?.value || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${captureResult.capture.status}</p>
+                    </div>
+                    <p>Thank you for your purchase! You will receive an email with download links shortly.</p>
+                    <div>
+                        <a href="/homepage">Continue Shopping</a>
+                        <a href="/my-collection">View My Collection</a>
+                    </div>
+                </body>
+                </html>
+            `);
+        } else {
+            console.error('❌ Payment capture failed:', captureResult.error);
+            res.redirect('/payment/cancel?error=capture_failed');
+        }
+    } catch (error) {
+        console.error('❌ Payment processing error:', error);
+        res.redirect('/payment/cancel?error=processing_error');
+    }
 });
 
 app.get('/payment/cancel', (req, res) => {
+    const { error } = req.query;
+    
+    let errorMessage = 'Your payment was cancelled. Your cart items are still saved.';
+    
+    if (error) {
+        switch (error) {
+            case 'no_token':
+                errorMessage = 'Payment token was missing. Please try again.';
+                break;
+            case 'capture_failed':
+                errorMessage = 'Payment processing failed. Please contact support.';
+                break;
+            case 'processing_error':
+                errorMessage = 'An error occurred during payment processing. Please try again.';
+                break;
+            default:
+                errorMessage = 'Payment was cancelled or failed. Your cart items are still saved.';
+        }
+    }
+    
     res.send(`
         <!DOCTYPE html>
         <html>
@@ -885,6 +1100,13 @@ app.get('/payment/cancel', (req, res) => {
                 }
                 h1 { font-size: 3rem; margin-bottom: 1rem; color: #f87171; }
                 p { font-size: 1.2rem; margin-bottom: 2rem; }
+                .error-details { 
+                    background: rgba(255,255,255,0.1); 
+                    padding: 20px; 
+                    border-radius: 10px; 
+                    margin: 20px 0;
+                    backdrop-filter: blur(10px);
+                }
                 a { 
                     color: white; 
                     text-decoration: none; 
@@ -902,7 +1124,10 @@ app.get('/payment/cancel', (req, res) => {
         </head>
         <body>
             <h1>❌ Payment Cancelled</h1>
-            <p>Your payment was cancelled. Your cart items are still saved.</p>
+            <div class="error-details">
+                <p>${errorMessage}</p>
+                ${error ? `<p><strong>Error Code:</strong> ${error}</p>` : ''}
+            </div>
             <div>
                 <a href="/checkout">Try Again</a>
                 <a href="/homepage">Continue Shopping</a>
@@ -1033,7 +1258,8 @@ app.listen(PORT, () => {
     console.log(`🚀 LyricArt Studio Server running on port ${PORT}`);
     console.log('📊 Database initialized with 2 users');
     console.log('🛒 Shopping cart system ready');
-    console.log('💳 PayPal integration configured');
+    console.log('💳 PayPal SDK integration configured');
+    console.log('📡 PayPal webhooks enabled');
     console.log('🔐 User authentication active');
     console.log('📧 Email system configured and ready');
     console.log('⚡ Performance optimizations applied');
