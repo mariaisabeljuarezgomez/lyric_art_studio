@@ -14,7 +14,7 @@ const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const paypal = require('@paypal/checkout-server-sdk');
 const FileDeliveryService = require('./file-delivery-service');
-const fs = require('fs').promises;
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -37,9 +37,32 @@ pool.query(`
 // Use connect-pg-simple for PostgreSQL session storage
 const pgSession = require('connect-pg-simple')(session);
 
+// Authentication Middleware
+const authenticateUser = async (req, res, next) => {
+    try {
+        console.log('🔐 Authentication check - Session:', req.session);
+        console.log('🔐 Authentication check - Cookies:', req.cookies);
+        
+        // Check if user is authenticated via Express session
+        if (req.session && req.session.userId) {
+            console.log('✅ User authenticated via session:', req.session.userId);
+            req.user = { id: req.session.userId, email: req.session.userEmail, name: req.session.userName };
+            return next();
+        }
+        
+        // If no session, redirect to login
+        console.log('❌ No valid session found, redirecting to login');
+        return res.redirect('/login?redirect=' + encodeURIComponent(req.originalUrl));
+        
+    } catch (error) {
+        console.error('❌ Authentication error:', error);
+        return res.redirect('/login?redirect=' + encodeURIComponent(req.originalUrl));
+    }
+};
+
 // Email Configuration
 const createEmailTransporter = () => {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.privateemail.com',
         port: process.env.EMAIL_PORT || 587,
         secure: false, // true for 465, false for other ports
@@ -298,9 +321,22 @@ const sendEmail = async (to, template, data = {}) => {
 };
 
 // PayPal Configuration
-const environment = process.env.NODE_ENV === 'production' 
-    ? new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
-    : new paypal.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
+console.log('🔧 PayPal Environment Check:');
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   PORT:', process.env.PORT);
+console.log('   PAYPAL_CLIENT_ID exists:', !!process.env.PAYPAL_CLIENT_ID);
+console.log('   PAYPAL_CLIENT_SECRET exists:', !!process.env.PAYPAL_CLIENT_SECRET);
+
+// Use sandbox for local development (localhost) regardless of NODE_ENV
+const isLocalhost = process.env.PORT === '3001' || process.env.PORT === '8080' || !process.env.PORT;
+const useSandbox = process.env.NODE_ENV !== 'production' || isLocalhost;
+
+const environment = useSandbox
+    ? new paypal.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
+    : new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
+
+console.log('   Using environment:', useSandbox ? 'SANDBOX' : 'LIVE');
+console.log('   Reason:', isLocalhost ? 'Localhost detected' : 'Production environment');
 
 const paypalClient = new paypal.core.PayPalHttpClient(environment);
 
@@ -309,10 +345,13 @@ const createPayPalOrder = async (items, total) => {
     // Extract design ID from items (assuming single item for now)
     const designId = items[0]?.itemId || 'unknown';
     
+    console.log('🔧 Creating PayPal order with data:', { items, total, designId });
+    
     try {
         const request = new paypal.orders.OrdersCreateRequest();
         request.prefer("return=representation");
-        request.requestBody({
+        
+        const requestBody = {
             intent: 'CAPTURE',
             purchase_units: [{
                 amount: {
@@ -330,27 +369,37 @@ const createPayPalOrder = async (items, total) => {
                     name: item.title || 'LyricArt Design',
                     unit_amount: {
                         currency_code: 'USD',
-                        value: item.price.toFixed(2)
+                        value: (item.price || 3.00).toFixed(2)
                     },
-                    quantity: item.quantity || 1,
+                    quantity: item.quantity || item.qty || 1,
                     category: 'DIGITAL_GOODS'
                 }))
             }],
             application_context: {
-                return_url: `${process.env.SITE_URL || 'https://lyricartstudio.shop'}/payment/success`,
-                cancel_url: `${process.env.SITE_URL || 'https://lyricartstudio.shop'}/payment/cancel`,
+                return_url: `${process.env.PORT === '3001' ? 'http://localhost:3001' : (process.env.SITE_URL || 'https://lyricartstudio.shop')}/payment/success`,
+                cancel_url: `${process.env.PORT === '3001' ? 'http://localhost:3001' : (process.env.SITE_URL || 'https://lyricartstudio.shop')}/payment/cancel`,
                 brand_name: 'Lyric Art Studio',
                 landing_page: 'BILLING',
                 user_action: 'PAY_NOW',
                 shipping_preference: 'NO_SHIPPING'
             }
-        });
+        };
+        
+        console.log('📋 PayPal request body:', JSON.stringify(requestBody, null, 2));
+        request.requestBody(requestBody);
 
+        console.log('🚀 Executing PayPal request...');
         const order = await paypalClient.execute(request);
         console.log('✅ PayPal order created:', order.result.id);
+        console.log('📋 PayPal order result:', JSON.stringify(order.result, null, 2));
         return { success: true, order: order.result };
     } catch (error) {
         console.error('❌ PayPal order creation error:', error);
+        console.error('❌ Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
         return { success: false, error: error.message };
     }
 };
@@ -390,8 +439,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static(path.join(__dirname)));
+// Serve static files for specific directories only
 app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
@@ -422,6 +470,13 @@ app.use(session({
     }
 }));
 
+// 🎯 CORS FIX - ALLOW COOKIES TO BE SENT
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');   // allow cookies
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    next();
+});
+
 // Initialize file delivery service
 const fileDeliveryService = new FileDeliveryService();
 
@@ -436,18 +491,108 @@ const getDesignInfo = async (designId) => {
     }
 };
 
-// Initialize database with users
+// Initialize database with users and purchases
 const initializeDatabase = async () => {
     try {
-        // Create users table if it doesn't exist
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id VARCHAR(255) PRIMARY KEY,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                name VARCHAR(255) NOT NULL
+        // Check if tables exist, create them if they don't
+        console.log('🔍 Checking database schema...');
+        
+        // Check if users table exists
+        const usersTableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'users'
             );
         `);
+        
+        if (!usersTableExists.rows[0].exists) {
+            console.log('📊 Creating users table...');
+            await pool.query(`
+                CREATE TABLE users (
+                    id VARCHAR(255) PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password VARCHAR(255) NOT NULL,
+                    name VARCHAR(255) NOT NULL
+                );
+            `);
+        }
+        
+        // Check if purchases table exists
+        const purchasesTableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'purchases'
+            );
+        `);
+        
+        if (!purchasesTableExists.rows[0].exists) {
+            console.log('📊 Creating purchases table...');
+            await pool.query(`
+                CREATE TABLE purchases (
+                    id SERIAL PRIMARY KEY,
+                    user_id VARCHAR(255) NOT NULL,
+                    design_id VARCHAR(255) NOT NULL,
+                    design_name VARCHAR(255) NOT NULL,
+                    payment_id VARCHAR(255) NOT NULL,
+                    order_id VARCHAR(255),
+                    amount DECIMAL(10,2) NOT NULL,
+                    purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                );
+            `);
+        }
+        
+        // Check if wishlist table exists
+        const wishlistTableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'wishlist'
+            );
+        `);
+        
+        if (!wishlistTableExists.rows[0].exists) {
+            console.log('📊 Creating wishlist table...');
+            await pool.query(`
+                CREATE TABLE wishlist (
+                    id SERIAL PRIMARY KEY,
+                    user_id VARCHAR(255) NOT NULL,
+                    design_id VARCHAR(255) NOT NULL,
+                    added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, design_id),
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                );
+            `);
+        }
+        
+        // Check if pending_orders table exists
+        const pendingOrdersTableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'pending_orders'
+            );
+        `);
+        
+        if (!pendingOrdersTableExists.rows[0].exists) {
+            console.log('📊 Creating pending_orders table...');
+            await pool.query(`
+                CREATE TABLE pending_orders (
+                    id SERIAL PRIMARY KEY,
+                    order_id VARCHAR(255) UNIQUE NOT NULL,
+                    user_id VARCHAR(255) NOT NULL,
+                    user_email VARCHAR(255) NOT NULL,
+                    user_name VARCHAR(255) NOT NULL,
+                    items JSONB NOT NULL,
+                    total DECIMAL(10,2) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    processed BOOLEAN DEFAULT FALSE,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                );
+            `);
+        }
 
         // Check if users exist
         const userCheck = await pool.query('SELECT COUNT(*) FROM users');
@@ -459,23 +604,23 @@ const initializeDatabase = async () => {
             await pool.query(`
                 INSERT INTO users (id, email, password, name) VALUES 
                 ('a1d4f3f989e2e99be3968cbc77648050', 'test@example.com', $1, 'Test User'),
-                ('8a428e2c095c3d605076dc5415592a21', 'mariaisabeljuarezgomez85@gmail.com', $2, 'Maria Isabel Juarez Gomez')
+                ('8a428e2c-095c-3d60-5076-dc5415592a21', 'mariaisabeljuarezgomez85@gmail.com', $2, 'Maria Isabel Juarez Gomez')
             `, [hashedPassword1, hashedPassword2]);
             
             console.log('📊 Database initialized with 2 users');
         } else {
             console.log('📊 Database already has users');
         }
-    } catch (err) {
-        console.error('Error initializing database:', err);
+        
+        // NO MORE TEST PURCHASE DATA - Database is now clean for real purchases only
+        
+    } catch (error) {
+        console.error('❌ Database initialization error:', error);
     }
 };
 
 // Initialize database on startup
 initializeDatabase();
-
-// Serve static files
-app.use(express.static(path.join(__dirname)));
 
 // API Routes
 app.post('/api/auth/login', async (req, res) => {
@@ -853,14 +998,47 @@ app.post('/api/email/test', async (req, res) => {
 // PayPal payment routes
 app.post('/api/payment/create-paypal-order', async (req, res) => {
     try {
+        console.log('🔄 PayPal order creation request received');
         const { items, total } = req.body;
         
+        console.log('📦 Request data:', { items, total });
+        
         if (!items || items.length === 0) {
+            console.error('❌ No items in cart');
             return res.status(400).json({ error: 'No items in cart' });
         }
 
+        // Validate PayPal credentials
+        if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
+            console.error('❌ PayPal credentials not configured');
+            return res.status(500).json({ error: 'PayPal service not configured' });
+        }
+
+        // Store order information with user details for webhook processing
+        const orderId = `order_${Date.now()}`;
+        const userId = req.session?.userId;
+        const userEmail = req.session?.userEmail;
+        const userName = req.session?.userName;
+        
+        if (userId) {
+            try {
+                // Store pending order with user information
+                await pool.query(`
+                    INSERT INTO pending_orders (order_id, user_id, user_email, user_name, items, total, created_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                `, [orderId, userId, userEmail, userName, JSON.stringify(items), total]);
+                
+                console.log(`💾 Pending order stored for user ${userId}: ${orderId}`);
+            } catch (error) {
+                console.error('❌ Error storing pending order:', error);
+            }
+        }
+        
+        console.log('💳 Creating PayPal order...');
         // Create real PayPal order
         const paypalResult = await createPayPalOrder(items, total);
+        
+        console.log('📡 PayPal result:', paypalResult);
         
         if (paypalResult.success) {
             console.log('✅ PayPal order created successfully:', paypalResult.order.id);
@@ -871,6 +1049,7 @@ app.post('/api/payment/create-paypal-order', async (req, res) => {
         }
     } catch (error) {
         console.error('❌ PayPal order creation error:', error);
+        console.error('❌ Error stack:', error.stack);
         res.status(500).json({ error: error.message });
     }
 });
@@ -889,9 +1068,56 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
         if (captureResult.success) {
             console.log('✅ PayPal order captured successfully:', captureResult.capture.id);
             
+            // LOOK UP PENDING ORDER INSTEAD OF USING SESSION
+            try {
+                const pendingOrderResult = await pool.query(`
+                    SELECT * FROM pending_orders WHERE order_id = $1 AND processed = false
+                `, [orderId]);
+                
+                if (pendingOrderResult.rows.length > 0) {
+                    const pendingOrder = pendingOrderResult.rows[0];
+                    const userId = pendingOrder.user_id;
+                    const items = pendingOrder.items;
+                    
+                    console.log(`📦 Processing pending order for user ${userId} with ${items.length} items`);
+                    
+                    // Record each purchased item
+                    for (const item of items) {
+                        const designId = item.itemId;
+                        const designName = item.title || designId;
+                        const amount = item.price || 3.00;
+                        
+                        // Store purchase in database
+                        await pool.query(`
+                            INSERT INTO purchases (user_id, design_id, design_name, payment_id, order_id, amount)
+                            VALUES ($1, $2, $3, $4, $5, $6)
+                        `, [
+                            userId,
+                            designId,
+                            designName,
+                            captureResult.capture.id,
+                            orderId,
+                            amount
+                        ]);
+                        
+                        console.log(`💾 Purchase recorded for user ${userId}, design: ${designId}`);
+                    }
+                    
+                    // Mark pending order as processed
+                    await pool.query(`
+                        UPDATE pending_orders SET processed = true WHERE order_id = $1
+                    `, [orderId]);
+                    
+                    console.log(`✅ All purchases recorded for user ${userId}`);
+                } else {
+                    console.error('❌ No pending order found for orderId:', orderId);
+                }
+            } catch (error) {
+                console.error('❌ Error recording purchases:', error);
+            }
+            
             // Send order confirmation email
             if (req.session.userEmail) {
-                const cart = req.session.cart || { items: [], total: 0 };
                 try {
                     await sendEmail(req.session.userEmail, 'orderConfirmation', {
                         customerEmail: req.session.userEmail,
@@ -938,15 +1164,20 @@ app.post('/api/paypal/webhook', async (req, res) => {
         switch (webhookBody.event_type) {
             case 'PAYMENT.CAPTURE.COMPLETED':
                 console.log('✅ Payment completed via webhook:', webhookBody.resource.id);
+                console.log('🔍 Full webhook body:', JSON.stringify(webhookBody, null, 2));
                 
                 // Extract order details from webhook
                 const paymentId = webhookBody.resource.id;
                 const orderId = webhookBody.resource.supplementary_data?.related_ids?.order_id;
                 const amount = webhookBody.resource.amount?.value;
                 
+                console.log('🔍 Extracted data:', { paymentId, orderId, amount });
+                
                 // Get design info from custom_id (format: order_timestamp_designId)
                 const customId = webhookBody.resource.custom_id;
+                console.log('🔍 Custom ID:', customId);
                 const designId = customId ? customId.split('_')[2] : null;
+                console.log('🔍 Extracted design ID:', designId);
                 
                 if (designId) {
                     try {
@@ -954,13 +1185,54 @@ app.post('/api/paypal/webhook', async (req, res) => {
                         const designInfo = await getDesignInfo(designId);
                         
                         if (designInfo) {
+                            // Find the pending order to get user information
+                            const pendingOrderResult = await pool.query(`
+                                SELECT * FROM pending_orders 
+                                WHERE order_id = $1 AND processed = FALSE
+                            `, [orderId]);
+                            
+                            let userId = '8a428e2c-095c-3d60-5076-dc5415592a21'; // Default fallback
+                            let userEmail = 'mariaisabeljuarezgomez85@gmail.com';
+                            let userName = 'Maria Isabel Juarez Gomez';
+                            
+                            if (pendingOrderResult.rows.length > 0) {
+                                const pendingOrder = pendingOrderResult.rows[0];
+                                userId = pendingOrder.user_id;
+                                userEmail = pendingOrder.user_email;
+                                userName = pendingOrder.user_name;
+                                
+                                // Mark order as processed
+                                await pool.query(`
+                                    UPDATE pending_orders SET processed = TRUE WHERE order_id = $1
+                                `, [orderId]);
+                                
+                                console.log(`✅ Found pending order for user ${userId}`);
+                            } else {
+                                console.warn(`⚠️ No pending order found for ${orderId}, using default user`);
+                            }
+                            
+                            // Store purchase in database for the actual user
+                            await pool.query(`
+                                INSERT INTO purchases (user_id, design_id, design_name, payment_id, order_id, amount)
+                                VALUES ($1, $2, $3, $4, $5, $6)
+                            `, [
+                                userId,
+                                designId,
+                                designInfo.title || designId,
+                                paymentId,
+                                orderId || `order_${Date.now()}`,
+                                amount
+                            ]);
+                            
+                            console.log(`💾 Purchase stored in database for user ${userId}, design: ${designId}`);
+                            
                             // Prepare order data for file delivery
                             const orderData = {
                                 orderId: orderId || `order_${Date.now()}`,
                                 designId: designId,
                                 designName: designInfo.title || designId,
-                                customerEmail: 'customer@example.com', // This should come from the order
-                                customerName: 'Customer', // This should come from the order
+                                customerEmail: userEmail,
+                                customerName: userName,
                                 amount: amount,
                                 paymentId: paymentId
                             };
@@ -976,7 +1248,7 @@ app.post('/api/paypal/webhook', async (req, res) => {
                                 orderData
                             );
                             
-                            console.log(`✅ Order ${orderData.orderId} processed and files sent`);
+                            console.log(`✅ Order ${orderData.orderId} processed and files sent to ${userEmail}`);
                         } else {
                             console.warn(`⚠️ Design info not found for ${designId}`);
                         }
@@ -1013,6 +1285,78 @@ app.post('/api/paypal/webhook', async (req, res) => {
     }
 });
 
+// Download endpoints for purchased designs
+app.get('/api/download/:designId/:format', authenticateUser, async (req, res) => {
+    const { designId, format } = req.params;
+    console.log(`🎯 Download request for ${designId}.${format} by user:`, req.session.userId);
+    
+    try {
+        // Verify user owns this design
+        const purchaseCheck = await pool.query(`
+            SELECT * FROM purchases 
+            WHERE user_id = $1 AND design_id = $2
+        `, [req.session.userId, designId]);
+        
+        if (purchaseCheck.rows.length === 0) {
+            return res.status(403).send('You do not own this design');
+        }
+        
+        // Construct file path - use music_lyricss folder for actual files
+        const designPath = path.join(__dirname, 'music_lyricss', designId);
+        
+        // Check if design folder exists
+        if (!fs.existsSync(designPath)) {
+            console.log(`❌ Design folder not found: ${designPath}`);
+            return res.status(404).send('Design not found');
+        }
+        
+        // Look for the specific file format requested
+        let fileName = `${designId}.${format}`;
+        let filePath = path.join(designPath, fileName);
+        
+        // If the specific format doesn't exist, try to find any available file
+        if (!fs.existsSync(filePath)) {
+            console.log(`⚠️ Requested format ${format} not found, looking for available files...`);
+            const files = fs.readdirSync(designPath);
+            const availableFile = files.find(file => file.startsWith(designId));
+            
+            if (availableFile) {
+                fileName = availableFile;
+                filePath = path.join(designPath, fileName);
+                console.log(`✅ Found available file: ${fileName}`);
+            } else {
+                console.log(`❌ No files found in design folder: ${designPath}`);
+                return res.status(404).send('No files available for this design');
+            }
+        }
+        
+        // Set headers for download
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', getContentType(format));
+        
+        // Stream the file
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+        
+        console.log(`✅ File ${fileName} downloaded by user ${req.session.userId}`);
+    } catch (error) {
+        console.error('❌ Download error:', error);
+        res.status(500).send('Download failed');
+    }
+});
+
+// Helper function to get content type
+function getContentType(format) {
+    const contentTypes = {
+        'svg': 'image/svg+xml',
+        'png': 'image/png',
+        'pdf': 'application/pdf',
+        'eps': 'application/postscript',
+        'webp': 'image/webp'
+    };
+    return contentTypes[format] || 'application/octet-stream';
+}
+
 app.get('/payment/success', async (req, res) => {
     const { token, PayerID } = req.query;
     
@@ -1047,27 +1391,27 @@ app.get('/payment/success', async (req, res) => {
             // Clear cart after successful payment
             req.session.cart = { items: [], total: 0, itemCount: 0 };
             
-            res.send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
                     <title>Payment Successful | Lyric Art Studio</title>
-                    <style>
-                        body { 
-                            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-                            text-align: center; 
-                            padding: 50px;
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            color: white;
-                            height: 100vh;
-                            margin: 0;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: center;
-                            align-items: center;
-                        }
-                        h1 { font-size: 3rem; margin-bottom: 1rem; color: #4ade80; }
-                        p { font-size: 1.2rem; margin-bottom: 2rem; }
+            <style>
+                body { 
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+                    text-align: center; 
+                    padding: 50px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    height: 100vh;
+                    margin: 0;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                }
+                h1 { font-size: 3rem; margin-bottom: 1rem; color: #4ade80; }
+                p { font-size: 1.2rem; margin-bottom: 2rem; }
                         .order-details { 
                             background: rgba(255,255,255,0.1); 
                             padding: 20px; 
@@ -1075,22 +1419,22 @@ app.get('/payment/success', async (req, res) => {
                             margin: 20px 0;
                             backdrop-filter: blur(10px);
                         }
-                        a { 
-                            color: white; 
-                            text-decoration: none; 
-                            padding: 12px 24px;
-                            background: rgba(255,255,255,0.2);
-                            border-radius: 8px;
-                            transition: all 0.3s ease;
-                            margin: 0 10px;
-                        }
-                        a:hover { 
-                            background: rgba(255,255,255,0.3);
-                            transform: translateY(-2px);
-                        }
-                    </style>
-                </head>
-                <body>
+                a { 
+                    color: white; 
+                    text-decoration: none; 
+                    padding: 12px 24px;
+                    background: rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    margin: 0 10px;
+                }
+                a:hover { 
+                    background: rgba(255,255,255,0.3);
+                    transform: translateY(-2px);
+                }
+            </style>
+        </head>
+        <body>
                     <h1>✅ Payment Successful!</h1>
                     <div class="order-details">
                         <p><strong>Order ID:</strong> ${captureResult.capture.id}</p>
@@ -1098,13 +1442,13 @@ app.get('/payment/success', async (req, res) => {
                         <p><strong>Status:</strong> ${captureResult.capture.status}</p>
                     </div>
                     <p>Thank you for your purchase! You will receive an email with download links shortly.</p>
-                    <div>
-                        <a href="/homepage">Continue Shopping</a>
-                        <a href="/my-collection">View My Collection</a>
-                    </div>
-                </body>
-                </html>
-            `);
+            <div>
+                <a href="/homepage">Continue Shopping</a>
+                <a href="/my-collection">View My Collection</a>
+            </div>
+        </body>
+        </html>
+    `);
         } else {
             console.error('❌ Payment capture failed:', captureResult.error);
             res.redirect('/payment/cancel?error=capture_failed');
@@ -1224,8 +1568,14 @@ app.get('/artist-profiles', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/artist_profiles.html'));
 });
 
-app.get('/my-collection', (req, res) => {
-    res.sendFile(path.join(__dirname, 'pages/my_collection_dashboard.html'));
+app.get('/my-collection', authenticateUser, (req, res) => {
+    console.log('🎯 /my-collection route accessed for user:', req.session.userId);
+    res.sendFile(path.join(__dirname, 'pages/my_collection_dashboard_ORIGINAL.html'));
+});
+
+app.get('/my-collection-dashboard-v2', authenticateUser, (req, res) => {
+    console.log('🎯 /my-collection-dashboard-v2 route accessed for user:', req.session.userId);
+    res.sendFile(path.join(__dirname, 'pages/my_collection_dashboard_v2.html'));
 });
 
 app.get('/contact', (req, res) => {
@@ -1260,6 +1610,255 @@ app.get('/subscription', (req, res) => {
 app.get('/api/designs', (req, res) => {
     res.sendFile(path.join(__dirname, 'designs-database.json'));
 });
+
+// Test page for wishlist functionality
+app.get('/wishlist-test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'wishlist-test.html'));
+});
+
+// Debug page for design IDs
+app.get('/debug-design-ids', (req, res) => {
+    res.sendFile(path.join(__dirname, 'debug-design-ids.html'));
+});
+
+
+
+// My Collection API routes
+app.get('/api/my-collection/designs', authenticateUser, async (req, res) => {
+    console.log('🎯 /api/my-collection/designs accessed for user:', req.session.userId);
+    try {
+        // Get user's purchased designs from database
+        const result = await pool.query(`
+            SELECT DISTINCT design_id, design_name, MIN(purchase_date) as first_purchase_date
+            FROM purchases 
+            WHERE user_id = $1 
+            GROUP BY design_id, design_name
+            ORDER BY first_purchase_date DESC
+        `, [req.session.userId]);
+        
+        console.log(`🔍 DEBUG: Raw database result:`, result.rows);
+        
+        const designs = result.rows.map(row => {
+            return {
+                id: row.design_id,
+                name: row.design_name,
+                purchaseDate: row.first_purchase_date,
+                imageUrl: `/images/designs/${row.design_id}/${row.design_id}.webp`,
+                artist: row.design_name.split(' - ')[0] || 'Unknown Artist',
+                format: 'SVG, PNG, PDF, EPS'
+            };
+        });
+        
+        console.log(`📊 Found ${designs.length} designs for user ${req.session.userId}`);
+        console.log(`🔍 DEBUG: Processed designs:`, designs);
+        res.json({ success: true, designs: designs });
+    } catch (error) {
+        console.error('❌ Error fetching designs:', error);
+        res.json({ success: true, designs: [] }); // Always return success
+    }
+});
+
+app.get('/api/my-collection/history', authenticateUser, async (req, res) => {
+    console.log('🎯 /api/my-collection/history accessed for user:', req.session.userId);
+    try {
+        // Get user's purchase history from database, grouped by order
+        const result = await pool.query(`
+            SELECT 
+                order_id,
+                MIN(purchase_date) as order_date,
+                COUNT(*) as item_count,
+                SUM(amount) as total_amount,
+                ARRAY_AGG(
+                    JSON_BUILD_OBJECT(
+                        'designId', design_id,
+                        'designName', design_name,
+                        'amount', amount
+                    )
+                ) as items
+            FROM purchases 
+            WHERE user_id = $1 
+            GROUP BY order_id
+            ORDER BY MIN(purchase_date) DESC
+        `, [req.session.userId]);
+        
+        const history = result.rows.map(row => ({
+            id: row.order_id,
+            date: row.order_date,
+            total: parseFloat(row.total_amount),
+            itemCount: parseInt(row.item_count),
+            items: row.items || []
+        }));
+        
+        console.log(`📊 Found ${history.length} purchase records for user ${req.session.userId}`);
+        res.json({ success: true, history: history });
+    } catch (error) {
+        console.error('❌ Error fetching history:', error);
+        res.json({ success: true, history: [] }); // Always return success
+    }
+});
+
+app.get('/api/my-collection/download/:designId', authenticateUser, async (req, res) => {
+    const { designId } = req.params;
+    console.log('🎯 /api/my-collection/download accessed for user:', req.session.userId);
+    
+    try {
+        // Verify user owns this design
+        const purchaseCheck = await pool.query(`
+            SELECT * FROM purchases 
+            WHERE user_id = $1 AND design_id = $2
+        `, [req.session.userId, designId]);
+        
+        if (purchaseCheck.rows.length === 0) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'You do not own this design' 
+            });
+        }
+        
+        // Check if design files exist - use music_lyricss folder for actual files
+        const designPath = path.join(__dirname, 'music_lyricss', designId);
+        if (!fs.existsSync(designPath)) {
+            console.log(`❌ Design folder not found: ${designPath}`);
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Design files not found' 
+            });
+        }
+        
+        // Check what files are actually available in the design folder
+        const files = fs.readdirSync(designPath);
+        const availableFormats = files.map(file => {
+            const ext = path.extname(file).toLowerCase().substring(1);
+            return ext;
+        });
+        
+        // Create download links for available formats
+        const downloadLinks = {};
+        availableFormats.forEach(format => {
+            downloadLinks[format] = `/api/download/${designId}/${format}`;
+        });
+        
+        // If no files found, provide webp as fallback
+        if (Object.keys(downloadLinks).length === 0) {
+            downloadLinks.webp = `/api/download/${designId}/webp`;
+        }
+        
+        res.json({ 
+            success: true, 
+            downloadLinks: downloadLinks,
+            message: 'Download links generated successfully'
+        });
+    } catch (error) {
+        console.error('❌ Error generating download links:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error generating download links' 
+        });
+    }
+});
+
+// REMOVED TEST DATA ENDPOINT - Only real purchases will be shown
+
+// ===== WISHLIST API ENDPOINTS =====
+
+// Get user's wishlist
+app.get('/api/wishlist', authenticateUser, async (req, res) => {
+    console.log('🎯 /api/wishlist accessed for user:', req.session.userId);
+    try {
+        const result = await pool.query(`
+            SELECT design_id, added_date
+            FROM wishlist 
+            WHERE user_id = $1 
+            ORDER BY added_date DESC
+        `, [req.session.userId]);
+        
+        const wishlist = result.rows.map(row => ({
+            designId: row.design_id,
+            addedDate: row.added_date
+        }));
+        
+        console.log(`📊 Found ${wishlist.length} wishlist items for user ${req.session.userId}`);
+        res.json({ success: true, wishlist: wishlist });
+    } catch (error) {
+        console.error('❌ Error fetching wishlist:', error);
+        res.json({ success: true, wishlist: [] });
+    }
+});
+
+// Add item to wishlist
+app.post('/api/wishlist/add', authenticateUser, async (req, res) => {
+    const { designId } = req.body;
+    console.log('🎯 /api/wishlist/add accessed for user:', req.session.userId, 'design:', designId);
+    
+    if (!designId) {
+        return res.status(400).json({ success: false, message: 'Design ID is required' });
+    }
+    
+    try {
+        // Add to wishlist without checking if folder exists
+        // The design ID comes from the database, so it should be valid
+        await pool.query(`
+            INSERT INTO wishlist (user_id, design_id) 
+            VALUES ($1, $2) 
+            ON CONFLICT (user_id, design_id) DO NOTHING
+        `, [req.session.userId, designId]);
+        
+        console.log(`✅ Added design ${designId} to wishlist for user ${req.session.userId}`);
+        res.json({ success: true, message: 'Added to wishlist' });
+    } catch (error) {
+        console.error('❌ Error adding to wishlist:', error);
+        res.status(500).json({ success: false, message: 'Error adding to wishlist' });
+    }
+});
+
+// Remove item from wishlist
+app.delete('/api/wishlist/remove', authenticateUser, async (req, res) => {
+    const { designId } = req.body;
+    console.log('🎯 /api/wishlist/remove accessed for user:', req.session.userId, 'design:', designId);
+    
+    if (!designId) {
+        return res.status(400).json({ success: false, message: 'Design ID is required' });
+    }
+    
+    try {
+        const result = await pool.query(`
+            DELETE FROM wishlist 
+            WHERE user_id = $1 AND design_id = $2
+        `, [req.session.userId, designId]);
+        
+        if (result.rowCount > 0) {
+            console.log(`✅ Removed design ${designId} from wishlist for user ${req.session.userId}`);
+            res.json({ success: true, message: 'Removed from wishlist' });
+        } else {
+            res.json({ success: false, message: 'Item not found in wishlist' });
+        }
+    } catch (error) {
+        console.error('❌ Error removing from wishlist:', error);
+        res.status(500).json({ success: false, message: 'Error removing from wishlist' });
+    }
+});
+
+// Check if item is in wishlist
+app.get('/api/wishlist/check/:designId', authenticateUser, async (req, res) => {
+    const { designId } = req.params;
+    console.log('🎯 /api/wishlist/check accessed for user:', req.session.userId, 'design:', designId);
+    
+    try {
+        const result = await pool.query(`
+            SELECT id FROM wishlist 
+            WHERE user_id = $1 AND design_id = $2
+        `, [req.session.userId, designId]);
+        
+        const isInWishlist = result.rows.length > 0;
+        res.json({ success: true, isInWishlist: isInWishlist });
+    } catch (error) {
+        console.error('❌ Error checking wishlist:', error);
+        res.json({ success: true, isInWishlist: false });
+    }
+});
+
+// Serve static files for HTML pages (after all API routes)
+app.use(express.static(path.join(__dirname)));
 
 // Handle 404s
 app.use((req, res) => {

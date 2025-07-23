@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design ID Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-item { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Design ID Debug Tool</h1>
+    <div id="results"></div>
+
+    <script>
+        async function debugDesignIds() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                // Load designs from API
+                console.log('🔍 Loading designs from API...');
+                const response = await fetch('/api/designs');
+                const data = await response.json();
+                
+                console.log('📊 API Response:', data);
+                
+                if (!data.designs || !Array.isArray(data.designs)) {
+                    resultsDiv.innerHTML = '<div class="error">❌ No designs found in API response</div>';
+                    return;
+                }
+                
+                resultsDiv.innerHTML = `<div class="info">📊 Found ${data.designs.length} designs</div>`;
+                
+                // Test first 5 designs
+                const testDesigns = data.designs.slice(0, 5);
+                
+                testDesigns.forEach((design, index) => {
+                    console.log(`🔍 Testing design ${index + 1}:`, design);
+                    
+                    // Extract design ID from image path
+                    let designId = '';
+                    if (design.image) {
+                        const pathParts = design.image.split('/');
+                        console.log('🔍 Path parts:', pathParts);
+                        if (pathParts.length >= 3 && pathParts[1] === 'designs') {
+                            designId = pathParts[2];
+                            console.log('🔍 Extracted designId:', designId);
+                        }
+                    }
+                    
+                    // Generate fallback if needed
+                    if (!designId) {
+                        const artist = design.artist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                        const song = design.song.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                        const instrument = (design.shape || 'guitar').toLowerCase();
+                        designId = `${artist}-${song}-${instrument}`;
+                        console.log('🔍 Generated fallback designId:', designId);
+                    }
+                    
+                    const status = designId ? 'success' : 'error';
+                    const icon = designId ? '✅' : '❌';
+                    
+                    resultsDiv.innerHTML += `
+                        <div class="debug-item">
+                            <div class="${status}">
+                                ${icon} Design ${index + 1}: ${design.artist} - ${design.song}
+                            </div>
+                            <div><strong>Image Path:</strong> ${design.image || 'N/A'}</div>
+                            <div><strong>Extracted Design ID:</strong> ${designId || 'FAILED'}</div>
+                            <div><strong>Artist:</strong> ${design.artist}</div>
+                            <div><strong>Song:</strong> ${design.song}</div>
+                            <div><strong>Shape:</strong> ${design.shape}</div>
+                        </div>
+                    `;
+                });
+                
+                // Test wishlist functionality
+                resultsDiv.innerHTML += '<h2>Testing Wishlist Functionality</h2>';
+                
+                // Check authentication
+                try {
+                    const authResponse = await fetch('/api/auth/status', { credentials: 'include' });
+                    const authData = await authResponse.json();
+                    
+                    if (authData.loggedIn) {
+                        resultsDiv.innerHTML += '<div class="success">✅ User is authenticated</div>';
+                        
+                        // Test adding to wishlist
+                        const testDesignId = testDesigns[0] ? 
+                            testDesigns[0].image.split('/')[2] : 'test-design';
+                        
+                        resultsDiv.innerHTML += `<div class="info">🧪 Testing wishlist add with designId: ${testDesignId}</div>`;
+                        
+                        const addResponse = await fetch('/api/wishlist/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ designId: testDesignId })
+                        });
+                        
+                        const addData = await addResponse.json();
+                        console.log('🧪 Wishlist add response:', addData);
+                        
+                        if (addData.success) {
+                            resultsDiv.innerHTML += '<div class="success">✅ Successfully added to wishlist</div>';
+                        } else {
+                            resultsDiv.innerHTML += `<div class="error">❌ Failed to add to wishlist: ${addData.message}</div>`;
+                        }
+                        
+                    } else {
+                        resultsDiv.innerHTML += '<div class="error">❌ User is not authenticated</div>';
+                    }
+                } catch (authError) {
+                    resultsDiv.innerHTML += `<div class="error">❌ Auth error: ${authError.message}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Run debug when page loads
+        debugDesignIds();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wishlist Test - Lyric Art Studio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #1d4ed8;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Wishlist Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Authentication Test</h2>
+        <button class="test-button" onclick="testAuth()">Test Authentication Status</button>
+        <div id="auth-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Wishlist API Test</h2>
+        <button class="test-button" onclick="testWishlistAPI()">Test Wishlist API Endpoints</button>
+        <div id="wishlist-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Design ID Test</h2>
+        <button class="test-button" onclick="testDesignId()">Test Design ID Extraction</button>
+        <div id="design-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Full Wishlist Flow Test</h2>
+        <button class="test-button" onclick="testFullFlow()">Test Complete Wishlist Flow</button>
+        <div id="flow-result"></div>
+    </div>
+
+    <script>
+        async function testAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.innerHTML = '<div class="info">Testing authentication...</div>';
+            
+            try {
+                const response = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.loggedIn) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Authentication successful!<br>
+                            User: ${data.user?.name || 'Unknown'}<br>
+                            Email: ${data.user?.email || 'Unknown'}<br>
+                            Response: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Not authenticated<br>
+                            Response: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Authentication test failed: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function testWishlistAPI() {
+            const resultDiv = document.getElementById('wishlist-result');
+            resultDiv.innerHTML = '<div class="info">Testing wishlist API...</div>';
+            
+            try {
+                // Test wishlist get
+                const getResponse = await fetch('/api/wishlist', {
+                    credentials: 'include'
+                });
+                const getData = await getResponse.json();
+                
+                let result = `<div class="info">📊 Wishlist API Test Results:</div>`;
+                result += `<div class="success">✅ GET /api/wishlist: ${getResponse.status} - ${JSON.stringify(getData)}</div>`;
+                
+                // Test wishlist check
+                const testDesignId = 'ac-dc-back-in-black-guitar';
+                const checkResponse = await fetch(`/api/wishlist/check/${testDesignId}`, {
+                    credentials: 'include'
+                });
+                const checkData = await checkResponse.json();
+                
+                result += `<div class="success">✅ GET /api/wishlist/check/${testDesignId}: ${checkResponse.status} - ${JSON.stringify(checkData)}</div>`;
+                
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Wishlist API test failed: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function testDesignId() {
+            const resultDiv = document.getElementById('design-result');
+            resultDiv.innerHTML = '<div class="info">Testing design ID extraction...</div>';
+            
+            try {
+                const response = await fetch('/api/designs');
+                const data = await response.json();
+                
+                let result = `<div class="info">📊 Design ID Test Results:</div>`;
+                
+                // Test first few designs
+                data.designs.slice(0, 3).forEach(design => {
+                    const pathParts = design.image.split('/');
+                    const extractedId = pathParts.length >= 3 && pathParts[1] === 'designs' ? pathParts[2] : 'FAILED';
+                    
+                    result += `<div class="success">
+                        ✅ Design: ${design.artist} - ${design.song}<br>
+                        Image path: ${design.image}<br>
+                        Extracted ID: ${extractedId}<br>
+                        Expected format: images/designs/[design-id]/[filename]
+                    </div>`;
+                });
+                
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Design ID test failed: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function testFullFlow() {
+            const resultDiv = document.getElementById('flow-result');
+            resultDiv.innerHTML = '<div class="info">Testing complete wishlist flow...</div>';
+            
+            try {
+                const testDesignId = 'ac-dc-back-in-black-guitar';
+                let result = `<div class="info">🔄 Testing complete wishlist flow for: ${testDesignId}</div>`;
+                
+                // Step 1: Check current status
+                const checkResponse = await fetch(`/api/wishlist/check/${testDesignId}`, {
+                    credentials: 'include'
+                });
+                const checkData = await checkResponse.json();
+                result += `<div class="info">📋 Current status: ${JSON.stringify(checkData)}</div>`;
+                
+                // Step 2: Add to wishlist
+                const addResponse = await fetch('/api/wishlist/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ designId: testDesignId })
+                });
+                const addData = await addResponse.json();
+                result += `<div class="success">➕ Add result: ${JSON.stringify(addData)}</div>`;
+                
+                // Step 3: Check status again
+                const checkResponse2 = await fetch(`/api/wishlist/check/${testDesignId}`, {
+                    credentials: 'include'
+                });
+                const checkData2 = await checkResponse2.json();
+                result += `<div class="info">📋 Status after add: ${JSON.stringify(checkData2)}</div>`;
+                
+                // Step 4: Remove from wishlist
+                const removeResponse = await fetch('/api/wishlist/remove', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ designId: testDesignId })
+                });
+                const removeData = await removeResponse.json();
+                result += `<div class="success">🗑️ Remove result: ${JSON.stringify(removeData)}</div>`;
+                
+                // Step 5: Final check
+                const checkResponse3 = await fetch(`/api/wishlist/check/${testDesignId}`, {
+                    credentials: 'include'
+                });
+                const checkData3 = await checkResponse3.json();
+                result += `<div class="info">📋 Final status: ${JSON.stringify(checkData3)}</div>`;
+                
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Full flow test failed: ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

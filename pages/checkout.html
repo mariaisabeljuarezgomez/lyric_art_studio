@@ -324,9 +324,20 @@
                 
                 console.log('🛒 Raw cart data:', cartData);
                 
-                // Handle both old format (array) and new format (object with items)
-                const items = cartData.items || cartData;
+                // Extract items from cart object with better error handling
+                let items = [];
+                if (cartData && typeof cartData === 'object') {
+                    if (cartData.cart && Array.isArray(cartData.cart.items)) {
+                        items = cartData.cart.items;
+                    } else if (Array.isArray(cartData.items)) {
+                        items = cartData.items;
+                    } else if (Array.isArray(cartData)) {
+                        items = cartData;
+                    }
+                }
                 console.log('🛒 Processed items:', items);
+                console.log('🛒 Items type:', typeof items);
+                console.log('🛒 Is array:', Array.isArray(items));
                 
                 if (!items || items.length === 0) {
                     showError('Your cart is empty.');
@@ -344,8 +355,20 @@
                 
                 console.log('✅ Cart has items, creating PayPal order...');
                 
-                // Calculate total using real prices
-                const total = items.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
+                // Calculate total using real prices with better error handling
+                let total = 0;
+                if (Array.isArray(items) && items.length > 0) {
+                    try {
+                        total = items.reduce((sum, item) => {
+                            const price = parseFloat(item.price) || 3.00;
+                            const quantity = parseInt(item.qty || item.quantity || 1);
+                            return sum + (price * quantity);
+                        }, 0);
+                    } catch (reduceError) {
+                        console.error('❌ Error calculating total:', reduceError);
+                        total = 0;
+                    }
+                }
                 console.log('💰 Calculated total:', total);
                 
                 // Prepare PayPal order data

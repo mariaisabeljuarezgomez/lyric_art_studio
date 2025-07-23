@@ -47,6 +47,9 @@ class SongCatalogManager {
         this.renderCatalog();
         this.updateFilters();
         updateCartBadge(); // Initialize cart badge
+        
+        // Initialize wishlist buttons after catalog is fully loaded
+        setTimeout(initializeWishlistButtons, 500);
     }
 
     async loadSongData() {
@@ -88,6 +91,25 @@ class SongCatalogManager {
                 return;
             }
 
+            // Extract design ID from image path
+            let designId = '';
+            if (item.image) {
+                // Extract folder name from image path: "images/designs/folder-name/file.webp"
+                const pathParts = item.image.split('/');
+                if (pathParts.length >= 3 && pathParts[1] === 'designs') {
+                    designId = pathParts[2]; // This is the folder name
+                }
+            }
+            
+            // If no designId was extracted, generate one based on the correct folder naming pattern
+            if (!designId) {
+                // Format: {artist}-{song}-{instrument}
+                const artist = this.cleanArtistName(item.artist).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                const song = this.cleanSongName(item.song).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                const instrument = (item.shape || 'guitar').toLowerCase();
+                designId = `${artist}-${song}-${instrument}`;
+            }
+            
             // Use the real data from our database
             const song = {
                 id: item.id || (index + 1),
@@ -101,6 +123,7 @@ class SongCatalogManager {
                 image: item.image || this.getImageForSong(item.artist, item.song),
                 webp: item.webp,
                 files: item.files,
+                designId: designId, // Add the correct design ID
                 popularity: Math.floor(Math.random() * 1000) + 100,
                 isNew: Math.random() < 0.1, // 10% chance of being new
                 isFeatured: Math.random() < 0.05 // 5% chance of being featured
@@ -505,7 +528,7 @@ class SongCatalogManager {
         
         return `
             <div class="card-surface group cursor-pointer hover:border-accent transition-smooth" 
-                 onclick="openDesignModal('${imageSrc}', '${song.song}', '${song.artist}', '${song.instrumentShape}', ${song.price}, '${highResPath}')">
+                 onclick="openDesignModal('${imageSrc}', '${song.song}', '${song.artist}', '${song.instrumentShape}', ${song.price}, '${highResPath}', '${song.designId}')">
                 <div class="relative aspect-square overflow-hidden rounded-t-lg" style="background-color: white;">
                     <picture>
                         <source srcset="${webpSrc}" type="image/webp">
@@ -516,8 +539,19 @@ class SongCatalogManager {
                              draggable="false">
                     </picture>
                     
+                    <!-- Wishlist Button -->
+                    <div class="absolute top-2 left-2 bg-white/95 text-red-500 p-2 md:p-2 rounded-full opacity-80 hover:opacity-100 transition-opacity duration-300 cursor-pointer touch-manipulation wishlist-btn shadow-lg border border-gray-200"
+                         onclick="event.stopPropagation(); toggleWishlist('${song.designId}', this)"
+                         title="Add to wishlist"
+                         data-design-id="${song.designId}"
+                         data-debug="song.designId: ${song.designId}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                    </div>
+                    
                     <!-- Zoom Button - Mobile friendly -->
-                    <div class="absolute top-2 right-2 bg-accent text-white p-2 md:p-2 rounded-full opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 hover:opacity-100 transition-opacity duration-300 cursor-pointer touch-manipulation"
+                    <div class="absolute bottom-2 left-2 bg-accent text-white p-2 md:p-2 rounded-full opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 hover:opacity-100 transition-opacity duration-300 cursor-pointer touch-manipulation"
                          onclick="event.stopPropagation(); openProtectedDesignViewer('${highResPath}', '${song.song}', '${song.artist}')"
                          title="Zoom to see high-resolution details">
                         <span class="text-sm md:text-base">🔍</span>
@@ -530,8 +564,8 @@ class SongCatalogManager {
                         $${song.price.toFixed(2)}
                     </div>
                     
-                    ${song.isNew ? '<div class="absolute top-2 left-2 bg-accent text-primary text-xs px-2 py-1 rounded">NEW</div>' : ''}
-                    ${song.isFeatured ? '<div class="absolute top-2 left-12 bg-yellow-500 text-primary text-xs px-2 py-1 rounded">FEATURED</div>' : ''}
+                    ${song.isNew ? '<div class="absolute top-2 right-2 bg-accent text-primary text-xs px-2 py-1 rounded">NEW</div>' : ''}
+                    ${song.isFeatured ? '<div class="absolute top-2 right-12 bg-yellow-500 text-primary text-xs px-2 py-1 rounded">FEATURED</div>' : ''}
                 </div>
                 <div class="p-3 md:p-4">
                     <h3 class="font-montserrat font-semibold text-base md:text-lg mb-1 truncate">${song.song}</h3>
@@ -555,7 +589,7 @@ class SongCatalogManager {
         
         return `
             <div class="card-surface p-4 flex items-center space-x-4 group cursor-pointer hover:border-accent transition-smooth"
-                 onclick="openDesignModal('${imageSrc}', '${song.song}', '${song.artist}', '${song.instrumentShape}', ${song.price}, '${highResPath}')">
+                 onclick="openDesignModal('${imageSrc}', '${song.song}', '${song.artist}', '${song.instrumentShape}', ${song.price}, '${highResPath}', '${song.designId}')">
                 <div class="relative w-20 h-20 flex-shrink-0 rounded" style="background-color: white;">
                     <picture>
                         <source srcset="${webpSrc}" type="image/webp">
@@ -618,7 +652,7 @@ class SongCatalogManager {
 }
 
 // Global function for opening design modal
-function openDesignModal(imageSrc, songTitle, artistName, shape, price, highResPath) {
+function openDesignModal(imageSrc, songTitle, artistName, shape, price, highResPath, designId) {
     // Use WebP for display, high-res path for zoom
     let correctedImageSrc = imageSrc;
     if (!correctedImageSrc.startsWith('/')) {
@@ -707,6 +741,17 @@ function openDesignModal(imageSrc, songTitle, artistName, shape, price, highResP
                                         onmouseout="this.style.backgroundColor='#2563EB'"
                                         onclick="addToCart('${songTitle}', ${price})">
                                     Add to Cart
+                                </button>
+                                                <button id="modal-wishlist-btn" style="width: 100%; background-color: #FEF3C7; color: #92400E; padding: 12px 16px; border-radius: 8px; border: 1px solid #F59E0B; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" 
+                        onmouseover="this.style.backgroundColor='#FDE68A'" 
+                        onmouseout="this.style.backgroundColor='#FEF3C7'"
+                        onclick="toggleWishlist('${designId}', this)"
+                        data-design-id="${designId}"
+                        data-debug="designId: ${designId}">
+                                    <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                    </svg>
+                                    Add to Wishlist
                                 </button>
                                 <button style="width: 100%; background-color: #059669; color: white; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: background-color 0.2s;" 
                                         onmouseover="this.style.backgroundColor='#047857'" 
@@ -801,18 +846,36 @@ async function updateCartBadge() {
 
 // Show notification function
 function showNotification(message, type = 'info') {
+    console.log('🔔 Showing notification:', message, type);
+    
+    // Remove any existing notifications first
+    const existingNotifications = document.querySelectorAll('.notification-toast');
+    existingNotifications.forEach(notification => notification.remove());
+    
     const notification = document.createElement('div');
     notification.textContent = message;
-    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+    notification.className = `notification-toast fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 font-bold text-lg ${
         type === 'success' ? 'bg-green-500 text-white' : 
         type === 'error' ? 'bg-red-500 text-white' : 
         'bg-blue-500 text-white'
     }`;
     document.body.appendChild(notification);
     
+    // Force a reflow to ensure the initial state is applied
+    notification.offsetHeight;
+    
+    // Slide in from the right
+    notification.style.transform = 'translateX(0)';
+    
+    // Auto-remove after 4 seconds
     setTimeout(() => {
-        notification.remove();
-    }, 3000);
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 300);
+    }, 4000);
 }
 
 // Clear all filters function
@@ -1011,3 +1074,172 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', function() {
     window.songCatalog = new SongCatalogManager();
 });
+
+// ===== WISHLIST FUNCTIONALITY =====
+
+// Toggle wishlist for a design
+async function toggleWishlist(designId, button) {
+    console.log('🎯 toggleWishlist called with designId:', designId);
+    
+    try {
+        // Check if user is authenticated
+        try {
+            const authResponse = await fetch('/api/auth/status', {
+                credentials: 'include'
+            });
+            const authData = await authResponse.json();
+            
+            if (!authData.loggedIn) {
+                showNotification('Please log in to add items to your wishlist', 'warning');
+                return;
+            }
+        } catch (authError) {
+            console.error('❌ Error checking authentication:', authError);
+            showNotification('Error checking authentication', 'error');
+            return;
+        }
+        
+        // Check current wishlist status
+        let checkData;
+        try {
+            const checkResponse = await fetch(`/api/wishlist/check/${designId}`, {
+                credentials: 'include'
+            });
+            checkData = await checkResponse.json();
+        } catch (checkError) {
+            console.error('❌ Error checking wishlist status:', checkError);
+            showNotification('Error checking wishlist status', 'error');
+            return;
+        }
+        
+        if (checkData.isInWishlist) {
+            // Remove from wishlist
+            try {
+                const removeResponse = await fetch('/api/wishlist/remove', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ designId })
+                });
+                
+                const removeData = await removeResponse.json();
+                
+                if (removeData.success) {
+                    updateWishlistButton(button, false);
+                    showNotification('Removed from wishlist', 'success');
+                } else {
+                    showNotification('Failed to remove from wishlist', 'error');
+                }
+            } catch (removeError) {
+                console.error('❌ Error removing from wishlist:', removeError);
+                showNotification('Error removing from wishlist', 'error');
+            }
+        } else {
+            // Add to wishlist
+            try {
+                const addResponse = await fetch('/api/wishlist/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ designId })
+                });
+                
+                const addData = await addResponse.json();
+                
+                if (addData.success) {
+                    updateWishlistButton(button, true);
+                    showNotification('Added to wishlist', 'success');
+                } else {
+                    showNotification('Failed to add to wishlist', 'error');
+                }
+            } catch (addError) {
+                console.error('❌ Error adding to wishlist:', addError);
+                showNotification('Error adding to wishlist', 'error');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error toggling wishlist:', error);
+        showNotification('Error updating wishlist', 'error');
+    }
+}
+
+// Update wishlist button appearance
+function updateWishlistButton(button, isInWishlist) {
+    const svg = button.querySelector('svg');
+    
+    if (isInWishlist) {
+        // Filled heart - in wishlist
+        if (button.id === 'modal-wishlist-btn') {
+            // Modal button styling
+            button.style.backgroundColor = '#FEE2E2';
+            button.style.color = '#DC2626';
+            button.style.borderColor = '#EF4444';
+            button.innerHTML = `
+                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                Remove from Wishlist
+            `;
+        } else {
+            // Card button styling
+            button.classList.add('text-error');
+            button.classList.remove('text-text-secondary');
+            svg.innerHTML = `<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>`;
+        }
+    } else {
+        // Outline heart - not in wishlist
+        if (button.id === 'modal-wishlist-btn') {
+            // Modal button styling
+            button.style.backgroundColor = '#FEF3C7';
+            button.style.color = '#92400E';
+            button.style.borderColor = '#F59E0B';
+            button.innerHTML = `
+                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+                Add to Wishlist
+            `;
+        } else {
+            // Card button styling
+            button.classList.remove('text-error');
+            button.classList.add('text-text-secondary');
+            svg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>`;
+        }
+    }
+}
+
+// Initialize wishlist button states
+async function initializeWishlistButtons() {
+    try {
+        // Check if user is authenticated
+        const authResponse = await fetch('/api/auth/status', {
+            credentials: 'include'
+        });
+        const authData = await authResponse.json();
+        
+        if (!authData.loggedIn) {
+            return; // User not logged in, don't initialize wishlist buttons
+        }
+        
+        // Get user's wishlist
+        const wishlistResponse = await fetch('/api/wishlist', {
+            credentials: 'include'
+        });
+        const wishlistData = await wishlistResponse.json();
+        
+        if (wishlistData.success) {
+            const wishlistDesignIds = wishlistData.wishlist.map(item => item.designId);
+            
+            // Update all wishlist buttons (both card and modal buttons)
+            const wishlistButtons = document.querySelectorAll('.wishlist-btn, #modal-wishlist-btn');
+            wishlistButtons.forEach(button => {
+                const designId = button.getAttribute('data-design-id');
+                if (designId && wishlistDesignIds.includes(designId)) {
+                    updateWishlistButton(button, true);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error initializing wishlist buttons:', error);
+    }
+}

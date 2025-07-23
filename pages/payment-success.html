@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Success - Lyric Art Studio</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <meta name="description" content="Payment completed successfully. Download your lyric art designs." />
+</head>
+<body class="bg-background text-text-primary font-inter">
+    <!-- Navigation Header -->
+    <header class="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-md border-b border-border-subtle shadow-lg">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                        <path d="M19 15L19.5 17L21 17.5L19.5 18L19 20L18.5 18L17 17.5L18.5 17L19 15Z"/>
+                        <path d="M5 15L5.5 17L7 17.5L5.5 18L5 20L4.5 18L3 17.5L4.5 17L5 15Z"/>
+                    </svg>
+                    <span class="text-xl font-montserrat font-bold">Lyric Art Studio</span>
+                </div>
+
+                <!-- Back to Home -->
+                <a href="/homepage" class="text-text-secondary hover:text-accent transition-smooth text-sm font-medium flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    <span>Back to Shop</span>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="min-h-screen pt-24 pb-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Loading State -->
+            <div id="loading" class="text-center py-16">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
+                <p class="text-text-secondary mt-6 text-lg">Processing your payment...</p>
+            </div>
+
+            <!-- Success State -->
+            <div id="success" class="text-center py-8 sm:py-16" style="display: none;">
+                <div class="max-w-md mx-auto bg-surface/90 backdrop-blur-md rounded-2xl border border-border-subtle p-6 sm:p-8 lg:p-12 shadow-xl mx-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                        <svg class="w-8 h-8 sm:w-10 sm:h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-text-primary mb-2 sm:mb-3">Payment Successful!</h3>
+                    <p class="text-text-secondary mb-6 sm:mb-8 text-sm sm:text-base">Your purchase has been completed successfully. You can now download your designs from your collection.</p>
+                    <div class="space-y-3">
+                        <a href="/my_collection_dashboard_ORIGINAL" class="block w-full bg-accent text-background px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-accent/90 transition-all duration-300 font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                            View My Collection
+                        </a>
+                        <a href="/homepage" class="block w-full bg-surface text-text-primary px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-surface/80 transition-all duration-300 font-semibold text-base sm:text-lg border border-border-subtle">
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error" class="text-center py-8 sm:py-16" style="display: none;">
+                <div class="max-w-md mx-auto bg-surface/90 backdrop-blur-md rounded-2xl border border-border-subtle p-6 sm:p-8 lg:p-12 shadow-xl mx-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                        <svg class="w-8 h-8 sm:w-10 sm:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-text-primary mb-2 sm:mb-3">Payment Error</h3>
+                    <p id="error-message" class="text-text-secondary mb-6 sm:mb-8 text-sm sm:text-base">There was an issue processing your payment.</p>
+                    <div class="space-y-3">
+                        <a href="/checkout" class="block w-full bg-accent text-background px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-accent/90 transition-all duration-300 font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                            Try Again
+                        </a>
+                        <a href="/homepage" class="block w-full bg-surface text-text-primary px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-surface/80 transition-all duration-300 font-semibold text-base sm:text-lg border border-border-subtle">
+                            Back to Shop
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const PayerID = urlParams.get('PayerID');
+
+        console.log('🔍 Payment success page loaded');
+        console.log('🔍 URL parameters:', { token, PayerID });
+
+        async function processPayment() {
+            try {
+                if (!token) {
+                    throw new Error('No payment token found');
+                }
+
+                console.log('💳 Processing payment capture...');
+                
+                // Capture the PayPal payment
+                const response = await fetch('/api/payment/capture-paypal-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ orderId: token })
+                });
+
+                console.log('📡 Capture response status:', response.status);
+                
+                const data = await response.json();
+                console.log('📡 Capture response data:', data);
+
+                if (data.success) {
+                    console.log('✅ Payment captured successfully');
+                    showSuccess();
+                } else {
+                    throw new Error(data.error || 'Payment capture failed');
+                }
+            } catch (error) {
+                console.error('❌ Payment processing error:', error);
+                showError(error.message);
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('success').style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+
+        // Process payment when page loads
+        if (token) {
+            processPayment();
+        } else {
+            showError('No payment token found in URL');
+        }
+    </script>
+</body>
+</html> 
