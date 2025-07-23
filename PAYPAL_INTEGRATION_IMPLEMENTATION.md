@@ -2,7 +2,7 @@
 
 ## **💳 Overview**
 
-The LyricArt Studio PayPal integration provides a complete payment processing solution using PayPal's official SDK and webhooks. The system handles order creation, payment capture, webhook processing, and automatic email notifications for successful transactions.
+The Lyric Art Studio PayPal integration provides a complete payment processing solution using PayPal's official SDK and webhooks. The system handles order creation, payment capture, webhook processing, and automatic email notifications for successful transactions.
 
 ---
 
@@ -91,7 +91,7 @@ const createPayPalOrder = async (items, total) => {
             application_context: {
                 return_url: `${process.env.SITE_URL}/payment/success`,
                 cancel_url: `${process.env.SITE_URL}/payment/cancel`,
-                brand_name: 'LyricArt Studio',
+                brand_name: 'Lyric Art Studio',
                 landing_page: 'BILLING',
                 user_action: 'PAY_NOW',
                 shipping_preference: 'NO_SHIPPING'
@@ -718,7 +718,7 @@ const testWebhook = async () => {
 2. **Create Application**
    - Navigate to "My Apps & Credentials"
    - Click "Create App"
-   - Name: "LyricArt Studio"
+   - Name: "Lyric Art Studio"
    - Select "Business" account type
 
 3. **Get Credentials**

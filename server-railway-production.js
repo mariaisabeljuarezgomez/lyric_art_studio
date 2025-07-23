@@ -1,4 +1,4 @@
-// LyricArt Studio Server for Railway Production
+// Lyric Art Studio Server for Railway Production
 // Uses PostgreSQL for session storage instead of file storage
 
 // Load environment variables
@@ -54,7 +54,7 @@ const createEmailTransporter = () => {
 // Email Templates
 const emailTemplates = {
     orderConfirmation: (orderData) => ({
-        subject: `Order Confirmation - LyricArt Studio`,
+        subject: `Order Confirmation - Lyric Art Studio`,
         html: `
             <!DOCTYPE html>
             <html>
@@ -75,7 +75,7 @@ const emailTemplates = {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>🎵 LyricArt Studio</h1>
+                        <h1>🎵 Lyric Art Studio</h1>
                         <p>Order Confirmation</p>
                     </div>
                     <div class="content">
@@ -110,7 +110,7 @@ const emailTemplates = {
                         <p>If you have any questions, please contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}">${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}</a></p>
                     </div>
                     <div class="footer">
-                        <p>© 2025 LyricArt Studio. All rights reserved.</p>
+                        <p>© 2025 Lyric Art Studio. All rights reserved.</p>
                         <p>This email was sent to ${orderData.customerEmail}</p>
                     </div>
                 </div>
@@ -120,7 +120,7 @@ const emailTemplates = {
     }),
 
     contactForm: (contactData) => ({
-        subject: `New Contact Form Submission - ${contactData.subject || 'LyricArt Studio'}`,
+        subject: `New Contact Form Submission - ${contactData.subject || 'Lyric Art Studio'}`,
         html: `
             <!DOCTYPE html>
             <html>
@@ -141,7 +141,7 @@ const emailTemplates = {
                 <div class="container">
                     <div class="header">
                         <h1>📧 New Contact Form Submission</h1>
-                        <p>LyricArt Studio</p>
+                        <p>Lyric Art Studio</p>
                     </div>
                     <div class="content">
                         <div class="field">
@@ -169,13 +169,13 @@ const emailTemplates = {
     }),
 
     welcomeEmail: (userData) => ({
-        subject: `Welcome to LyricArt Studio!`,
+        subject: `Welcome to Lyric Art Studio!`,
         html: `
             <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="utf-8">
-                <title>Welcome to LyricArt Studio</title>
+                <title>Welcome to Lyric Art Studio</title>
                 <style>
                     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -188,12 +188,12 @@ const emailTemplates = {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>🎵 Welcome to LyricArt Studio!</h1>
+                        <h1>🎵 Welcome to Lyric Art Studio!</h1>
                         <p>Your account has been created successfully</p>
                     </div>
                     <div class="content">
                         <h2>Hi ${userData.name},</h2>
-                        <p>Welcome to LyricArt Studio! We're excited to have you as part of our community.</p>
+                        <p>Welcome to Lyric Art Studio! We're excited to have you as part of our community.</p>
                         
                         <p>With your account, you can:</p>
                         <ul>
@@ -211,10 +211,10 @@ const emailTemplates = {
                         <p>If you have any questions, feel free to contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}">${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}</a></p>
                         
                         <p>Happy designing!</p>
-                        <p><strong>The LyricArt Studio Team</strong></p>
+                        <p><strong>The Lyric Art Studio Team</strong></p>
                     </div>
                     <div class="footer">
-                        <p>© 2025 LyricArt Studio. All rights reserved.</p>
+                        <p>© 2025 Lyric Art Studio. All rights reserved.</p>
                     </div>
                 </div>
             </body>
@@ -223,7 +223,7 @@ const emailTemplates = {
     }),
 
     passwordReset: (userData, resetLink) => ({
-        subject: `Password Reset Request - LyricArt Studio`,
+        subject: `Password Reset Request - Lyric Art Studio`,
         html: `
             <!DOCTYPE html>
             <html>
@@ -244,11 +244,11 @@ const emailTemplates = {
                 <div class="container">
                     <div class="header">
                         <h1>🔐 Password Reset Request</h1>
-                        <p>LyricArt Studio</p>
+                        <p>Lyric Art Studio</p>
                     </div>
                     <div class="content">
                         <h2>Hi ${userData.name},</h2>
-                        <p>We received a request to reset your password for your LyricArt Studio account.</p>
+                        <p>We received a request to reset your password for your Lyric Art Studio account.</p>
                         
                         <div style="text-align: center; margin: 30px 0;">
                             <a href="${resetLink}" class="button">Reset Password</a>
@@ -263,7 +263,7 @@ const emailTemplates = {
                         <p>If you have any questions, contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}">${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}</a></p>
                     </div>
                     <div class="footer">
-                        <p>© 2025 LyricArt Studio. All rights reserved.</p>
+                        <p>© 2025 Lyric Art Studio. All rights reserved.</p>
                         <p>This email was sent to ${userData.email}</p>
                     </div>
                 </div>
@@ -280,7 +280,7 @@ const sendEmail = async (to, template, data = {}) => {
         const emailContent = emailTemplates[template](data);
         
         const mailOptions = {
-            from: process.env.EMAIL_FROM || `"LyricArt Studio" <${process.env.EMAIL_USER || 'admin@lyricartstudio.shop'}>`,
+            from: process.env.EMAIL_FROM || `"Lyric Art Studio" <${process.env.EMAIL_USER || 'admin@lyricartstudio.shop'}>`,
             to: to,
             subject: emailContent.subject,
             html: emailContent.html
@@ -333,7 +333,7 @@ const createPayPalOrder = async (items, total) => {
             application_context: {
                 return_url: `${process.env.SITE_URL || 'https://lyricartstudio.shop'}/payment/success`,
                 cancel_url: `${process.env.SITE_URL || 'https://lyricartstudio.shop'}/payment/cancel`,
-                brand_name: 'LyricArt Studio',
+                brand_name: 'Lyric Art Studio',
                 landing_page: 'BILLING',
                 user_action: 'PAY_NOW',
                 shipping_preference: 'NO_SHIPPING'
@@ -994,7 +994,7 @@ app.get('/payment/success', async (req, res) => {
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Payment Successful | LyricArt Studio</title>
+                    <title>Payment Successful | Lyric Art Studio</title>
                     <style>
                         body { 
                             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
@@ -1083,7 +1083,7 @@ app.get('/payment/cancel', (req, res) => {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Payment Cancelled | LyricArt Studio</title>
+            <title>Payment Cancelled | Lyric Art Studio</title>
             <style>
                 body { 
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
@@ -1210,7 +1210,7 @@ app.use((req, res) => {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>404 - Page Not Found | LyricArt Studio</title>
+            <title>404 - Page Not Found | Lyric Art Studio</title>
             <style>
                 body { 
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
@@ -1255,7 +1255,7 @@ module.exports = app;
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`🚀 LyricArt Studio Server running on port ${PORT}`);
+    console.log(`🚀 Lyric Art Studio Server running on port ${PORT}`);
     console.log('📊 Database initialized with 2 users');
     console.log('🛒 Shopping cart system ready');
     console.log('💳 PayPal SDK integration configured');

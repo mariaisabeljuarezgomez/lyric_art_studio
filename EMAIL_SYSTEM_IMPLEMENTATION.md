@@ -2,7 +2,7 @@
 
 ## **📧 Overview**
 
-The LyricArt Studio email system provides comprehensive email functionality for customer communications, order confirmations, and administrative notifications. Built with Nodemailer and integrated with Namecheap Private Email, the system supports HTML templates and automatic email triggers.
+The Lyric Art Studio email system provides comprehensive email functionality for customer communications, order confirmations, and administrative notifications. Built with Nodemailer and integrated with Namecheap Private Email, the system supports HTML templates and automatic email triggers.
 
 ---
 
@@ -41,7 +41,7 @@ EMAIL_PASS=your_email_password_here
 
 # Email Sender Configuration
 EMAIL_FROM=admin@lyricartstudio.shop
-EMAIL_FROM_NAME=LyricArt Studio
+EMAIL_FROM_NAME=Lyric Art Studio
 
 # Support Email Addresses
 ADMIN_EMAIL=admin@lyricartstudio.shop
@@ -180,7 +180,7 @@ const sendEmail = async (to, template, data = {}) => {
         const emailContent = emailTemplates[template](data);
         
         const mailOptions = {
-            from: process.env.EMAIL_FROM || `"LyricArt Studio" <${process.env.EMAIL_USER}>`,
+            from: process.env.EMAIL_FROM || `"Lyric Art Studio" <${process.env.EMAIL_USER}>`,
             to: to,
             subject: emailContent.subject,
             html: emailContent.html

@@ -16,7 +16,7 @@
 
 ## 🚨 Problem Overview
 
-The LyricArt Studio website experienced a critical issue where:
+The Lyric Art Studio website experienced a critical issue where:
 - **Cart items were not persisting** between page loads
 - **User login sessions were not maintaining** across page refreshes
 - **Cart counter was not updating** despite successful API calls

@@ -2,7 +2,7 @@
 
 ## **PROJECT OVERVIEW**
 
-This is a **LyricArt Studio Website** - a comprehensive e-commerce platform for selling custom music lyric designs in various formats (SVG, PDF, PNG, EPS). The site features a modern, responsive design with advanced functionality including zoom/pan capabilities, artist profiles, and a robust design database.
+This is a **Lyric Art Studio Website** - a comprehensive e-commerce platform for selling custom music lyric designs in various formats (SVG, PDF, PNG, EPS). The site features a modern, responsive design with advanced functionality including zoom/pan capabilities, artist profiles, and a robust design database.
 
 ---
 

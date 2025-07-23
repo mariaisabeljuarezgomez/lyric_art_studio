@@ -310,7 +310,7 @@ app.use((req, res) => {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>404 - Page Not Found | LyricArt Studio</title>
+            <title>404 - Page Not Found | Lyric Art Studio</title>
             <style>
                 body { 
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 

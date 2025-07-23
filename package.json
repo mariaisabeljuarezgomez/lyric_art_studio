@@ -1,7 +1,7 @@
 {
   "name": "lyricart-studio-website",
   "version": "1.0.0",
-  "description": "LyricArt Studio - Custom Lyric Art Designs",
+  "description": "Lyric Art Studio - Custom Lyric Art Designs",
   "main": "server-railway-production.js",
   "scripts": {
     "start": "node server-railway-production.js",
@@ -26,6 +26,6 @@
     "designs",
     "website"
   ],
-  "author": "LyricArt Studio",
+  "author": "Lyric Art Studio",
   "license": "MIT"
 }

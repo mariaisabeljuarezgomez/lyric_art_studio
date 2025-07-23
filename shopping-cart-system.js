@@ -104,7 +104,7 @@ class ShoppingCartSystem {
                     quantity: item.quantity.toString(),
                     category: 'DIGITAL_GOODS'
                 })),
-                description: 'LyricArt Studio Design Purchase',
+                description: 'Lyric Art Studio Design Purchase',
                 custom_id: `order_${Date.now()}`
             }],
             application_context: {

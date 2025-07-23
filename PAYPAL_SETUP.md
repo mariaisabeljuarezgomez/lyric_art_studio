@@ -32,7 +32,7 @@ This guide will help you set up PayPal Smart Payment Buttons that accept:
 
 1. In the developer dashboard, go to **"My Apps & Credentials"**
 2. Click **"Create App"**
-3. Name your app: `LyricArt Studio`
+3. Name your app: `Lyric Art Studio`
 4. Select **"Business"** account type
 5. Click **"Create App"**
 
@@ -72,7 +72,7 @@ sandbox: {
 
 1. In PayPal Developer Portal, go to **"My Apps & Credentials"**
 2. Click **"Create App"**
-3. Name: `LyricArt Studio Production`
+3. Name: `Lyric Art Studio Production`
 4. Select **"Business"** account type
 5. Click **"Create App"**
 

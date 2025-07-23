@@ -7,7 +7,7 @@ if (typeof ProtectedImageViewer === 'undefined') {
     constructor() {
         this.viewer = null;
         this.isProtected = true;
-        this.watermarkText = 'LyricArt Studio - Preview Only';
+        this.watermarkText = 'Lyric Art Studio - Preview Only';
         this.initProtection();
     }
 

@@ -1,4 +1,4 @@
-# LyricArt Studio - Digital Music Design Marketplace
+# Lyric Art Studio - Digital Music Design Marketplace
 
 A premium digital marketplace for music-inspired lyric art designs in SVG, PDF, PNG, and EPS formats.
 

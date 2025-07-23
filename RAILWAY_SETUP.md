@@ -1,4 +1,4 @@
-# Railway Database Setup for LyricArt Studio
+# Railway Database Setup for Lyric Art Studio
 
 ## 🚀 Quick Setup Guide
 
