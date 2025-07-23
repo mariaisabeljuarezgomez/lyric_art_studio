@@ -322,8 +322,11 @@
                 const cartResponse = await fetch('/api/cart', { credentials: 'include' });
                 const cartData = await cartResponse.json();
                 
+                console.log('🛒 Raw cart data:', cartData);
+                
                 // Handle both old format (array) and new format (object with items)
                 const items = cartData.items || cartData;
+                console.log('🛒 Processed items:', items);
                 
                 if (!items || items.length === 0) {
                     showError('Your cart is empty.');
@@ -343,6 +346,14 @@
                 
                 // Calculate total using real prices
                 const total = items.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
+                console.log('💰 Calculated total:', total);
+                
+                // Prepare PayPal order data
+                const paypalOrderData = {
+                    items: items,
+                    total: total
+                };
+                console.log('💳 PayPal order data:', paypalOrderData);
                 
                 // Create PayPal order
                 const orderResponse = await fetch('/api/payment/create-paypal-order', {
@@ -351,24 +362,44 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        items: items,
-                        total: total
-                    })
+                    body: JSON.stringify(paypalOrderData)
                 });
+                
+                console.log('📡 PayPal API response status:', orderResponse.status);
                 
                 const orderData = await orderResponse.json();
                 
-                if (orderData.success && orderData.paypalOrder) {
-                    console.log('✅ PayPal order created, redirecting...');
-                    window.location.href = orderData.paypalOrder.links[0].href;
+                if (orderData.success && orderData.order) {
+                    console.log('✅ PayPal order created:', orderData.order.id);
+                    
+                    // Find the approval link
+                    const approvalLink = orderData.order.links.find(link => link.rel === 'approve');
+                    if (approvalLink) {
+                        console.log('✅ Redirecting to PayPal...');
+                        window.location.href = approvalLink.href;
+                    } else {
+                        throw new Error('PayPal approval link not found');
+                    }
                 } else {
-                    throw new Error('Failed to create PayPal order');
+                    console.error('❌ PayPal order creation failed:', orderData.error || 'Unknown error');
+                    throw new Error(orderData.error || 'Failed to create PayPal order');
                 }
                 
             } catch (error) {
                 console.error('❌ Checkout error:', error);
-                showError('Checkout failed. Please try again.');
+                console.error('❌ Error details:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                let errorMessage = 'Checkout failed. Please try again.';
+                if (error.message.includes('PayPal')) {
+                    errorMessage = 'PayPal service temporarily unavailable. Please try again.';
+                } else if (error.message.includes('network')) {
+                    errorMessage = 'Network error. Please check your connection and try again.';
+                }
+                
+                showError(errorMessage);
                 button.disabled = false;
                 button.innerHTML = `
                     <div class="flex items-center justify-center space-x-3">
