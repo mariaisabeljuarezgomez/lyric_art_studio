@@ -901,7 +901,7 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
 });
 
 // PayPal Webhook Handler
-app.post('/api/payment/paypal-webhook', async (req, res) => {
+app.post('/api/paypal/webhook', async (req, res) => {
     try {
         const webhookBody = req.body;
         const headers = req.headers;
