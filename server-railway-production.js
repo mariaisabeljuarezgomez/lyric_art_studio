@@ -16,6 +16,9 @@ const paypal = require('@paypal/checkout-server-sdk');
 const FileDeliveryService = require('./file-delivery-service');
 const fs = require('fs');
 
+// Import fetch for Node.js (if not available globally)
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 
@@ -406,14 +409,18 @@ const createPayPalOrder = async (items, total) => {
 
 const capturePayPalOrder = async (orderId) => {
     try {
+        console.log('💳 Starting PayPal capture for orderId:', orderId);
         const request = new paypal.orders.OrdersCaptureRequest(orderId);
         request.requestBody({});
         
+        console.log('💳 Executing PayPal capture request...');
         const capture = await paypalClient.execute(request);
-        console.log('✅ PayPal order captured:', capture.result.id);
+        console.log('✅ PayPal order captured successfully:', capture.result.id);
+        console.log('✅ Capture result:', capture.result);
         return { success: true, capture: capture.result };
     } catch (error) {
         console.error('❌ PayPal order capture error:', error);
+        console.error('❌ Error details:', error.message);
         return { success: false, error: error.message };
     }
 };
@@ -444,6 +451,11 @@ app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// Serve favicon
+app.get('/favicon.ico', (req, res) => {
+    res.status(204).end(); // No content response for favicon
+});
 
 // Security headers
 app.use((req, res, next) => {
@@ -715,12 +727,28 @@ app.get('/api/cart', (req, res) => {
     res.json({ cart: req.session.cart });
 });
 
-app.post('/api/cart/add', (req, res) => {
+app.post('/api/cart/add', async (req, res) => {
     const { itemId, designId, format, price, quantity = 1 } = req.body;
     const id = itemId || designId; // Handle both parameter names
     
     if (!req.session.cart) {
         req.session.cart = { items: [], total: 0, itemCount: 0 };
+    }
+
+    // Get design info from database if we have a designId
+    let designName = id;
+    if (designId) {
+        try {
+            const designsData = fs.readFileSync(path.join(__dirname, 'designs-database.json'), 'utf8');
+            const designs = JSON.parse(designsData);
+            const design = designs.designs.find(d => d.id.toString() === designId.toString());
+            if (design) {
+                designName = `${design.artist} - ${design.song}`;
+                console.log(`🔍 Found design: ${designName} (ID: ${designId})`);
+            }
+        } catch (error) {
+            console.error('❌ Error looking up design:', error);
+        }
     }
 
     const existingItem = req.session.cart.items.find(item => 
@@ -730,7 +758,14 @@ app.post('/api/cart/add', (req, res) => {
     if (existingItem) {
         existingItem.quantity += quantity;
     } else {
-        req.session.cart.items.push({ itemId: id, format, price, quantity });
+        req.session.cart.items.push({ 
+            itemId: id, 
+            designId: designId || id,
+            designName: designName,
+            format, 
+            price, 
+            quantity 
+        });
     }
 
     req.session.cart.total = req.session.cart.items.reduce((sum, item) => 
@@ -1058,11 +1093,17 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
     try {
         const { orderId } = req.body;
         
+        console.log('🎯 Payment capture request received for orderId:', orderId);
+        console.log('🔍 Request body:', req.body);
+        console.log('🔍 Session data:', req.session);
+        
         if (!orderId) {
+            console.error('❌ No orderId provided in request');
             return res.status(400).json({ error: 'Order ID is required' });
         }
 
         // Capture the PayPal order
+        console.log('💳 Attempting to capture PayPal order:', orderId);
         const captureResult = await capturePayPalOrder(orderId);
         
         if (captureResult.success) {
@@ -1070,9 +1111,25 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
             
             // LOOK UP PENDING ORDER INSTEAD OF USING SESSION
             try {
-                const pendingOrderResult = await pool.query(`
+                console.log('🔍 Looking up pending order for orderId:', orderId);
+                
+                // First try to find by exact orderId match
+                let pendingOrderResult = await pool.query(`
                     SELECT * FROM pending_orders WHERE order_id = $1 AND processed = false
                 `, [orderId]);
+                
+                // If not found, try to find by PayPal order ID pattern (look for recent unprocessed orders)
+                if (pendingOrderResult.rows.length === 0) {
+                    console.log('🔍 No exact match found, looking for recent unprocessed orders...');
+                    pendingOrderResult = await pool.query(`
+                        SELECT * FROM pending_orders 
+                        WHERE processed = false 
+                        ORDER BY created_at DESC 
+                        LIMIT 1
+                    `);
+                }
+                
+                console.log(`📊 Found ${pendingOrderResult.rows.length} pending orders for orderId: ${orderId}`);
                 
                 if (pendingOrderResult.rows.length > 0) {
                     const pendingOrder = pendingOrderResult.rows[0];
@@ -1080,12 +1137,37 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
                     const items = pendingOrder.items;
                     
                     console.log(`📦 Processing pending order for user ${userId} with ${items.length} items`);
+                    console.log(`📦 Pending order details:`, pendingOrder);
                     
                     // Record each purchased item
                     for (const item of items) {
-                        const designId = item.itemId;
-                        const designName = item.title || designId;
+                        const itemId = item.itemId;
+                        const designName = item.title || itemId;
                         const amount = item.price || 3.00;
+                        
+                        // Look up the correct design ID from the designs database
+                        let designId = itemId;
+                        try {
+                            const designsData = fs.readFileSync(path.join(__dirname, 'designs-database.json'), 'utf8');
+                            const designs = JSON.parse(designsData);
+                            
+                            // Try to find the design by matching the itemId with the folder name in files
+                            const matchingDesign = designs.designs.find(design => {
+                                // Check if any of the file paths contain the itemId
+                                const filePaths = Object.values(design.files);
+                                return filePaths.some(path => path.includes(itemId));
+                            });
+                            
+                            if (matchingDesign) {
+                                designId = matchingDesign.id.toString();
+                                console.log(`🔍 Found matching design: ${matchingDesign.artist} - ${matchingDesign.song} (ID: ${designId})`);
+                            } else {
+                                console.log(`⚠️ No matching design found for itemId: ${itemId}, using itemId as designId`);
+                            }
+                        } catch (error) {
+                            console.error('❌ Error looking up design:', error);
+                            console.log(`⚠️ Using itemId as designId: ${itemId}`);
+                        }
                         
                         // Store purchase in database
                         await pool.query(`
@@ -1096,17 +1178,17 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
                             designId,
                             designName,
                             captureResult.capture.id,
-                            orderId,
+                            pendingOrder.order_id, // Use the actual pending order ID
                             amount
                         ]);
                         
-                        console.log(`💾 Purchase recorded for user ${userId}, design: ${designId}`);
+                        console.log(`💾 Purchase recorded for user ${userId}, design: ${designId} (original itemId: ${itemId})`);
                     }
                     
                     // Mark pending order as processed
                     await pool.query(`
                         UPDATE pending_orders SET processed = true WHERE order_id = $1
-                    `, [orderId]);
+                    `, [pendingOrder.order_id]);
                     
                     console.log(`✅ All purchases recorded for user ${userId}`);
                 } else {
@@ -1306,8 +1388,12 @@ app.get('/api/download/:designId/:format', authenticateUser, async (req, res) =>
             return res.status(403).send('You do not own this design');
         }
         
+        // Get the correct folder name for this design ID
+        const folderName = await getDesignFolderName(designId);
+        console.log(`🔍 Converted design ID ${designId} to folder name: ${folderName}`);
+        
         // Construct file path - use music_lyricss folder for actual files
-        const designPath = path.join(__dirname, 'music_lyricss', designId);
+        const designPath = path.join(__dirname, 'music_lyricss', folderName);
         console.log(`🔍 Looking for files in:`, designPath);
         
         // Check if design folder exists
@@ -1317,7 +1403,7 @@ app.get('/api/download/:designId/:format', authenticateUser, async (req, res) =>
         }
         
         // Look for the specific file format requested
-        let fileName = `${designId}.${format}`;
+        let fileName = `${folderName}.${format}`;
         let filePath = path.join(designPath, fileName);
         console.log(`🔍 Looking for file:`, filePath);
         
@@ -1326,7 +1412,7 @@ app.get('/api/download/:designId/:format', authenticateUser, async (req, res) =>
             console.log(`⚠️ Requested format ${format} not found, looking for available files...`);
             const files = fs.readdirSync(designPath);
             console.log(`🔍 Available files:`, files);
-            const availableFile = files.find(file => file.startsWith(designId));
+            const availableFile = files.find(file => file.startsWith(folderName));
             
             if (availableFile) {
                 fileName = availableFile;
@@ -1371,38 +1457,55 @@ function getContentType(format) {
 app.get('/payment/success', async (req, res) => {
     const { token, PayerID } = req.query;
     
+    console.log('🎯 Payment success route accessed with token:', token);
+    
     if (!token) {
         return res.redirect('/payment/cancel?error=no_token');
     }
     
     try {
-        // Capture the PayPal order
-        const captureResult = await capturePayPalOrder(token);
+        // Call the payment capture endpoint to process the pending order
+        console.log('💳 Calling payment capture endpoint...');
         
-        if (captureResult.success) {
-            console.log('✅ Payment completed successfully:', captureResult.capture.id);
+        const captureResponse = await fetch(`${req.protocol}://${req.get('host')}/api/payment/capture-paypal-order`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cookie': req.headers.cookie || ''
+            },
+            body: JSON.stringify({ orderId: token })
+        });
+        
+        console.log('📡 Capture endpoint response status:', captureResponse.status);
+        
+        if (captureResponse.ok) {
+            const captureData = await captureResponse.json();
+            console.log('📡 Capture endpoint response:', captureData);
             
-            // Send order confirmation email if user is logged in
-            if (req.session.userEmail) {
-                const cart = req.session.cart || { items: [], total: 0 };
-                try {
-                    await sendEmail(req.session.userEmail, 'orderConfirmation', {
-                        customerEmail: req.session.userEmail,
-                        customerName: req.session.userName || 'Valued Customer',
-                        orderId: captureResult.capture.id,
-                        items: cart.items,
-                        total: cart.total
-                    });
-                    console.log('✅ Order confirmation email sent');
-                } catch (emailError) {
-                    console.error('❌ Failed to send order confirmation email:', emailError);
+            if (captureData.success) {
+                console.log('✅ Payment and pending order processed successfully');
+                
+                // Send order confirmation email if user is logged in
+                if (req.session.userEmail) {
+                    const cart = req.session.cart || { items: [], total: 0 };
+                    try {
+                        await sendEmail(req.session.userEmail, 'orderConfirmation', {
+                            customerEmail: req.session.userEmail,
+                            customerName: req.session.userName || 'Valued Customer',
+                            orderId: captureData.capture.id,
+                            items: cart.items,
+                            total: cart.total
+                        });
+                        console.log('✅ Order confirmation email sent');
+                    } catch (emailError) {
+                        console.error('❌ Failed to send order confirmation email:', emailError);
+                    }
                 }
-            }
-            
-            // Clear cart after successful payment
-            req.session.cart = { items: [], total: 0, itemCount: 0 };
-            
-    res.send(`
+                
+                // Clear cart after successful payment
+                req.session.cart = { items: [], total: 0, itemCount: 0 };
+                
+                res.send(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -1448,20 +1551,24 @@ app.get('/payment/success', async (req, res) => {
         <body>
                     <h1>✅ Payment Successful!</h1>
                     <div class="order-details">
-                        <p><strong>Order ID:</strong> ${captureResult.capture.id}</p>
-                        <p><strong>Amount:</strong> $${captureResult.capture.amount?.value || 'N/A'}</p>
-                        <p><strong>Status:</strong> ${captureResult.capture.status}</p>
+                        <p><strong>Order ID:</strong> ${captureData.capture.id}</p>
+                        <p><strong>Amount:</strong> $${captureData.capture.amount?.value || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${captureData.capture.status}</p>
                     </div>
                     <p>Thank you for your purchase! You will receive an email with download links shortly.</p>
-            <div>
-                <a href="/homepage">Continue Shopping</a>
-                <a href="/my-collection">View My Collection</a>
-            </div>
+                    <div>
+                        <a href="/homepage">Continue Shopping</a>
+                        <a href="/my-collection">View My Collection</a>
+                    </div>
         </body>
         </html>
     `);
+            } else {
+                console.error('❌ Payment capture failed:', captureData.error);
+                res.redirect('/payment/cancel?error=capture_failed');
+            }
         } else {
-            console.error('❌ Payment capture failed:', captureResult.error);
+            console.error('❌ Payment capture endpoint failed:', captureResponse.status);
             res.redirect('/payment/cancel?error=capture_failed');
         }
     } catch (error) {
@@ -1649,16 +1756,18 @@ app.get('/api/my-collection/designs', authenticateUser, async (req, res) => {
         
         console.log(`🔍 DEBUG: Raw database result:`, result.rows);
         
-        const designs = result.rows.map(row => {
-            return {
+        const designs = [];
+        for (const row of result.rows) {
+            const folderName = await getDesignFolderName(row.design_id);
+            designs.push({
                 id: row.design_id,
                 name: row.design_name,
                 purchaseDate: row.first_purchase_date,
-                imageUrl: `/images/designs/${row.design_id}/${row.design_id}.webp`,
+                imageUrl: `/images/designs/${folderName}/${folderName}.webp`,
                 artist: row.design_name.split(' - ')[0] || 'Unknown Artist',
                 format: 'SVG, PNG, PDF, EPS'
-            };
-        });
+            });
+        }
         
         console.log(`📊 Found ${designs.length} designs for user ${req.session.userId}`);
         console.log(`🔍 DEBUG: Processed designs:`, designs);
@@ -1708,6 +1817,139 @@ app.get('/api/my-collection/history', authenticateUser, async (req, res) => {
     }
 });
 
+// Get personalized recommendations based on user's purchase history
+app.get('/api/my-collection/recommendations', authenticateUser, async (req, res) => {
+    console.log('🎯 /api/my-collection/recommendations accessed for user:', req.session.userId);
+    try {
+        // Get user's purchased designs
+        const userPurchases = await pool.query(`
+            SELECT design_id, design_name FROM purchases 
+            WHERE user_id = $1
+        `, [req.session.userId]);
+        
+        let recommendations = [];
+        
+        if (userPurchases.rows.length > 0) {
+            // Get the first purchased design to base recommendations on
+            const purchasedDesign = userPurchases.rows[0];
+            
+            // Find similar designs based on genre and category
+            const similarDesigns = await pool.query(`
+                SELECT d.*, 
+                       CASE 
+                           WHEN d.genre = (SELECT genre FROM designs WHERE design_id = $1) THEN 3
+                           WHEN d.category = (SELECT category FROM designs WHERE design_id = $1) THEN 2
+                           ELSE 1
+                       END as match_score
+                FROM designs d
+                WHERE d.design_id != $1 
+                AND d.design_id NOT IN (
+                    SELECT design_id FROM purchases WHERE user_id = $2
+                )
+                ORDER BY match_score DESC, d.rating DESC, d.review_count DESC
+                LIMIT 8
+            `, [purchasedDesign.design_id, req.session.userId]);
+            
+            recommendations = similarDesigns.rows.map(design => ({
+                id: design.design_id,
+                name: design.name,
+                artist: design.artist,
+                genre: design.genre,
+                category: design.category,
+                price: parseFloat(design.price),
+                rating: parseFloat(design.rating),
+                reviewCount: parseInt(design.review_count),
+                imageUrl: design.image_url || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=400&auto=format&fit=crop`,
+                matchScore: parseInt(design.match_score),
+                matchPercentage: Math.min(95, 70 + (design.match_score * 10))
+            }));
+        } else {
+            // If no purchases, show top-rated designs
+            const topDesigns = await pool.query(`
+                SELECT * FROM designs 
+                ORDER BY rating DESC, review_count DESC
+                LIMIT 6
+            `);
+            
+            recommendations = topDesigns.rows.map(design => ({
+                id: design.design_id,
+                name: design.name,
+                artist: design.artist,
+                genre: design.genre,
+                category: design.category,
+                price: parseFloat(design.price),
+                rating: parseFloat(design.rating),
+                reviewCount: parseInt(design.review_count),
+                imageUrl: design.image_url || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=400&auto=format&fit=crop`,
+                matchScore: 1,
+                matchPercentage: 85
+            }));
+        }
+        
+        // Get trending designs (based on rating and review count)
+        const trendingDesigns = await pool.query(`
+            SELECT * FROM designs 
+            WHERE design_id NOT IN (
+                SELECT design_id FROM purchases WHERE user_id = $1
+            )
+            ORDER BY (rating * review_count) DESC
+            LIMIT 4
+        `, [req.session.userId]);
+        
+        const trending = trendingDesigns.rows.map(design => ({
+            id: design.design_id,
+            name: design.name,
+            artist: design.artist,
+            genre: design.genre,
+            category: design.category,
+            price: parseFloat(design.price),
+            rating: parseFloat(design.rating),
+            reviewCount: parseInt(design.review_count),
+            imageUrl: design.image_url || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=400&auto=format&fit=crop`
+        }));
+        
+        // Get new artist discoveries (artists not in user's purchases)
+        const newArtists = await pool.query(`
+            SELECT DISTINCT artist, genre, 
+                   COUNT(*) as design_count,
+                   AVG(rating) as avg_rating
+            FROM designs 
+            WHERE artist NOT IN (
+                SELECT DISTINCT d.artist 
+                FROM designs d 
+                JOIN purchases p ON d.design_id = p.design_id 
+                WHERE p.user_id = $1
+            )
+            GROUP BY artist, genre
+            ORDER BY avg_rating DESC, design_count DESC
+            LIMIT 3
+        `, [req.session.userId]);
+        
+        const artistDiscoveries = newArtists.rows.map(artist => ({
+            artist: artist.artist,
+            genre: artist.genre,
+            designCount: parseInt(artist.design_count),
+            avgRating: parseFloat(artist.avg_rating)
+        }));
+        
+        console.log(`📊 Generated ${recommendations.length} recommendations for user ${req.session.userId}`);
+        res.json({ 
+            success: true, 
+            recommendations: recommendations,
+            trending: trending,
+            artistDiscoveries: artistDiscoveries
+        });
+    } catch (error) {
+        console.error('❌ Error generating recommendations:', error);
+        res.json({ 
+            success: true, 
+            recommendations: [],
+            trending: [],
+            artistDiscoveries: []
+        });
+    }
+});
+
 app.get('/api/my-collection/download/:designId', authenticateUser, async (req, res) => {
     const { designId } = req.params;
     console.log('🎯 /api/my-collection/download accessed for user:', req.session.userId);
@@ -1726,8 +1968,11 @@ app.get('/api/my-collection/download/:designId', authenticateUser, async (req, r
             });
         }
         
+        // Get the correct folder name for this design ID
+        const folderName = await getDesignFolderName(designId);
+        
         // Check if design files exist - use music_lyricss folder for actual files
-        const designPath = path.join(__dirname, 'music_lyricss', designId);
+        const designPath = path.join(__dirname, 'music_lyricss', folderName);
         if (!fs.existsSync(designPath)) {
             console.log(`❌ Design folder not found: ${designPath}`);
             return res.status(404).json({ 
@@ -1746,12 +1991,12 @@ app.get('/api/my-collection/download/:designId', authenticateUser, async (req, r
         // Create download links for available formats
         const downloadLinks = {};
         availableFormats.forEach(format => {
-            downloadLinks[format] = `/api/download/${designId}/${format}`;
+            downloadLinks[format] = `/api/download/${folderName}/${format}`;
         });
         
         // If no files found, provide webp as fallback
         if (Object.keys(downloadLinks).length === 0) {
-            downloadLinks.webp = `/api/download/${designId}/webp`;
+            downloadLinks.webp = `/api/download/${folderName}/webp`;
         }
         
         res.json({ 
@@ -1931,4 +2176,29 @@ app.listen(PORT, () => {
     console.log('📧 Email system configured and ready');
     console.log('⚡ Performance optimizations applied');
 });
+
+// Function to get design folder name from numeric ID
+const getDesignFolderName = async (designId) => {
+    try {
+        // Load the designs database
+        const designsData = JSON.parse(fs.readFileSync('designs-database.json', 'utf8'));
+        
+        // Find the design by numeric ID
+        const design = designsData.designs.find(d => d.id.toString() === designId.toString());
+        
+        if (design && design.image) {
+            // Extract folder name from image path: "images/designs/folder-name/folder-name.webp"
+            const pathParts = design.image.split('/');
+            if (pathParts.length >= 3) {
+                return pathParts[2]; // Return the folder name
+            }
+        }
+        
+        // Fallback: return the design ID if no match found
+        return designId;
+    } catch (error) {
+        console.error('❌ Error getting design folder name:', error);
+        return designId; // Fallback to original ID
+    }
+};
 

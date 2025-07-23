@@ -237,7 +237,7 @@
             
             const itemsHtml = items.map(item => {
                 console.log('🛒 Processing item for display:', item);
-                const designName = item.itemId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const designName = item.designName || item.itemId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const price = item.price || 3.00;
                 const quantity = item.qty || item.quantity || 1;
                 const totalPrice = (price * quantity).toFixed(2);

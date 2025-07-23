@@ -86,35 +86,19 @@ class SongCatalogManager {
         const processedSongs = [];
 
         rawData.forEach((item, index) => {
-            // Skip items with empty songs or invalid data
-            if (!item.song || item.song.trim() === '' || !item.artist || item.artist.trim() === '') {
+            // Skip items with invalid data (must have at least artist)
+            if (!item.artist || item.artist.trim() === '') {
                 return;
             }
 
-            // Extract design ID from image path
-            let designId = '';
-            if (item.image) {
-                // Extract folder name from image path: "images/designs/folder-name/file.webp"
-                const pathParts = item.image.split('/');
-                if (pathParts.length >= 3 && pathParts[1] === 'designs') {
-                    designId = pathParts[2]; // This is the folder name
-                }
-            }
-            
-            // If no designId was extracted, generate one based on the correct folder naming pattern
-            if (!designId) {
-                // Format: {artist}-{song}-{instrument}
-                const artist = this.cleanArtistName(item.artist).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                const song = this.cleanSongName(item.song).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                const instrument = (item.shape || 'guitar').toLowerCase();
-                designId = `${artist}-${song}-${instrument}`;
-            }
+            // Use the numeric design ID from the database
+            const designId = item.id.toString();
             
             // Use the real data from our database
             const song = {
                 id: item.id || (index + 1),
                 artist: this.cleanArtistName(item.artist),
-                song: this.cleanSongName(item.song),
+                song: item.song ? this.cleanSongName(item.song) : 'Unknown Song',
                 genre: item.genre || this.determineGenre(item.artist, item.song),
                 decade: this.determineDecade(item.artist),
                 instrumentShape: item.shape || 'GUITAR', // Use the actual shape from database
