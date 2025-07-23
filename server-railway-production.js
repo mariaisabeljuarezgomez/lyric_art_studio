@@ -11,6 +11,7 @@ const session = require('express-session');
 const { Pool } = require('pg');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -32,6 +33,266 @@ pool.query(`
 
 // Use connect-pg-simple for PostgreSQL session storage
 const pgSession = require('connect-pg-simple')(session);
+
+// Email Configuration
+const createEmailTransporter = () => {
+    return nodemailer.createTransporter({
+        host: process.env.EMAIL_HOST || 'smtp.privateemail.com',
+        port: process.env.EMAIL_PORT || 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+            user: process.env.EMAIL_USER || 'admin@lyricartstudio.shop',
+            pass: process.env.EMAIL_PASS
+        },
+        tls: {
+            rejectUnauthorized: false
+        }
+    });
+};
+
+// Email Templates
+const emailTemplates = {
+    orderConfirmation: (orderData) => ({
+        subject: `Order Confirmation - LyricArt Studio`,
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Order Confirmation</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .order-item { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #667eea; }
+                    .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 20px; }
+                    .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+                    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🎵 LyricArt Studio</h1>
+                        <p>Order Confirmation</p>
+                    </div>
+                    <div class="content">
+                        <h2>Thank you for your order!</h2>
+                        <p>Hi ${orderData.customerName || 'Valued Customer'},</p>
+                        <p>Your order has been successfully processed. Here are your order details:</p>
+                        
+                        <h3>Order Details:</h3>
+                        <p><strong>Order ID:</strong> ${orderData.orderId}</p>
+                        <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                        
+                        <h3>Items Ordered:</h3>
+                        ${orderData.items.map(item => `
+                            <div class="order-item">
+                                <strong>${item.title || 'Design'}</strong><br>
+                                Format: ${item.format}<br>
+                                Price: $${item.price}
+                            </div>
+                        `).join('')}
+                        
+                        <div class="total">
+                            <strong>Total: $${orderData.total}</strong>
+                        </div>
+                        
+                        <p>Your download links will be available in your account dashboard.</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${process.env.SITE_URL || 'https://lyricartstudio.shop'}/my-collection" class="button">View My Collection</a>
+                            <a href="${process.env.SITE_URL || 'https://lyricartstudio.shop'}/homepage" class="button">Continue Shopping</a>
+                        </div>
+                        
+                        <p>If you have any questions, please contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}">${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}</a></p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 LyricArt Studio. All rights reserved.</p>
+                        <p>This email was sent to ${orderData.customerEmail}</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
+    }),
+
+    contactForm: (contactData) => ({
+        subject: `New Contact Form Submission - ${contactData.subject || 'LyricArt Studio'}`,
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Contact Form Submission</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .field { margin: 15px 0; }
+                    .label { font-weight: bold; color: #667eea; }
+                    .value { background: white; padding: 10px; border-radius: 5px; margin-top: 5px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>📧 New Contact Form Submission</h1>
+                        <p>LyricArt Studio</p>
+                    </div>
+                    <div class="content">
+                        <div class="field">
+                            <div class="label">Name:</div>
+                            <div class="value">${contactData.name}</div>
+                        </div>
+                        <div class="field">
+                            <div class="label">Email:</div>
+                            <div class="value">${contactData.email}</div>
+                        </div>
+                        <div class="field">
+                            <div class="label">Subject:</div>
+                            <div class="value">${contactData.subject || 'General Inquiry'}</div>
+                        </div>
+                        <div class="field">
+                            <div class="label">Message:</div>
+                            <div class="value">${contactData.message}</div>
+                        </div>
+                        <p><strong>Submitted on:</strong> ${new Date().toLocaleString()}</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
+    }),
+
+    welcomeEmail: (userData) => ({
+        subject: `Welcome to LyricArt Studio!`,
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Welcome to LyricArt Studio</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+                    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🎵 Welcome to LyricArt Studio!</h1>
+                        <p>Your account has been created successfully</p>
+                    </div>
+                    <div class="content">
+                        <h2>Hi ${userData.name},</h2>
+                        <p>Welcome to LyricArt Studio! We're excited to have you as part of our community.</p>
+                        
+                        <p>With your account, you can:</p>
+                        <ul>
+                            <li>Browse our collection of 400+ custom lyric designs</li>
+                            <li>Purchase designs in multiple formats (SVG, PDF, PNG, EPS)</li>
+                            <li>Access your purchased designs anytime</li>
+                            <li>Track your order history</li>
+                        </ul>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${process.env.SITE_URL || 'https://lyricartstudio.shop'}/homepage" class="button">Start Browsing</a>
+                            <a href="${process.env.SITE_URL || 'https://lyricartstudio.shop'}/my-collection" class="button">My Collection</a>
+                        </div>
+                        
+                        <p>If you have any questions, feel free to contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}">${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}</a></p>
+                        
+                        <p>Happy designing!</p>
+                        <p><strong>The LyricArt Studio Team</strong></p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 LyricArt Studio. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
+    }),
+
+    passwordReset: (userData, resetLink) => ({
+        subject: `Password Reset Request - LyricArt Studio`,
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Password Reset</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+                    .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔐 Password Reset Request</h1>
+                        <p>LyricArt Studio</p>
+                    </div>
+                    <div class="content">
+                        <h2>Hi ${userData.name},</h2>
+                        <p>We received a request to reset your password for your LyricArt Studio account.</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${resetLink}" class="button">Reset Password</a>
+                        </div>
+                        
+                        <div class="warning">
+                            <strong>Important:</strong> This link will expire in 1 hour for security reasons.
+                        </div>
+                        
+                        <p>If you didn't request this password reset, please ignore this email. Your password will remain unchanged.</p>
+                        
+                        <p>If you have any questions, contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}">${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}</a></p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 LyricArt Studio. All rights reserved.</p>
+                        <p>This email was sent to ${userData.email}</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
+    })
+};
+
+// Email sending function
+const sendEmail = async (to, template, data = {}) => {
+    try {
+        const transporter = createEmailTransporter();
+        const emailContent = emailTemplates[template](data);
+        
+        const mailOptions = {
+            from: process.env.EMAIL_FROM || `"LyricArt Studio" <${process.env.EMAIL_USER || 'admin@lyricartstudio.shop'}>`,
+            to: to,
+            subject: emailContent.subject,
+            html: emailContent.html
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Email sent successfully:', info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('❌ Email sending failed:', error);
+        return { success: false, error: error.message };
+    }
+};
 
 // Middleware
 app.use(cors({
@@ -352,6 +613,141 @@ app.delete('/api/cart/clear', (req, res) => {
     });
 });
 
+// Email API Routes
+app.post('/api/email/contact', async (req, res) => {
+    try {
+        const { name, email, subject, message } = req.body;
+        
+        if (!name || !email || !message) {
+            return res.status(400).json({ error: 'Name, email, and message are required' });
+        }
+
+        // Send email to admin
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@lyricartstudio.shop';
+        const emailResult = await sendEmail(adminEmail, 'contactForm', {
+            name, email, subject, message
+        });
+
+        if (emailResult.success) {
+            console.log('✅ Contact form email sent to admin');
+            res.json({ success: true, message: 'Message sent successfully' });
+        } else {
+            console.error('❌ Contact form email failed:', emailResult.error);
+            res.status(500).json({ error: 'Failed to send message' });
+        }
+    } catch (error) {
+        console.error('❌ Contact form error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/email/order-confirmation', async (req, res) => {
+    try {
+        const { customerEmail, customerName, orderId, items, total } = req.body;
+        
+        if (!customerEmail || !orderId || !items || !total) {
+            return res.status(400).json({ error: 'Missing required order information' });
+        }
+
+        const emailResult = await sendEmail(customerEmail, 'orderConfirmation', {
+            customerEmail,
+            customerName,
+            orderId,
+            items,
+            total
+        });
+
+        if (emailResult.success) {
+            console.log('✅ Order confirmation email sent to customer');
+            res.json({ success: true, message: 'Order confirmation sent' });
+        } else {
+            console.error('❌ Order confirmation email failed:', emailResult.error);
+            res.status(500).json({ error: 'Failed to send order confirmation' });
+        }
+    } catch (error) {
+        console.error('❌ Order confirmation error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/email/welcome', async (req, res) => {
+    try {
+        const { userEmail, userName } = req.body;
+        
+        if (!userEmail || !userName) {
+            return res.status(400).json({ error: 'User email and name are required' });
+        }
+
+        const emailResult = await sendEmail(userEmail, 'welcomeEmail', {
+            email: userEmail,
+            name: userName
+        });
+
+        if (emailResult.success) {
+            console.log('✅ Welcome email sent to new user');
+            res.json({ success: true, message: 'Welcome email sent' });
+        } else {
+            console.error('❌ Welcome email failed:', emailResult.error);
+            res.status(500).json({ error: 'Failed to send welcome email' });
+        }
+    } catch (error) {
+        console.error('❌ Welcome email error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/email/password-reset', async (req, res) => {
+    try {
+        const { userEmail, userName, resetToken } = req.body;
+        
+        if (!userEmail || !resetToken) {
+            return res.status(400).json({ error: 'User email and reset token are required' });
+        }
+
+        const resetLink = `${process.env.SITE_URL || 'https://lyricartstudio.shop'}/reset-password?token=${resetToken}`;
+        
+        const emailResult = await sendEmail(userEmail, 'passwordReset', {
+            email: userEmail,
+            name: userName || 'User'
+        }, resetLink);
+
+        if (emailResult.success) {
+            console.log('✅ Password reset email sent');
+            res.json({ success: true, message: 'Password reset email sent' });
+        } else {
+            console.error('❌ Password reset email failed:', emailResult.error);
+            res.status(500).json({ error: 'Failed to send password reset email' });
+        }
+    } catch (error) {
+        console.error('❌ Password reset email error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Test email endpoint
+app.post('/api/email/test', async (req, res) => {
+    try {
+        const { testEmail } = req.body;
+        const emailToTest = testEmail || process.env.ADMIN_EMAIL || 'admin@lyricartstudio.shop';
+        
+        const emailResult = await sendEmail(emailToTest, 'welcomeEmail', {
+            email: emailToTest,
+            name: 'Test User'
+        });
+
+        if (emailResult.success) {
+            console.log('✅ Test email sent successfully');
+            res.json({ success: true, message: 'Test email sent successfully' });
+        } else {
+            console.error('❌ Test email failed:', emailResult.error);
+            res.status(500).json({ error: 'Test email failed', details: emailResult.error });
+        }
+    } catch (error) {
+        console.error('❌ Test email error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // PayPal payment routes
 app.post('/api/payment/create-paypal-order', async (req, res) => {
     try {
@@ -388,8 +784,36 @@ app.post('/api/payment/create-paypal-order', async (req, res) => {
     }
 });
 
-app.get('/payment/approve', (req, res) => {
+app.get('/payment/approve', async (req, res) => {
     const { orderId } = req.query;
+    
+    // Get cart data from session
+    const cart = req.session.cart || { items: [], total: 0 };
+    
+    // Send order confirmation email if user is logged in
+    if (req.session.userEmail && cart.items.length > 0) {
+        try {
+            const emailResult = await sendEmail(req.session.userEmail, 'orderConfirmation', {
+                customerEmail: req.session.userEmail,
+                customerName: req.session.userName || 'Valued Customer',
+                orderId: orderId,
+                items: cart.items,
+                total: cart.total
+            });
+            
+            if (emailResult.success) {
+                console.log('✅ Order confirmation email sent for order:', orderId);
+            } else {
+                console.error('❌ Failed to send order confirmation email:', emailResult.error);
+            }
+        } catch (error) {
+            console.error('❌ Error sending order confirmation email:', error);
+        }
+        
+        // Clear cart after successful payment
+        req.session.cart = { items: [], total: 0, itemCount: 0 };
+    }
+    
     res.send(`
         <!DOCTYPE html>
         <html>
@@ -611,6 +1035,7 @@ app.listen(PORT, () => {
     console.log('🛒 Shopping cart system ready');
     console.log('💳 PayPal integration configured');
     console.log('🔐 User authentication active');
+    console.log('📧 Email system configured and ready');
     console.log('⚡ Performance optimizations applied');
 });
 

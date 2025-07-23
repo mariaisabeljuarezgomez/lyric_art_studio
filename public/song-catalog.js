@@ -845,14 +845,8 @@ function clearAllFilters() {
 
 // Function to open protected design viewer
 function openProtectedDesignViewer(imagePath, songTitle, artistName) {
-    console.log('Opening protected design viewer:', imagePath);
+    console.log('Opening OpenSeadragon design viewer:', imagePath);
     
-    if (typeof window.createProtectedViewer === 'undefined') {
-        console.error('Protected image viewer not loaded');
-        alert('Image viewer not available. Please refresh the page.');
-        return;
-    }
-
     // Create modal HTML
     const modalHTML = `
         <div id="protected-viewer-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 8px;">
@@ -870,12 +864,14 @@ function openProtectedDesignViewer(imagePath, songTitle, artistName) {
                     </div>
                 </div>
                 
-                <!-- Protected Viewer Container -->
-                <div id="protected-viewer-container" style="width: 100%; height: 100%; margin-top: 60px; background-color: white;"></div>
+                <!-- OpenSeadragon Container -->
+                <div id="protected-viewer-container" style="width: 100%; height: 100%; margin-top: 60px; background-color: white;">
+                    <div id="openseadragon-viewer" style="width: 100%; height: 100%;"></div>
+                </div>
                 
                 <!-- Instructions -->
                 <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; background-color: rgba(0, 0, 0, 0.75); color: white; padding: 8px; border-radius: 8px; font-size: 12px; text-align: center;">
-                    <p style="margin: 0;">🔍 Scroll to zoom • 🖱️ Drag to pan • 📱 Pinch to zoom on mobile • 🛡️ Image protected</p>
+                    <p style="margin: 0;">🔍 Scroll to zoom • 🖱️ Drag to pan • 📱 Pinch to zoom on mobile</p>
                 </div>
             </div>
         </div>
@@ -883,21 +879,54 @@ function openProtectedDesignViewer(imagePath, songTitle, artistName) {
 
     // Add modal to page
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-    // Initialize protected viewer
-    setTimeout(() => {
-        try {
-            console.log('🔍 About to call createProtectedViewer...');
-            console.log('🔍 createProtectedViewer function available:', typeof window.createProtectedViewer);
-            console.log('🔍 OpenSeadragon available:', typeof OpenSeadragon);
-            
-            window.createProtectedViewer('protected-viewer-container', imagePath);
-            console.log('✅ Protected viewer initialized successfully');
-        } catch (error) {
-            console.error('❌ Error initializing protected viewer:', error);
-            alert('Error loading image viewer. Please try again.');
+    
+    // Initialize OpenSeadragon viewer
+    try {
+        if (typeof OpenSeadragon === 'undefined') {
+            console.error('❌ OpenSeadragon not loaded, falling back to simple viewer');
+            // Fallback to simple image
+            const container = document.getElementById('protected-viewer-container');
+            container.innerHTML = `<img src="${imagePath}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px;" alt="${songTitle}">`;
+            return;
         }
-    }, 100);
+        
+        // Create OpenSeadragon viewer
+        const viewer = OpenSeadragon({
+            id: 'openseadragon-viewer',
+            prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
+            tileSources: {
+                type: 'image',
+                url: imagePath,
+                buildPyramid: false
+            },
+            minZoomLevel: 0.5,
+            maxZoomLevel: 8,
+            zoomPerScroll: 1.1,
+            zoomPerClick: 1.5,
+            animationTime: 0.8,
+            blendTime: 0.1,
+            alwaysBlend: false,
+            immediateRender: false,
+            wrapHorizontal: false,
+            wrapVertical: false,
+            wrapOverlays: false,
+            panHorizontal: true,
+            panVertical: true,
+            showNavigator: false,
+            showRotationControl: false,
+            showZoomControl: false,
+            showHomeControl: false,
+            showFullPageControl: false
+        });
+        
+        console.log('✅ OpenSeadragon viewer created successfully');
+        
+    } catch (error) {
+        console.error('❌ Error creating OpenSeadragon viewer:', error);
+        // Fallback to simple image
+        const container = document.getElementById('protected-viewer-container');
+        container.innerHTML = `<img src="${imagePath}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px;" alt="${songTitle}">`;
+    }
 }
 
 // Close protected viewer modal

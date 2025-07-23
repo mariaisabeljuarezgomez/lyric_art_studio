@@ -571,7 +571,7 @@
                                 </div>
                                 
                                 <div style="display: flex; gap: 10px;">
-                                    <button type="submit" style="flex: 1; background: #00d4ff; color: black; border: none; border-radius: 4px; padding: 10px; font-size: 12px; font-weight: bold; cursor: pointer;">Submit Request</button>
+                                    <button type="submit" style="flex: 1; background: #00d4ff; color: black; border: none; border-radius: 4px; padding: 10px; font-size: 12px; font-weight: bold; cursor: pointer;">PURCHASE</button>
                                     <button type="button" onclick="closeCommissionModal()" style="flex: 1; background: transparent; color: #00d4ff; border: 1px solid #00d4ff; border-radius: 4px; padding: 10px; font-size: 12px; cursor: pointer;">Cancel</button>
                                 </div>
                             </form>
@@ -667,24 +667,61 @@
                 price: 25.00
             };
 
+            // Add to shopping cart using server-side cart
+            addCustomDesignToCartServer(commissionData);
+
             // Show success message
             const successHTML = `
                 <div class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.8);">
                     <div class="bg-background rounded-lg p-8 max-w-md w-full text-center">
-                        <div class="w-16 h-16 mx-auto mb-4 bg-accent/20 rounded-full flex items-center justify-center">
-                            <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-12 h-12 mx-auto mb-4 bg-accent/20 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-montserrat font-bold mb-2">Custom Design Request Submitted!</h3>
-                        <p class="text-text-secondary mb-6">Maria will review your request and contact you within 24 hours to discuss your custom design.</p>
-                        <button onclick="closeSuccessModal()" class="btn-primary w-full">Close</button>
+                        <h3 class="text-lg font-montserrat font-bold mb-2">Custom Design Added to Cart!</h3>
+                        <p class="text-text-secondary mb-4">Your custom design has been added to your shopping cart.</p>
+                        <p class="text-text-secondary mb-6">You can add more designs or proceed to checkout when ready.</p>
+                        <div class="flex gap-3">
+                            <button onclick="closeSuccessModal()" class="flex-1 bg-surface border border-border-subtle text-text-primary py-2 px-4 rounded-lg hover:bg-surface/80 transition-smooth">
+                                Add Another Design
+                            </button>
+                            <button onclick="window.location.href='/pages/checkout.html'" class="flex-1 btn-primary">
+                                View Cart
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
             
             document.body.insertAdjacentHTML('beforeend', successHTML);
             closeCommissionModal();
+        }
+
+        async function addCustomDesignToCartServer(commissionData) {
+            try {
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        itemId: `custom-${Date.now()}`,
+                        qty: 1,
+                        price: commissionData.price,
+                        format: 'Custom Design',
+                        commissionData: commissionData
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('Custom design added to cart!', 'success');
+                } else {
+                    throw new Error('Failed to add to cart');
+                }
+            } catch (error) {
+                console.error('Error adding custom design to cart:', error);
+                showNotification('Failed to add custom design to cart', 'error');
+            }
         }
 
         function closeSuccessModal() {
