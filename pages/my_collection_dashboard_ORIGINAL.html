@@ -136,23 +136,23 @@
                 <div class="mb-8">
                     <div class="flex flex-col md:flex-row gap-4 mb-6">
                         <div class="flex-1 relative">
-                            <input type="text" placeholder="Search your designs..." class="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 pr-10 text-text-primary placeholder-text-secondary focus:border-accent focus:outline-none transition-smooth" />
+                            <input type="text" id="search-input" placeholder="Search your designs..." class="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 pr-10 text-text-primary placeholder-text-secondary focus:border-accent focus:outline-none transition-smooth" />
                             <svg class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </div>
-                        <select class="bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-primary focus:border-accent focus:outline-none transition-smooth">
-                            <option>All Formats</option>
-                            <option>SVG</option>
-                            <option>PNG</option>
-                            <option>PDF</option>
-                            <option>EPS</option>
+                        <select id="format-filter" class="bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-primary focus:border-accent focus:outline-none transition-smooth">
+                            <option value="all">All Formats</option>
+                            <option value="svg">SVG</option>
+                            <option value="png">PNG</option>
+                            <option value="pdf">PDF</option>
+                            <option value="eps">EPS</option>
                         </select>
-                        <select class="bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-primary focus:border-accent focus:outline-none transition-smooth">
-                            <option>Sort by: Recent</option>
-                            <option>Sort by: Name A-Z</option>
-                            <option>Sort by: Purchase Date</option>
-                            <option>Sort by: Artist</option>
+                        <select id="sort-select" class="bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-primary focus:border-accent focus:outline-none transition-smooth">
+                            <option value="recent">Sort by: Recent</option>
+                            <option value="name">Sort by: Name A-Z</option>
+                            <option value="date">Sort by: Purchase Date</option>
+                            <option value="artist">Sort by: Artist</option>
                         </select>
                     </div>
                 </div>
@@ -1142,6 +1142,262 @@
             setTimeout(() => notification.remove(), 3000);
         }
 
+        // ✅ SEARCH AND FILTER FUNCTIONALITY
+        let filteredDesigns = []; // Store filtered results
+
+        // Initialize search and filter functionality
+        function initializeSearchAndFilter() {
+            const searchInput = document.getElementById('search-input');
+            const formatFilter = document.getElementById('format-filter');
+            const sortSelect = document.getElementById('sort-select');
+
+            // Add event listeners
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(handleSearch, 300));
+            }
+            if (formatFilter) {
+                formatFilter.addEventListener('change', handleFilter);
+            }
+            if (sortSelect) {
+                sortSelect.addEventListener('change', handleSort);
+            }
+
+            console.log('✅ Search and filter functionality initialized');
+        }
+
+        // Debounce function to prevent excessive API calls
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Handle search functionality
+        function handleSearch() {
+            const searchInput = document.getElementById('search-input');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            
+            console.log('🔍 Searching for:', searchTerm);
+            
+            // Filter designs based on search term using real userDesigns data
+            filteredDesigns = userDesigns.filter(design => {
+                const matchesSearch = !searchTerm || 
+                    design.name.toLowerCase().includes(searchTerm) ||
+                    design.artist.toLowerCase().includes(searchTerm) ||
+                    (design.category && design.category.toLowerCase().includes(searchTerm));
+                
+                return matchesSearch;
+            });
+            
+            // Apply current filters and sorting
+            applyFiltersAndSort();
+        }
+
+        // Handle format filter
+        function handleFilter() {
+            console.log('🔧 Filter applied');
+            applyFiltersAndSort();
+        }
+
+        // Handle sorting
+        function handleSort() {
+            console.log('📊 Sort applied');
+            applyFiltersAndSort();
+        }
+
+        // Apply all filters and sorting
+        function applyFiltersAndSort() {
+            const formatFilter = document.getElementById('format-filter');
+            const sortSelect = document.getElementById('sort-select');
+            
+            let results = [...filteredDesigns];
+            
+            // Apply format filter (all designs support multiple formats)
+            if (formatFilter && formatFilter.value !== 'all') {
+                // Since all purchased designs support all formats, we don't need to filter
+                // But we can keep this for future flexibility
+                console.log('🔧 Format filter applied:', formatFilter.value);
+            }
+            
+            // Apply sorting
+            if (sortSelect) {
+                switch (sortSelect.value) {
+                    case 'name':
+                        results.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 'artist':
+                        results.sort((a, b) => a.artist.localeCompare(b.artist));
+                        break;
+                    case 'date':
+                        results.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+                        break;
+                    case 'recent':
+                    default:
+                        results.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+                        break;
+                }
+            }
+            
+            // Update the display with filtered results
+            updateDesignsDisplayFiltered(results);
+            
+            // Update total count
+            updateTotalCount(results.length);
+        }
+
+        // Update designs display with real data (RESTORED ORIGINAL FUNCTION)
+        function updateDesignsDisplay() {
+            const designsGrid = document.querySelector('#my-designs .grid');
+            if (!designsGrid) return;
+
+            if (userDesigns.length === 0) {
+                designsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <svg class="w-12 h-12 mx-auto text-text-secondary mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <h3 class="text-lg font-montserrat font-semibold mb-2">No Designs Yet</h3>
+                        <p class="text-text-secondary mb-4">You haven't purchased any designs yet.</p>
+                        <a href="/browse" class="btn-primary">Browse Designs</a>
+                    </div>
+                `;
+                return;
+            }
+
+            designsGrid.innerHTML = userDesigns.map(design => `
+                <div class="group">
+                    <div class="card-surface overflow-hidden hover:border-accent transition-smooth">
+                        <div class="relative">
+                            <div class="relative aspect-square" style="background-color: white;">
+                                <img src="${design.imageUrl}" alt="${design.name} design" class="w-full h-full object-contain" style="padding: 8px;" loading="lazy" onerror="this.style.display='none'" />
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-smooth"></div>
+                            <div class="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-smooth">
+                                <div class="flex space-x-2">
+                                    <button onclick="downloadDesign('${design.id}')" class="flex-1 bg-accent text-primary px-3 py-2 rounded text-sm font-medium hover:bg-accent/90 transition-smooth">Download</button>
+                                    <button onclick="shareDesign('${design.id}')" class="bg-surface/80 text-text-primary p-2 rounded hover:bg-surface transition-smooth">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-montserrat font-semibold mb-1">${design.name}</h3>
+                            <p class="text-text-secondary text-sm mb-2">${design.artist} • Multiple Formats</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex space-x-1">
+                                    <span class="px-2 py-1 bg-accent/20 text-accent text-xs rounded">SVG, PNG, PDF, EPS</span>
+                                </div>
+                                <span class="text-text-secondary text-xs">${formatDate(design.purchaseDate)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update designs display with filtered results (for search/filter functionality)
+        function updateDesignsDisplayFiltered(designs) {
+            const designsGrid = document.querySelector('#my-designs .grid');
+            if (!designsGrid) return;
+
+            if (designs.length === 0) {
+                designsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <svg class="w-12 h-12 mx-auto text-text-secondary mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <h3 class="text-lg font-montserrat font-semibold mb-2">No designs found</h3>
+                        <p class="text-text-secondary mb-4">Try adjusting your search or filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            designsGrid.innerHTML = designs.map(design => `
+                <div class="group">
+                    <div class="card-surface overflow-hidden hover:border-accent transition-smooth">
+                        <div class="relative">
+                            <div class="relative aspect-square" style="background-color: white;">
+                                <img src="${design.imageUrl}" alt="${design.name} design" class="w-full h-full object-contain" style="padding: 8px;" loading="lazy" onerror="this.style.display='none'" />
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-smooth"></div>
+                            <div class="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-smooth">
+                                <div class="flex space-x-2">
+                                    <button onclick="downloadDesign('${design.id}')" class="flex-1 bg-accent text-primary px-3 py-2 rounded text-sm font-medium hover:bg-accent/90 transition-smooth">Download</button>
+                                    <button onclick="shareDesign('${design.id}')" class="bg-surface/80 text-text-primary p-2 rounded hover:bg-surface transition-smooth">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-montserrat font-semibold mb-1">${design.name}</h3>
+                            <p class="text-text-secondary text-sm mb-2">${design.artist} • Multiple Formats</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex space-x-1">
+                                    <span class="px-2 py-1 bg-accent/20 text-accent text-xs rounded">SVG, PNG, PDF, EPS</span>
+                                </div>
+                                <span class="text-text-secondary text-xs">${formatDate(design.purchaseDate)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update total count display
+        function updateTotalCount(count) {
+            const totalCountElement = document.querySelector('.bg-surface .font-bold.text-accent');
+            if (totalCountElement) {
+                totalCountElement.textContent = count;
+            }
+        }
+
+        // Load user designs (this would be called when the page loads)
+        async function loadUserDesigns() {
+            console.log('🎯 Calling /api/my-collection/designs...');
+            
+            try {
+                const response = await fetch('/api/my-collection/designs', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('📊 API Response:', data);
+                
+                if (data.success && Array.isArray(data.designs)) {
+                    userDesigns = data.designs;
+                    console.log(`✅ Loaded ${userDesigns.length} real designs`);
+                    
+                    // Initialize filtered designs array with real data
+                    filteredDesigns = [...userDesigns];
+                    
+                    // Initialize search and filter functionality with real data
+                    initializeSearchAndFilter();
+                    
+                    // Apply initial display with real data
+                    updateDesignsDisplay();
+                    updateDesignsCount();
+                } else {
+                    console.log('⚠️ No designs found, using test data');
+                    // Keep fallback for testing
+                }
+            } catch (error) {
+                console.error('❌ Failed to load designs:', error);
+            }
+        }
+
         // Tab Navigation
         document.addEventListener('DOMContentLoaded', function() {
             const tabs = document.querySelectorAll('.dashboard-tab');
@@ -1163,6 +1419,9 @@
 
             // Check authentication on page load
             checkAuthStatus();
+            
+            // ✅ Load user designs and initialize search/filter
+            loadUserDesigns();
         });
 
         // Mobile responsive behavior
