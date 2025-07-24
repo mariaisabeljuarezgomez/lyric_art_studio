@@ -1168,6 +1168,13 @@
         // Mobile responsive behavior
         function handleMobileTabScroll() {
             const tabContainer = document.querySelector('nav.flex.space-x-8');
+            
+            // ✅ FIX: Add null check to prevent error
+            if (!tabContainer) {
+                console.log('⚠️ Tab container not found, skipping mobile scroll setup');
+                return;
+            }
+            
             let isDown = false;
             let startX;
             let scrollLeft;
@@ -1195,10 +1202,11 @@
             });
         }
 
-        handleMobileTabScroll();
-        
+        // ✅ FIX: Move handleMobileTabScroll inside DOMContentLoaded
         // Replace existing code with this forced execution
         document.addEventListener('DOMContentLoaded', async function() {
+            // ✅ FIX: Call handleMobileTabScroll after DOM is loaded
+            handleMobileTabScroll();
             console.log('🎯 DOMContentLoaded - Starting data load...');
             
             // Force immediate authentication check
