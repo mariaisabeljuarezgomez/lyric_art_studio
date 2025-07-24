@@ -723,7 +723,7 @@ function openDesignModal(imageSrc, songTitle, artistName, shape, price, highResP
                                 <button style="width: 100%; background-color: #2563EB; color: white; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: background-color 0.2s;" 
                                         onmouseover="this.style.backgroundColor='#1D4ED8'" 
                                         onmouseout="this.style.backgroundColor='#2563EB'"
-                                        onclick="addToCart('${songTitle}', ${price})">
+                                        onclick="addToCart('${songTitle}', ${price}, '${designId}')">
                                     Add to Cart
                                 </button>
                                                 <button id="modal-wishlist-btn" style="width: 100%; background-color: #FEF3C7; color: #92400E; padding: 12px 16px; border-radius: 8px; border: 1px solid #F59E0B; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" 
@@ -740,7 +740,7 @@ function openDesignModal(imageSrc, songTitle, artistName, shape, price, highResP
                                 <button style="width: 100%; background-color: #059669; color: white; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: background-color 0.2s;" 
                                         onmouseover="this.style.backgroundColor='#047857'" 
                                         onmouseout="this.style.backgroundColor='#059669'"
-                                        onclick="buyNow('${songTitle}', ${price})">
+                                        onclick="buyNow('${songTitle}', ${price}, '${designId}')">
                                     Buy Now
                                 </button>
                             </div>
@@ -781,20 +781,27 @@ function closeDesignModal() {
 }
 
 // Add to cart functionality
-async function addToCart(songTitle, price) {
-    const id = songTitle.toLowerCase().replace(/\s+/g, '-');
+async function addToCart(songTitle, price, designId = null) {
+    // Use designId if provided, otherwise fall back to slug conversion
+    const id = designId || songTitle.toLowerCase().replace(/\s+/g, '-');
     await fetch('/api/cart/add', {
-            method: 'POST',
+        method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId: id, qty: 1, price })
-        });
+        body: JSON.stringify({ 
+            itemId: id, 
+            designId: designId || id,
+            designName: songTitle,
+            qty: 1, 
+            price 
+        })
+    });
     updateCartBadge();
 }
 
 // Buy now functionality
-async function buyNow(songTitle, price) {
-    await addToCart(songTitle, price);
+async function buyNow(songTitle, price, designId = null) {
+    await addToCart(songTitle, price, designId);
     location.href = '/checkout';
 }
 
