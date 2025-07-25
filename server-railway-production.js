@@ -2005,11 +2005,11 @@ app.get('/api/my-collection/download/:designId', authenticateUser, async (req, r
             console.log(`🔍 Converted folder name "${designId}" to numeric design ID: ${numericDesignId}`);
         }
         
-        // Verify user owns this design using the numeric ID
+        // Verify user owns this design using the folder name (what's actually stored)
         const purchaseCheck = await pool.query(`
             SELECT * FROM purchases 
-            WHERE user_id = $1 AND design_id = $2
-        `, [req.session.userId, numericDesignId.toString()]);
+            WHERE user_id = $1 AND design_name = $2
+        `, [req.session.userId, designId]);
         
         if (purchaseCheck.rows.length === 0) {
             console.log(`❌ User ${req.session.userId} does not own design ${numericDesignId} (folder: ${designId})`);
@@ -2201,6 +2201,267 @@ app.get('/api/wishlist/check/:designId', authenticateUser, async (req, res) => {
     } catch (error) {
         console.error('❌ Error checking wishlist:', error);
         res.json({ success: true, isInWishlist: false });
+    }
+});
+
+// ===== MY COLLECTION DELETE ENDPOINTS =====
+
+// Delete individual design from user's collection
+app.delete('/api/my-collection/delete-design', authenticateUser, async (req, res) => {
+    const { designId } = req.body;
+    console.log('🗑️ /api/my-collection/delete-design accessed for user:', req.session.userId, 'design:', designId);
+    
+    if (!designId) {
+        return res.status(400).json({ success: false, message: 'Design ID is required' });
+    }
+    
+    try {
+        // Convert folder name to numeric design ID if needed
+        let numericDesignId = designId;
+        if (typeof designId === 'string' && designId.includes('-')) {
+            numericDesignId = await getNumericDesignId(designId);
+            console.log(`🔍 Converted folder name "${designId}" to numeric design ID: ${numericDesignId}`);
+        }
+        
+        // Delete from purchases table
+        const result = await pool.query(`
+            DELETE FROM purchases 
+            WHERE user_id = $1 AND design_id = $2
+        `, [req.session.userId, numericDesignId.toString()]);
+        
+        if (result.rowCount > 0) {
+            console.log(`✅ Deleted design ${designId} from collection for user ${req.session.userId}`);
+            res.json({ success: true, message: 'Design deleted from collection' });
+        } else {
+            console.log(`❌ Design ${designId} not found in user's collection`);
+            res.status(404).json({ success: false, message: 'Design not found in your collection' });
+        }
+    } catch (error) {
+        console.error('❌ Error deleting design:', error);
+        res.status(500).json({ success: false, message: 'Error deleting design from collection' });
+    }
+});
+
+// Bulk delete designs from user's collection
+app.delete('/api/my-collection/bulk-delete-designs', authenticateUser, async (req, res) => {
+    const { designIds } = req.body;
+    console.log('🗑️ /api/my-collection/bulk-delete-designs accessed for user:', req.session.userId, 'designs:', designIds);
+    
+    if (!designIds || !Array.isArray(designIds) || designIds.length === 0) {
+        return res.status(400).json({ success: false, message: 'Design IDs array is required' });
+    }
+    
+    try {
+        let deletedCount = 0;
+        const results = [];
+        
+        for (const designId of designIds) {
+            try {
+                // Convert folder name to numeric design ID if needed
+                let numericDesignId = designId;
+                if (typeof designId === 'string' && designId.includes('-')) {
+                    numericDesignId = await getNumericDesignId(designId);
+                }
+                
+                // Delete from purchases table
+                const result = await pool.query(`
+                    DELETE FROM purchases 
+                    WHERE user_id = $1 AND design_id = $2
+                `, [req.session.userId, numericDesignId.toString()]);
+                
+                if (result.rowCount > 0) {
+                    deletedCount++;
+                    results.push({ designId: designId, success: true });
+                    console.log(`✅ Deleted design ${designId} from collection`);
+                } else {
+                    results.push({ designId: designId, success: false, message: 'Not found' });
+                    console.log(`❌ Design ${designId} not found in collection`);
+                }
+            } catch (error) {
+                console.error(`❌ Error deleting design ${designId}:`, error);
+                results.push({ designId: designId, success: false, message: 'Delete error' });
+            }
+        }
+        
+        console.log(`✅ Bulk delete completed: ${deletedCount}/${designIds.length} designs deleted for user ${req.session.userId}`);
+        res.json({ 
+            success: true, 
+            message: `${deletedCount} design(s) deleted from collection`,
+            deletedCount: deletedCount,
+            totalRequested: designIds.length,
+            results: results
+        });
+    } catch (error) {
+        console.error('❌ Error in bulk delete designs:', error);
+        res.status(500).json({ success: false, message: 'Error deleting designs from collection' });
+    }
+});
+
+// Delete individual order from user's purchase history
+app.delete('/api/my-collection/delete-order', authenticateUser, async (req, res) => {
+    const { orderId } = req.body;
+    console.log('🗑️ /api/my-collection/delete-order accessed for user:', req.session.userId, 'order:', orderId);
+    
+    if (!orderId) {
+        return res.status(400).json({ success: false, message: 'Order ID is required' });
+    }
+    
+    try {
+        // Delete all purchases for this order
+        const result = await pool.query(`
+            DELETE FROM purchases 
+            WHERE user_id = $1 AND order_id = $2
+        `, [req.session.userId, orderId]);
+        
+        if (result.rowCount > 0) {
+            console.log(`✅ Deleted order ${orderId} (${result.rowCount} items) from history for user ${req.session.userId}`);
+            res.json({ 
+                success: true, 
+                message: `Order deleted from history (${result.rowCount} items removed)`,
+                deletedItems: result.rowCount
+            });
+        } else {
+            console.log(`❌ Order ${orderId} not found in user's history`);
+            res.status(404).json({ success: false, message: 'Order not found in your purchase history' });
+        }
+    } catch (error) {
+        console.error('❌ Error deleting order:', error);
+        res.status(500).json({ success: false, message: 'Error deleting order from history' });
+    }
+});
+
+// Bulk delete orders from user's purchase history
+app.delete('/api/my-collection/bulk-delete-orders', authenticateUser, async (req, res) => {
+    const { orderIds } = req.body;
+    console.log('🗑️ /api/my-collection/bulk-delete-orders accessed for user:', req.session.userId, 'orders:', orderIds);
+    
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+        return res.status(400).json({ success: false, message: 'Order IDs array is required' });
+    }
+    
+    try {
+        let deletedOrdersCount = 0;
+        let totalDeletedItems = 0;
+        const results = [];
+        
+        for (const orderId of orderIds) {
+            try {
+                // Delete all purchases for this order
+                const result = await pool.query(`
+                    DELETE FROM purchases 
+                    WHERE user_id = $1 AND order_id = $2
+                `, [req.session.userId, orderId]);
+                
+                if (result.rowCount > 0) {
+                    deletedOrdersCount++;
+                    totalDeletedItems += result.rowCount;
+                    results.push({ orderId: orderId, success: true, deletedItems: result.rowCount });
+                    console.log(`✅ Deleted order ${orderId} (${result.rowCount} items)`);
+                } else {
+                    results.push({ orderId: orderId, success: false, message: 'Not found' });
+                    console.log(`❌ Order ${orderId} not found in history`);
+                }
+            } catch (error) {
+                console.error(`❌ Error deleting order ${orderId}:`, error);
+                results.push({ orderId: orderId, success: false, message: 'Delete error' });
+            }
+        }
+        
+        console.log(`✅ Bulk delete completed: ${deletedOrdersCount}/${orderIds.length} orders deleted (${totalDeletedItems} total items) for user ${req.session.userId}`);
+        res.json({ 
+            success: true, 
+            message: `${deletedOrdersCount} order(s) deleted from history (${totalDeletedItems} items removed)`,
+            deletedOrdersCount: deletedOrdersCount,
+            totalDeletedItems: totalDeletedItems,
+            totalRequested: orderIds.length,
+            results: results
+        });
+    } catch (error) {
+        console.error('❌ Error in bulk delete orders:', error);
+        res.status(500).json({ success: false, message: 'Error deleting orders from history' });
+    }
+});
+
+// Download order files (similar to design download but for specific order)
+app.get('/api/my-collection/download-order/:orderId', authenticateUser, async (req, res) => {
+    const { orderId } = req.params;
+    console.log('📥 /api/my-collection/download-order accessed for user:', req.session.userId, 'order:', orderId);
+    
+    try {
+        // Get all designs from this order for the user
+        const orderResult = await pool.query(`
+            SELECT design_id, design_name 
+            FROM purchases 
+            WHERE user_id = $1 AND order_id = $2
+        `, [req.session.userId, orderId]);
+        
+        if (orderResult.rows.length === 0) {
+            console.log(`❌ Order ${orderId} not found for user ${req.session.userId}`);
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Order not found in your purchase history' 
+            });
+        }
+        
+        // Create download links for all designs in the order
+        const downloadLinks = {};
+        let totalFiles = 0;
+        
+        for (const row of orderResult.rows) {
+            const designId = row.design_id;
+            
+            // Convert numeric design ID to folder name
+            let folderName = designId;
+            if (!designId.includes('-')) {
+                folderName = await getDesignFolderName(designId);
+            }
+            
+            // Check if design files exist
+            const designPath = path.join(__dirname, 'music_lyricss', folderName);
+            if (fs.existsSync(designPath)) {
+                const files = fs.readdirSync(designPath);
+                const availableFormats = files.map(file => {
+                    return path.extname(file).toLowerCase().substring(1);
+                });
+                
+                // Create download links for this design
+                downloadLinks[folderName] = {};
+                availableFormats.forEach(format => {
+                    downloadLinks[folderName][format] = `/api/download/${folderName}/${format}`;
+                    totalFiles++;
+                });
+                
+                // If no files found, provide webp as fallback
+                if (availableFormats.length === 0) {
+                    downloadLinks[folderName].webp = `/api/download/${folderName}/webp`;
+                    totalFiles++;
+                }
+            } else {
+                // Fallback for missing design folder
+                downloadLinks[folderName] = {
+                    webp: `/api/download/${folderName}/webp`
+                };
+                totalFiles++;
+            }
+        }
+        
+        console.log(`✅ Generated download links for order ${orderId}: ${totalFiles} files across ${orderResult.rows.length} designs`);
+        res.json({ 
+            success: true, 
+            downloadLinks: downloadLinks,
+            orderInfo: {
+                orderId: orderId,
+                designCount: orderResult.rows.length,
+                totalFiles: totalFiles
+            },
+            message: `Download links generated for ${orderResult.rows.length} designs`
+        });
+    } catch (error) {
+        console.error('❌ Error generating order download links:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error generating download links for order' 
+        });
     }
 });
 

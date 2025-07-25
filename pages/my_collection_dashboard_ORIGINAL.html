@@ -67,22 +67,24 @@
         <!-- Dashboard Header -->
         <section class="bg-secondary/30 py-6 md:py-8">
             <div class="container mx-auto px-4 md:px-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 class="text-2xl md:text-3xl lg:text-4xl font-montserrat font-bold mb-2">My Collection</h1>
-                        <p class="text-text-secondary text-sm md:text-base">Manage your purchased designs, playlists, and discover new favorites</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                        <div class="bg-surface px-3 md:px-4 py-2 rounded-lg border border-border-subtle text-center sm:text-left">
-                            <span class="text-xs md:text-sm text-text-secondary">Total Designs:</span>
-                            <span class="font-bold text-accent ml-1 md:ml-2">0</span>
+                <div class="max-w-6xl mx-auto">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl md:text-3xl lg:text-4xl font-montserrat font-bold mb-2">My Collection</h1>
+                            <p class="text-text-secondary text-sm md:text-base">Manage your purchased designs, playlists, and discover new favorites</p>
                         </div>
-                        <button class="btn-primary text-sm md:text-base px-4 md:px-6 py-2 md:py-3">
-                            <svg class="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            Bulk Download
-                        </button>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+                            <div class="bg-surface px-3 md:px-4 py-2 rounded-lg border border-border-subtle text-center sm:text-left">
+                                <span class="text-xs md:text-sm text-text-secondary">Total Designs:</span>
+                                <span class="font-bold text-accent ml-1 md:ml-2">0</span>
+                            </div>
+                            <button class="btn-primary text-sm md:text-base px-4 md:px-6 py-2 md:py-3">
+                                <svg class="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Bulk Download
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -91,7 +93,8 @@
         <!-- Dashboard Navigation Tabs -->
         <section class="border-b border-border-subtle">
             <div class="container mx-auto px-4 md:px-6">
-                <nav class="flex space-x-4 md:space-x-8 overflow-x-auto pb-2 md:pb-0">
+                <div class="max-w-6xl mx-auto">
+                    <nav class="flex space-x-4 md:space-x-8 overflow-x-auto pb-2 md:pb-0">
                     <button class="dashboard-tab active" data-tab="my-designs">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
@@ -125,6 +128,7 @@
                         Settings
                     </button>
                 </nav>
+                </div>
             </div>
         </section>
 
@@ -132,52 +136,80 @@
         <div class="container mx-auto px-4 md:px-6 py-6 md:py-8">
             <!-- My Designs Tab -->
             <div id="my-designs" class="tab-content active">
-                <!-- Search and Filter Bar -->
-                <div class="mb-8">
-                    <div class="flex flex-col md:flex-row gap-4 mb-6">
-                        <div class="flex-1 relative">
-                            <input type="text" id="search-input" placeholder="Search your designs..." class="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 pr-10 text-text-primary placeholder-text-secondary focus:border-accent focus:outline-none transition-smooth" />
-                            <svg class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
+                <div class="max-w-6xl mx-auto">
+                    <!-- Search and Filter Bar -->
+                    <div class="mb-8">
+                        <div class="flex flex-col md:flex-row gap-4 mb-6">
+                            <div class="flex-1 relative">
+                                <input type="text" id="search-input" placeholder="Search your designs..." class="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 pr-10 text-text-primary placeholder-text-secondary focus:border-accent focus:outline-none transition-smooth" />
+                                <svg class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </div>
+                            <select id="format-filter" class="bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-primary focus:border-accent focus:outline-none transition-smooth">
+                                <option value="all">All Formats</option>
+                                <option value="svg">SVG</option>
+                                <option value="png">PNG</option>
+                                <option value="pdf">PDF</option>
+                                <option value="eps">EPS</option>
+                            </select>
+                            <select id="sort-select" class="bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-primary focus:border-accent focus:outline-none transition-smooth">
+                                <option value="recent">Sort by: Recent</option>
+                                <option value="name">Sort by: Name A-Z</option>
+                                <option value="date">Sort by: Purchase Date</option>
+                                <option value="artist">Sort by: Artist</option>
+                            </select>
                         </div>
-                        <select id="format-filter" class="bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-primary focus:border-accent focus:outline-none transition-smooth">
-                            <option value="all">All Formats</option>
-                            <option value="svg">SVG</option>
-                            <option value="png">PNG</option>
-                            <option value="pdf">PDF</option>
-                            <option value="eps">EPS</option>
-                        </select>
-                        <select id="sort-select" class="bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-primary focus:border-accent focus:outline-none transition-smooth">
-                            <option value="recent">Sort by: Recent</option>
-                            <option value="name">Sort by: Name A-Z</option>
-                            <option value="date">Sort by: Purchase Date</option>
-                            <option value="artist">Sort by: Artist</option>
-                        </select>
                     </div>
-                </div>
 
-                <!-- Designs Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                    <!-- Dynamic content will be loaded here by JavaScript -->
-                </div>
+                                         <!-- Bulk Actions Bar -->
+                     <div id="bulk-actions-bar" class="hidden bg-accent/10 border border-accent/20 rounded-lg p-4 mb-6">
+                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                             <div class="flex items-center space-x-3">
+                                 <span id="selected-count" class="text-accent font-medium">0 selected</span>
+                                 <button onclick="selectAllDesigns()" class="text-accent hover:text-accent/80 text-sm">Select All</button>
+                                 <button onclick="clearSelection()" class="text-text-secondary hover:text-text-primary text-sm">Clear</button>
+                             </div>
+                             <div class="flex space-x-2">
+                                 <button onclick="bulkDownloadDesigns()" class="bg-accent text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent/90 transition-smooth">
+                                     <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                     </svg>
+                                     Download Selected
+                                 </button>
+                                 <button onclick="confirmBulkDeleteDesigns()" class="bg-error text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-error/90 transition-smooth">
+                                     <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                     </svg>
+                                     Delete Selected
+                                 </button>
+                             </div>
+                         </div>
+                     </div>
+
+                     <!-- Designs Grid -->
+                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                         <!-- Dynamic content will be loaded here by JavaScript -->
+                     </div>
+                 </div>
 
 
-                </div>
+                 </div>
 
-                <!-- Load More -->
-                <div class="text-center mt-8">
-                    <button class="bg-surface border border-border-subtle text-text-primary font-montserrat font-medium px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
-                        Load More Designs
-                    </button>
-                </div>
+                 <!-- Load More -->
+                 <div class="text-center mt-8">
+                     <button class="bg-surface border border-border-subtle text-text-primary font-montserrat font-medium px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
+                         Load More Designs
+                     </button>
+                 </div>
             </div>
 
 
 
             <!-- Wishlist Tab -->
             <div id="wishlist" class="tab-content">
-                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+                <div class="max-w-6xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
                         <div>
                             <h2 class="text-xl md:text-2xl font-montserrat font-bold mb-2">Wishlist</h2>
                             <p class="text-text-secondary text-sm md:text-base">Save designs you love and get notified of price drops</p>
@@ -190,36 +222,38 @@
                         </div>
                     </div>
 
-                <!-- Wishlist Loading State -->
-                <div id="wishlist-loading" class="text-center py-12">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-                    <p class="text-text-secondary">Loading your wishlist...</p>
-                </div>
+                    <!-- Wishlist Loading State -->
+                    <div id="wishlist-loading" class="text-center py-12">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+                        <p class="text-text-secondary">Loading your wishlist...</p>
+                    </div>
 
-                <!-- Wishlist Empty State -->
-                <div id="wishlist-empty" class="text-center py-12 hidden">
-                    <svg class="w-16 h-16 text-text-secondary mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                    </svg>
-                    <h3 class="text-xl font-montserrat font-bold mb-2">Your wishlist is empty</h3>
-                    <p class="text-text-secondary mb-6">Start adding designs you love to your wishlist</p>
-                    <a href="/browse" class="btn-primary">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    <!-- Wishlist Empty State -->
+                    <div id="wishlist-empty" class="text-center py-12 hidden">
+                        <svg class="w-16 h-16 text-text-secondary mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                         </svg>
-                        Browse Designs
-                    </a>
-                </div>
+                        <h3 class="text-xl font-montserrat font-bold mb-2">Your wishlist is empty</h3>
+                        <p class="text-text-secondary mb-6">Start adding designs you love to your wishlist</p>
+                        <a href="/browse" class="btn-primary">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            Browse Designs
+                        </a>
+                    </div>
 
-                <!-- Wishlist Items Container -->
-                <div id="wishlist-items" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 hidden">
-                    <!-- Wishlist items will be dynamically loaded here -->
+                    <!-- Wishlist Items Container -->
+                    <div id="wishlist-items" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 hidden">
+                        <!-- Wishlist items will be dynamically loaded here -->
+                    </div>
                 </div>
             </div>
 
             <!-- Purchase History Tab -->
             <div id="history" class="tab-content">
-                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+                <div class="max-w-6xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
                         <div>
                             <h2 class="text-xl md:text-2xl font-montserrat font-bold mb-2">Purchase History</h2>
                             <p class="text-text-secondary text-sm md:text-base">View your transaction records and re-download designs</p>
@@ -241,38 +275,66 @@
                                     Export CSV
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                                                 </div>
+                     </div>
 
-                <div class="space-y-4">
-                    <!-- Purchase history will be dynamically loaded here -->
+                     <!-- Bulk Actions Bar for Purchase History -->
+                     <div id="history-bulk-actions-bar" class="hidden bg-accent/10 border border-accent/20 rounded-lg p-4 mb-6">
+                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                             <div class="flex items-center space-x-3">
+                                 <span id="history-selected-count" class="text-accent font-medium">0 selected</span>
+                                 <button onclick="selectAllHistory()" class="text-accent hover:text-accent/80 text-sm">Select All</button>
+                                 <button onclick="clearHistorySelection()" class="text-text-secondary hover:text-text-primary text-sm">Clear</button>
+                             </div>
+                             <div class="flex space-x-2">
+                                 <button onclick="bulkRedownloadOrders()" class="bg-accent text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent/90 transition-smooth">
+                                     <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                     </svg>
+                                     Re-download Selected
+                                 </button>
+                                 <button onclick="confirmBulkDeleteHistory()" class="bg-error text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-error/90 transition-smooth">
+                                     <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                     </svg>
+                                     Delete Selected
+                                 </button>
+                             </div>
+                         </div>
+                     </div>
+
+                     <div class="space-y-4">
+                         <!-- Purchase history will be dynamically loaded here -->
+                     </div>
                 </div>
             </div>
 
             <!-- Recommendations Tab -->
             <div id="recommendations" class="tab-content">
-                <div class="mb-6 md:mb-8">
-                    <h2 class="text-xl md:text-2xl font-montserrat font-bold mb-2">Recommended for You</h2>
-                    <p class="text-text-secondary text-sm md:text-base">Discover new designs based on your purchase history and preferences</p>
-                </div>
-
-                <!-- Recommendation Categories -->
-                <div class="space-y-6 md:space-y-8">
-                    <!-- Based on Your Preferences -->
-                    <div>
-                        <h3 class="text-lg md:text-xl font-montserrat font-semibold mb-3 md:mb-4">More Like Your Collection</h3>
-                        <div id="recommendations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                            <!-- Recommendations will be dynamically loaded here -->
-                        </div>
+                <div class="max-w-6xl mx-auto">
+                    <div class="mb-6 md:mb-8">
+                        <h2 class="text-xl md:text-2xl font-montserrat font-bold mb-2">Recommended for You</h2>
+                        <p class="text-text-secondary text-sm md:text-base">Discover new designs based on your purchase history and preferences</p>
                     </div>
 
-                    <!-- Trending section removed to prevent duplicate addToCart calls -->
+                    <!-- Recommendation Categories -->
+                    <div class="space-y-6 md:space-y-8">
+                        <!-- Based on Your Preferences -->
+                        <div>
+                            <h3 class="text-lg md:text-xl font-montserrat font-semibold mb-3 md:mb-4">More Like Your Collection</h3>
+                            <div id="recommendations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                <!-- Recommendations will be dynamically loaded here -->
+                            </div>
+                        </div>
 
-                    <!-- New Artist Discoveries -->
-                    <div>
-                        <h3 class="text-xl font-montserrat font-semibold mb-4">Discover New Artists</h3>
-                        <div id="artists-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                            <!-- Artist discoveries will be dynamically loaded here -->
+                        <!-- Trending section removed to prevent duplicate addToCart calls -->
+
+                        <!-- New Artist Discoveries -->
+                        <div>
+                            <h3 class="text-xl font-montserrat font-semibold mb-4">Discover New Artists</h3>
+                            <div id="artists-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                                <!-- Artist discoveries will be dynamically loaded here -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -280,110 +342,112 @@
 
             <!-- Settings Tab -->
             <div id="settings" class="tab-content">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-montserrat font-bold mb-2">Account Settings</h2>
-                    <p class="text-text-secondary">Manage your preferences and notification settings</p>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Notification Preferences -->
-                    <div class="card-surface p-6">
-                        <h3 class="text-lg font-montserrat font-semibold mb-4">Notification Preferences</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">New Releases</h4>
-                                    <p class="text-text-secondary text-sm">Get notified about new design releases</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" checked />
-                                    <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                                </label>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Artist Updates</h4>
-                                    <p class="text-text-secondary text-sm">Updates from your favorite artists</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" checked />
-                                    <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                                </label>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Promotional Offers</h4>
-                                    <p class="text-text-secondary text-sm">Special deals and discounts</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" />
-                                    <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                                </label>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Wishlist Price Alerts</h4>
-                                    <p class="text-text-secondary text-sm">Get notified when wishlist items go on sale</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" checked />
-                                    <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                                </label>
-                            </div>
-                        </div>
+                <div class="max-w-6xl mx-auto">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-montserrat font-bold mb-2">Account Settings</h2>
+                        <p class="text-text-secondary">Manage your preferences and notification settings</p>
                     </div>
 
-                    <!-- Download Preferences -->
-                    <div class="card-surface p-6">
-                        <h3 class="text-lg font-montserrat font-semibold mb-4">Download Preferences</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Default Download Format</label>
-                                <select class="w-full bg-surface border border-border-subtle rounded-lg px-3 py-2 text-text-primary focus:border-accent focus:outline-none transition-smooth">
-                                    <option>SVG (Recommended)</option>
-                                    <option>PNG (High Resolution)</option>
-                                    <option>PDF (Print Ready)</option>
-                                    <option>EPS (Vector)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Auto-Download After Purchase</label>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" checked />
-                                    <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                                    <span class="ml-3 text-sm text-text-secondary">Automatically start download after purchase</span>
-                                </label>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Offline Storage</label>
-                                <div class="flex items-center justify-between bg-secondary p-3 rounded-lg">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <!-- Notification Preferences -->
+                        <div class="card-surface p-6">
+                            <h3 class="text-lg font-montserrat font-semibold mb-4">Notification Preferences</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-sm">Enable offline viewing</p>
-                                        <p class="text-xs text-text-secondary">Store purchased designs locally for offline access</p>
+                                        <h4 class="font-medium">New Releases</h4>
+                                        <p class="text-text-secondary text-sm">Get notified about new design releases</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked />
+                                        <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium">Artist Updates</h4>
+                                        <p class="text-text-secondary text-sm">Updates from your favorite artists</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked />
+                                        <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium">Promotional Offers</h4>
+                                        <p class="text-text-secondary text-sm">Special deals and discounts</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" class="sr-only peer" />
                                         <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                     </label>
                                 </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium">Wishlist Price Alerts</h4>
+                                        <p class="text-text-secondary text-sm">Get notified when wishlist items go on sale</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked />
+                                        <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Download Preferences -->
+                        <div class="card-surface p-6">
+                            <h3 class="text-lg font-montserrat font-semibold mb-4">Download Preferences</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Default Download Format</label>
+                                    <select class="w-full bg-surface border border-border-subtle rounded-lg px-3 py-2 text-text-primary focus:border-accent focus:outline-none transition-smooth">
+                                        <option>SVG (Recommended)</option>
+                                        <option>PNG (High Resolution)</option>
+                                        <option>PDF (Print Ready)</option>
+                                        <option>EPS (Vector)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Auto-Download After Purchase</label>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked />
+                                        <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                                        <span class="ml-3 text-sm text-text-secondary">Automatically start download after purchase</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Offline Storage</label>
+                                    <div class="flex items-center justify-between bg-secondary p-3 rounded-lg">
+                                        <div>
+                                            <p class="text-sm">Enable offline viewing</p>
+                                            <p class="text-xs text-text-secondary">Store purchased designs locally for offline access</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" class="sr-only peer" />
+                                            <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Account Actions -->
-                <div class="card-surface p-6 mt-8">
-                    <h3 class="text-lg font-montserrat font-semibold mb-4">Account Management</h3>
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <button class="bg-surface border border-border-subtle text-text-primary px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
-                            Export All Data
-                        </button>
-                        <button class="bg-surface border border-border-subtle text-text-primary px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
-                            Download Purchase Receipt
-                        </button>
-                        <button class="bg-error/20 border border-error text-error px-6 py-3 rounded-lg hover:bg-error hover:text-white transition-smooth">
-                            Delete Account
-                        </button>
+                    <!-- Account Actions -->
+                    <div class="card-surface p-6 mt-8">
+                        <h3 class="text-lg font-montserrat font-semibold mb-4">Account Management</h3>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <button class="bg-surface border border-border-subtle text-text-primary px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
+                                Export All Data
+                            </button>
+                            <button class="bg-surface border border-border-subtle text-text-primary px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
+                                Download Purchase Receipt
+                            </button>
+                            <button class="bg-error/20 border border-error text-error px-6 py-3 rounded-lg hover:bg-error hover:text-white transition-smooth">
+                                Delete Account
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -580,20 +644,36 @@
             }
 
             designsGrid.innerHTML = userDesigns.map(design => `
-                <div class="group">
+                <div class="group" data-design-id="${design.id}">
                     <div class="card-surface overflow-hidden hover:border-accent transition-smooth">
                         <div class="relative">
+                            <!-- Selection Checkbox -->
+                            <div class="absolute top-2 left-2 z-10">
+                                <input type="checkbox" class="design-checkbox rounded border-2 border-border-subtle bg-surface text-accent focus:ring-accent focus:ring-2" 
+                                       data-design-id="${design.id}" onchange="toggleDesignSelection('${design.id}')">
+                            </div>
+                            
                             <div class="relative aspect-square" style="background-color: white;">
                                 <img src="${design.imageUrl}" alt="${design.name} design" class="w-full h-full object-contain" style="padding: 8px;" loading="lazy" onerror="this.style.display='none'" />
                             </div>
+                            
+                            <!-- HOVER OVERLAY -->
                             <div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-smooth"></div>
+                            
+                            <!-- BOTTOM OVERLAY WITH ALL BUTTONS -->
                             <div class="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-smooth">
-                                <div class="flex space-x-2">
-                                    <button onclick="downloadDesign('${design.id}')" class="flex-1 bg-accent text-primary px-3 py-2 rounded text-sm font-medium hover:bg-accent/90 transition-smooth">Download</button>
-                                    <button onclick="shareDesign('${design.id}')" class="bg-surface/80 text-text-primary p-2 rounded hover:bg-surface transition-smooth">
+                                <div class="flex space-x-2 mb-2">
+                                    <button onclick="downloadDesign('${design.id}')" class="flex-1 bg-accent text-primary px-3 py-2 rounded text-sm font-medium hover:bg-accent/90">Download</button>
+                                    <button onclick="shareDesign('${design.id}')" class="bg-surface/80 text-text-primary p-2 rounded hover:bg-surface">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
                                         </svg>
+                                    </button>
+                                </div>
+                                <div class="flex justify-center">
+                                    <button onclick="confirmDeleteDesign('${design.id}')" 
+                                            class="bg-red-500 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-600">
+                                        Delete
                                     </button>
                                 </div>
                             </div>
@@ -678,9 +758,12 @@
             }
 
             historyContainer.innerHTML = purchaseHistory.map(order => `
-                <div class="card-surface p-6 hover:border-accent transition-smooth">
+                <div class="card-surface p-6 hover:border-accent transition-smooth" data-order-id="${order.id}">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div class="flex items-center space-x-4">
+                            <!-- Selection Checkbox -->
+                            <input type="checkbox" class="history-checkbox rounded border-2 border-border-subtle bg-surface text-accent focus:ring-accent focus:ring-2" 
+                                   data-order-id="${order.id}" onchange="toggleHistorySelection('${order.id}')">
                             <div class="w-16 h-16 bg-success/20 rounded-lg flex items-center justify-center">
                                 <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -704,6 +787,12 @@
                             </button>
                             <button onclick="viewOrderDetails('${order.id}')" class="bg-surface border border-border-subtle text-text-primary px-4 py-2 rounded-lg text-sm hover:border-accent hover:text-accent transition-smooth">
                                 View Details
+                            </button>
+                            <button onclick="confirmDeleteOrder('${order.id}')" class="bg-error text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-error/90 transition-smooth">
+                                <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Delete
                             </button>
                         </div>
                     </div>
@@ -1083,10 +1172,37 @@
 
 
         // Add to wishlist function
-        function addToWishlist(designId) {
-            // This would integrate with your existing wishlist system
-            console.log(`❤️ Adding to wishlist: ${designId}`);
-            showSuccess('Added to wishlist!');
+        async function addToWishlist(designId) {
+            try {
+                console.log(`❤️ Adding to wishlist: ${designId}`);
+                
+                const response = await fetch('/api/wishlist/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ designId: designId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log(`✅ Added ${designId} to wishlist`);
+                    showSuccess('Added to wishlist!');
+                    // Update wishlist count if on wishlist tab
+                    const wishlistTab = document.querySelector('[data-tab="wishlist"]');
+                    if (wishlistTab && wishlistTab.classList.contains('active')) {
+                        loadWishlistData();
+                    }
+                } else {
+                    console.error('❌ Failed to add to wishlist:', data.message);
+                    showError('Failed to add to wishlist');
+                }
+            } catch (error) {
+                console.error('❌ Error adding to wishlist:', error);
+                showError('Error adding to wishlist');
+            }
         }
 
         // Browse artist function
@@ -1271,9 +1387,20 @@
             }
 
             designsGrid.innerHTML = userDesigns.map(design => `
-                <div class="group">
+                <div class="group relative" data-design-id="${design.id}">
                     <div class="card-surface overflow-hidden hover:border-accent transition-smooth">
                         <div class="relative">
+                            <!-- Selection Checkbox -->
+                            <div class="absolute top-2 left-2 z-10">
+                                <input type="checkbox" class="design-checkbox rounded border-2 border-border-subtle bg-surface text-accent focus:ring-accent focus:ring-2" 
+                                       data-design-id="${design.id}" onchange="toggleDesignSelection('${design.id}')">
+                            </div>
+                            <!-- Individual Delete Button - POSITIONED CORRECTLY -->
+                            <button onclick="confirmDeleteDesign('${design.id}')" class="absolute top-2 right-2 z-50 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-smooth border border-white shadow-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
                             <div class="relative aspect-square" style="background-color: white;">
                                 <img src="${design.imageUrl}" alt="${design.name} design" class="w-full h-full object-contain" style="padding: 8px;" loading="lazy" onerror="this.style.display='none'" />
                             </div>
@@ -1323,20 +1450,36 @@
             }
 
             designsGrid.innerHTML = designs.map(design => `
-                <div class="group">
+                <div class="group" data-design-id="${design.id}">
                     <div class="card-surface overflow-hidden hover:border-accent transition-smooth">
                         <div class="relative">
+                            <!-- Selection Checkbox -->
+                            <div class="absolute top-2 left-2 z-10">
+                                <input type="checkbox" class="design-checkbox rounded border-2 border-border-subtle bg-surface text-accent focus:ring-accent focus:ring-2" 
+                                       data-design-id="${design.id}" onchange="toggleDesignSelection('${design.id}')">
+                            </div>
+                            
                             <div class="relative aspect-square" style="background-color: white;">
                                 <img src="${design.imageUrl}" alt="${design.name} design" class="w-full h-full object-contain" style="padding: 8px;" loading="lazy" onerror="this.style.display='none'" />
                             </div>
+                            
+                            <!-- HOVER OVERLAY -->
                             <div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-smooth"></div>
+                            
+                            <!-- BOTTOM OVERLAY WITH ALL BUTTONS -->
                             <div class="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-smooth">
-                                <div class="flex space-x-2">
-                                    <button onclick="downloadDesign('${design.id}')" class="flex-1 bg-accent text-primary px-3 py-2 rounded text-sm font-medium hover:bg-accent/90 transition-smooth">Download</button>
-                                    <button onclick="shareDesign('${design.id}')" class="bg-surface/80 text-text-primary p-2 rounded hover:bg-surface transition-smooth">
+                                <div class="flex space-x-2 mb-2">
+                                    <button onclick="downloadDesign('${design.id}')" class="flex-1 bg-accent text-primary px-3 py-2 rounded text-sm font-medium hover:bg-accent/90">Download</button>
+                                    <button onclick="shareDesign('${design.id}')" class="bg-surface/80 text-text-primary p-2 rounded hover:bg-surface">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
                                         </svg>
+                                    </button>
+                                </div>
+                                <div class="flex justify-center">
+                                    <button onclick="confirmDeleteDesign('${design.id}')" 
+                                            class="bg-red-500 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-600">
+                                        Delete
                                     </button>
                                 </div>
                             </div>
@@ -1842,6 +1985,345 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateCartCount();
         });
+
+        // =============================================
+        // DELETE FUNCTIONALITY FOR MY DESIGNS
+        // =============================================
+
+        let selectedDesigns = new Set();
+
+        // Toggle individual design selection
+        function toggleDesignSelection(designId) {
+            const checkbox = document.querySelector(`.design-checkbox[data-design-id="${designId}"]`);
+            if (checkbox.checked) {
+                selectedDesigns.add(designId);
+            } else {
+                selectedDesigns.delete(designId);
+            }
+            updateBulkActionsBar();
+        }
+
+        // Select all designs
+        function selectAllDesigns() {
+            const checkboxes = document.querySelectorAll('.design-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                selectedDesigns.add(checkbox.dataset.designId);
+            });
+            updateBulkActionsBar();
+        }
+
+        // Clear all selections
+        function clearSelection() {
+            const checkboxes = document.querySelectorAll('.design-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedDesigns.clear();
+            updateBulkActionsBar();
+        }
+
+        // Update bulk actions bar visibility and count
+        function updateBulkActionsBar() {
+            const bulkActionsBar = document.getElementById('bulk-actions-bar');
+            const selectedCount = document.getElementById('selected-count');
+            
+            if (selectedDesigns.size > 0) {
+                bulkActionsBar.classList.remove('hidden');
+                selectedCount.textContent = `${selectedDesigns.size} selected`;
+            } else {
+                bulkActionsBar.classList.add('hidden');
+            }
+        }
+
+        // Confirm individual design deletion
+        function confirmDeleteDesign(designId) {
+            if (confirm('Are you sure you want to delete this design from your collection? This action cannot be undone.')) {
+                deleteDesign(designId);
+            }
+        }
+
+        // Delete individual design
+        async function deleteDesign(designId) {
+            try {
+                const response = await fetch('/api/my-collection/delete-design', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ designId: designId })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Design deleted successfully!');
+                    // Remove from selected designs if it was selected
+                    selectedDesigns.delete(designId);
+                    // Reload the designs display
+                    loadUserDesigns();
+                } else {
+                    showError(data.message || 'Failed to delete design');
+                }
+            } catch (error) {
+                console.error('Error deleting design:', error);
+                showError('Error deleting design');
+            }
+        }
+
+        // Confirm bulk design deletion
+        function confirmBulkDeleteDesigns() {
+            if (selectedDesigns.size === 0) {
+                showError('Please select designs to delete');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${selectedDesigns.size} design(s) from your collection? This action cannot be undone.`)) {
+                bulkDeleteDesigns();
+            }
+        }
+
+        // Bulk delete designs
+        async function bulkDeleteDesigns() {
+            try {
+                const designIds = Array.from(selectedDesigns);
+                const response = await fetch('/api/my-collection/bulk-delete-designs', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ designIds: designIds })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(`${designIds.length} design(s) deleted successfully!`);
+                    selectedDesigns.clear();
+                    updateBulkActionsBar();
+                    loadUserDesigns();
+                } else {
+                    showError(data.message || 'Failed to delete designs');
+                }
+            } catch (error) {
+                console.error('Error bulk deleting designs:', error);
+                showError('Error deleting designs');
+            }
+        }
+
+        // Bulk download designs
+        async function bulkDownloadDesigns() {
+            if (selectedDesigns.size === 0) {
+                showError('Please select designs to download');
+                return;
+            }
+
+            try {
+                const designIds = Array.from(selectedDesigns);
+                // For now, download each design individually
+                // You can implement a proper bulk download endpoint later
+                for (const designId of designIds) {
+                    await downloadDesign(designId);
+                    // Small delay between downloads to prevent overwhelming the server
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                showSuccess(`${designIds.length} design(s) download started!`);
+            } catch (error) {
+                console.error('Error bulk downloading designs:', error);
+                showError('Error downloading designs');
+            }
+        }
+
+        // =============================================
+        // DELETE FUNCTIONALITY FOR PURCHASE HISTORY
+        // =============================================
+
+        let selectedOrders = new Set();
+
+        // Toggle individual order selection
+        function toggleHistorySelection(orderId) {
+            const checkbox = document.querySelector(`.history-checkbox[data-order-id="${orderId}"]`);
+            if (checkbox.checked) {
+                selectedOrders.add(orderId);
+            } else {
+                selectedOrders.delete(orderId);
+            }
+            updateHistoryBulkActionsBar();
+        }
+
+        // Select all orders
+        function selectAllHistory() {
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                selectedOrders.add(checkbox.dataset.orderId);
+            });
+            updateHistoryBulkActionsBar();
+        }
+
+        // Clear all order selections
+        function clearHistorySelection() {
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedOrders.clear();
+            updateHistoryBulkActionsBar();
+        }
+
+        // Update history bulk actions bar visibility and count
+        function updateHistoryBulkActionsBar() {
+            const bulkActionsBar = document.getElementById('history-bulk-actions-bar');
+            const selectedCount = document.getElementById('history-selected-count');
+            
+            if (selectedOrders.size > 0) {
+                bulkActionsBar.classList.remove('hidden');
+                selectedCount.textContent = `${selectedOrders.size} selected`;
+            } else {
+                bulkActionsBar.classList.add('hidden');
+            }
+        }
+
+        // Confirm individual order deletion
+        function confirmDeleteOrder(orderId) {
+            if (confirm('Are you sure you want to delete this order from your purchase history? This action cannot be undone.')) {
+                deleteOrder(orderId);
+            }
+        }
+
+        // Delete individual order
+        async function deleteOrder(orderId) {
+            try {
+                const response = await fetch('/api/my-collection/delete-order', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ orderId: orderId })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Order deleted successfully!');
+                    // Remove from selected orders if it was selected
+                    selectedOrders.delete(orderId);
+                    // Reload the purchase history display
+                    loadPurchaseHistory();
+                } else {
+                    showError(data.message || 'Failed to delete order');
+                }
+            } catch (error) {
+                console.error('Error deleting order:', error);
+                showError('Error deleting order');
+            }
+        }
+
+        // Confirm bulk order deletion
+        function confirmBulkDeleteHistory() {
+            if (selectedOrders.size === 0) {
+                showError('Please select orders to delete');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${selectedOrders.size} order(s) from your purchase history? This action cannot be undone.`)) {
+                bulkDeleteHistory();
+            }
+        }
+
+        // Bulk delete orders
+        async function bulkDeleteHistory() {
+            try {
+                const orderIds = Array.from(selectedOrders);
+                const response = await fetch('/api/my-collection/bulk-delete-orders', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ orderIds: orderIds })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(`${orderIds.length} order(s) deleted successfully!`);
+                    selectedOrders.clear();
+                    updateHistoryBulkActionsBar();
+                    loadPurchaseHistory();
+                } else {
+                    showError(data.message || 'Failed to delete orders');
+                }
+            } catch (error) {
+                console.error('Error bulk deleting orders:', error);
+                showError('Error deleting orders');
+            }
+        }
+
+        // Bulk re-download orders
+        async function bulkRedownloadOrders() {
+            if (selectedOrders.size === 0) {
+                showError('Please select orders to re-download');
+                return;
+            }
+
+            try {
+                const orderIds = Array.from(selectedOrders);
+                // For now, download each order individually
+                // You can implement a proper bulk download endpoint later
+                for (const orderId of orderIds) {
+                    await downloadOrder(orderId);
+                    // Small delay between downloads to prevent overwhelming the server
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                showSuccess(`${orderIds.length} order(s) re-download started!`);
+            } catch (error) {
+                console.error('Error bulk re-downloading orders:', error);
+                showError('Error re-downloading orders');
+            }
+        }
+
+        // Helper function to download an order (you'll need to implement this based on your backend)
+        async function downloadOrder(orderId) {
+            try {
+                const response = await fetch(`/api/my-collection/download-order/${orderId}`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `order-${orderId}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    throw new Error('Download failed');
+                }
+            } catch (error) {
+                console.error(`Error downloading order ${orderId}:`, error);
+                showError(`Failed to download order ${orderId}`);
+            }
+        }
+
+        // Enhanced notification functions
+        function showSuccess(message) {
+            console.log(`✅ SUCCESS: ${message}`);
+            // You can enhance this with actual UI notifications
+            showNotification(message, 'success');
+        }
+
+        function showError(message) {
+            console.log(`❌ ERROR: ${message}`);
+            // You can enhance this with actual UI notifications
+            showNotification(message, 'error');
+        }
     </script>
 
     <style>
