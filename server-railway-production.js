@@ -2354,12 +2354,34 @@ app.get('/login', (req, res) => {
 });
 
 // OAuth Routes
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.get('/auth/google', passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account' // Force account selection every time
+}));
+
+// Special route for testing with forced account selection
+app.get('/auth/google/test', passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account',
+    access_type: 'offline' // Request refresh token for better testing
+}));
 
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
         console.log('✅ Google OAuth successful for user:', req.user.email);
+        // Set session data
+        req.session.userId = req.user.id;
+        req.session.userEmail = req.user.email;
+        req.session.userName = req.user.name;
+        res.redirect('/homepage');
+    }
+);
+
+app.get('/auth/google/test/callback', 
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req, res) => {
+        console.log('✅ Google OAuth TEST successful for user:', req.user.email);
         // Set session data
         req.session.userId = req.user.id;
         req.session.userEmail = req.user.email;
@@ -2391,7 +2413,24 @@ app.get('/auth/logout', (req, res) => {
             if (err) {
                 console.error('❌ Session destroy error:', err);
             }
-            res.redirect('/homepage');
+            // Redirect to Google logout to clear OAuth session
+            res.redirect('https://accounts.google.com/logout');
+        });
+    });
+});
+
+// Special route for testing - complete logout and redirect back to homepage
+app.get('/auth/logout-test', (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            console.error('❌ Logout error:', err);
+        }
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('❌ Session destroy error:', err);
+            }
+            // Redirect to Google logout, then back to our homepage
+            res.redirect('https://accounts.google.com/logout?continue=' + encodeURIComponent(process.env.SITE_URL || 'http://localhost:3001') + '/homepage');
         });
     });
 });
