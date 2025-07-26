@@ -13,18 +13,18 @@
     "cleanup": "node cleanup-sessions.js"
   },
   "dependencies": {
-    "@paypal/checkout-server-sdk": "^1.0.3",
-    "archiver": "^6.0.2",
+    "@paypal/paypal-server-sdk": "^0.5.2",
+    "archiver": "^7.0.1",
     "bcrypt": "^5.1.1",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "multer": "^1.4.5-lts.1",
-    "node-fetch": "^2.7.0",
-    "nodemailer": "^6.9.7",
-    "pg": "^8.16.3",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "multer": "^2.0.0-rc.4",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^6.9.13",
+    "pg": "^8.12.0",
     "sharp": "^0.33.5"
   },
   "keywords": [

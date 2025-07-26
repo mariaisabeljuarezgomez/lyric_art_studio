@@ -12,15 +12,40 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
-const paypal = require('@paypal/checkout-server-sdk');
+const paypal = require('@paypal/paypal-server-sdk');
 const FileDeliveryService = require('./file-delivery-service');
 const fs = require('fs');
 
-// Import fetch for Node.js (if not available globally)
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+// Import fetch for Node.js v3 (ESM import)
+import('node-fetch').then(module => {
+    globalThis.fetch = module.default;
+}).catch(err => console.error('Failed to import node-fetch:', err));
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+// Global error handlers for process stability
+process.on('uncaughtException', (error) => {
+    console.error('🚨 UNCAUGHT EXCEPTION:', error);
+    console.error('Stack:', error.stack);
+    // Log error but don't exit - let Railway restart if needed
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('🚨 UNHANDLED REJECTION at:', promise, 'reason:', reason);
+    // Log error but don't exit - let Railway restart if needed
+});
+
+// Add memory usage monitoring
+setInterval(() => {
+    const memUsage = process.memoryUsage();
+    console.log('📊 Memory Usage:', {
+        rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB',
+        external: Math.round(memUsage.external / 1024 / 1024) + 'MB'
+    });
+}, 300000); // Log every 5 minutes
 
 // PostgreSQL connection for sessions
 const pool = new Pool({
@@ -1738,9 +1763,44 @@ app.get('/payment/cancel', (req, res) => {
     `);
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+// Enhanced health check with database and memory monitoring
+app.get('/api/health', async (req, res) => {
+    try {
+        // Check database connection
+        await pool.query('SELECT 1');
+        
+        // Get memory usage
+        const memUsage = process.memoryUsage();
+        
+        res.json({ 
+            status: 'OK', 
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            memory: {
+                rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
+                heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
+                heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB'
+            },
+            database: 'connected'
+        });
+    } catch (error) {
+        console.error('❌ Health check failed:', error);
+        res.status(500).json({ 
+            status: 'unhealthy', 
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Additional health endpoints
+app.get('/health', async (req, res) => {
+    try {
+        await pool.query('SELECT 1');
+        res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+    } catch (error) {
+        res.status(500).json({ status: 'unhealthy', error: error.message });
+    }
 });
 
 // Serve main pages
