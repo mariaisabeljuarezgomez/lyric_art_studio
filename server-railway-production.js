@@ -21,8 +21,13 @@ import('node-fetch').then(module => {
     globalThis.fetch = module.default;
 }).catch(err => console.error('Failed to import node-fetch:', err));
 
+console.log('🚀 STARTUP: Creating Express app...');
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+console.log(`🚀 STARTUP: PORT configured as ${PORT}`);
+console.log(`🚀 STARTUP: NODE_ENV = ${process.env.NODE_ENV}`);
+console.log(`🚀 STARTUP: DATABASE_URL = ${process.env.DATABASE_URL ? 'SET' : 'MISSING'}`);
 
 // Global error handlers for process stability
 process.on('uncaughtException', (error) => {
@@ -48,9 +53,22 @@ setInterval(() => {
 }, 300000); // Log every 5 minutes
 
 // PostgreSQL connection for sessions
+console.log('🚀 STARTUP: Creating PostgreSQL connection pool...');
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
+
+console.log('🚀 STARTUP: PostgreSQL pool created');
+
+// Test database connection immediately
+pool.connect((err, client, release) => {
+    if (err) {
+        console.error('❌ STARTUP: Database connection failed:', err);
+    } else {
+        console.log('✅ STARTUP: Database connection successful');
+        release();
+    }
 });
 
 // Create session table if it doesn't exist
@@ -1763,34 +1781,15 @@ app.get('/payment/cancel', (req, res) => {
     `);
 });
 
-// Enhanced health check with database and memory monitoring
-app.get('/api/health', async (req, res) => {
-    try {
-        // Check database connection
-        await pool.query('SELECT 1');
-        
-        // Get memory usage
-        const memUsage = process.memoryUsage();
-        
-        res.json({ 
-            status: 'OK', 
-            timestamp: new Date().toISOString(),
-            uptime: process.uptime(),
-            memory: {
-                rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
-                heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
-                heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB'
-            },
-            database: 'connected'
-        });
-    } catch (error) {
-        console.error('❌ Health check failed:', error);
-        res.status(500).json({ 
-            status: 'unhealthy', 
-            error: error.message,
-            timestamp: new Date().toISOString()
-        });
-    }
+// SIMPLIFIED health check for debugging startup issues
+app.get('/api/health', (req, res) => {
+    console.log('🏥 Health check requested');
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        message: 'Server is running'
+    });
 });
 
 // Additional health endpoints
@@ -3207,15 +3206,33 @@ module.exports = app;
 
 // Start the server if this file is run directly
 if (require.main === module) {
+    console.log('🚀 STARTUP: Starting server...');
+    console.log(`🚀 STARTUP: Attempting to listen on port ${PORT}`);
+    
     // Start server and initialize database in parallel
-    app.listen(PORT, () => {
-        console.log(`🚀 Lyric Art Studio Server running on port ${PORT}`);
+    const server = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`✅ SUCCESS: Lyric Art Studio Server running on port ${PORT}`);
         console.log(`🌐 Health check available at: http://localhost:${PORT}/api/health`);
         console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`🚀 STARTUP: Server is now accepting connections`);
         
         // Initialize database after server starts
-        initializeDatabase().catch(err => {
+        console.log('🚀 STARTUP: Initializing database...');
+        initializeDatabase().then(() => {
+            console.log('✅ SUCCESS: Database initialization completed');
+        }).catch(err => {
             console.error('❌ Database initialization failed (but server is running):', err);
         });
+    });
+    
+    server.on('error', (err) => {
+        console.error('❌ SERVER ERROR:', err);
+        if (err.code === 'EADDRINUSE') {
+            console.error(`❌ Port ${PORT} is already in use`);
+        }
+    });
+    
+    server.on('listening', () => {
+        console.log(`✅ Server successfully bound to port ${PORT}`);
     });
 }
