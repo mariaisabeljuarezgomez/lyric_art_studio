@@ -505,6 +505,24 @@ const getDesignInfo = async (designId) => {
 
 // Initialize database with users and purchases
 const initializeDatabase = async () => {
+    let retries = 5;
+    while (retries > 0) {
+        try {
+            console.log(`🔄 Database connection attempt ${6 - retries}`);
+            await pool.query('SELECT 1');
+            console.log('✅ Database connected');
+            break;
+        } catch (error) {
+            console.error(`❌ Database connection failed, ${retries - 1} retries left`);
+            retries -= 1;
+            if (retries === 0) {
+                console.error('❌ All database connection attempts failed');
+                throw error;
+            }
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+    }
+
     try {
         // Check if tables exist, create them if they don't
         console.log('🔍 Checking database schema...');
@@ -2948,6 +2966,181 @@ app.use((req, res) => {
 });
 
 // =================================
+
+// Utility Functions for Design Processing
+const getDesignNameFromFolderName = (folderName) => {
+    try {
+        // Load the designs database
+        const designsData = JSON.parse(fs.readFileSync('designs-database.json', 'utf8'));
+        
+        // Find the design by folder name in the image path
+        const design = designsData.designs.find(d => {
+            if (d.image) {
+                const pathParts = d.image.split('/');
+                if (pathParts.length >= 3) {
+                    return pathParts[2] === folderName;
+                }
+            }
+            return false;
+        });
+        
+        if (design) {
+            const designName = `${design.artist} - ${design.song}`;
+            console.log(`✅ Found design name "${designName}" for folder "${folderName}"`);
+            return designName;
+        }
+        
+        // Fallback: convert folder name to readable format
+        console.log(`⚠️ No design name found for folder "${folderName}", converting to readable format`);
+        return folderName
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+            .replace(/\b(Guitar|Piano|Cassette)\b/g, '')
+            .trim();
+    } catch (error) {
+        console.error('❌ Error getting design name from folder name:', error);
+        // Fallback: convert folder name to readable format
+        return folderName
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+            .replace(/\b(Guitar|Piano|Cassette)\b/g, '')
+            .trim();
+    }
+};
+
+const getDesignArtistFromFolderName = (folderName) => {
+    try {
+        // Load the designs database
+        const designsData = JSON.parse(fs.readFileSync('designs-database.json', 'utf8'));
+        
+        // Find the design by folder name in the image path
+        const design = designsData.designs.find(d => {
+            if (d.image) {
+                const pathParts = d.image.split('/');
+                if (pathParts.length >= 3) {
+                    return pathParts[2] === folderName;
+                }
+            }
+            return false;
+        });
+        
+        if (design) {
+            console.log(`✅ Found artist "${design.artist}" for folder "${folderName}"`);
+            return design.artist;
+        }
+        
+        // Fallback: extract artist name from folder name
+        const parts = folderName.split('-');
+        if (parts[0] === 'the' && parts[1]) {
+            return `The ${parts[1].charAt(0).toUpperCase() + parts[1].slice(1)}`;
+        }
+        return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    } catch (error) {
+        console.error('❌ Error getting design artist from folder name:', error);
+        // Fallback: extract artist name from folder name
+        const parts = folderName.split('-');
+        if (parts[0] === 'the' && parts[1]) {
+            return `The ${parts[1].charAt(0).toUpperCase() + parts[1].slice(1)}`;
+        }
+        return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    }
+};
+
+const getDesignShapeFromFolderName = (folderName) => {
+    try {
+        // Load the designs database
+        const designsData = JSON.parse(fs.readFileSync('designs-database.json', 'utf8'));
+        
+        // Find the design by folder name in the image path
+        const design = designsData.designs.find(d => {
+            if (d.image) {
+                const pathParts = d.image.split('/');
+                if (pathParts.length >= 3) {
+                    return pathParts[2] === folderName;
+                }
+            }
+            return false;
+        });
+        
+        if (design) {
+            // Extract shape from the design data if available
+            if (design.image && design.image.includes('guitar')) return 'Guitar Shape';
+            if (design.image && design.image.includes('piano')) return 'Piano Shape';
+            if (design.image && design.image.includes('cassette')) return 'Cassette Shape';
+        }
+        
+        // Fallback: determine shape from folder name
+        if (folderName.includes('guitar')) return 'Guitar Shape';
+        if (folderName.includes('piano')) return 'Piano Shape';
+        if (folderName.includes('cassette')) return 'Cassette Shape';
+        return 'Design';
+    } catch (error) {
+        console.error('❌ Error getting design shape from folder name:', error);
+        // Fallback: determine shape from folder name
+        if (folderName.includes('guitar')) return 'Guitar Shape';
+        if (folderName.includes('piano')) return 'Piano Shape';
+        if (folderName.includes('cassette')) return 'Cassette Shape';
+        return 'Design';
+    }
+};
+
+const getDesignFolderNameFromId = (designId) => {
+    try {
+        // Load the designs database
+        const designsData = JSON.parse(fs.readFileSync('designs-database.json', 'utf8'));
+        
+        // Find the design by numeric ID
+        const design = designsData.designs.find(d => d.id.toString() === designId.toString());
+        
+        if (design && design.image) {
+            // Extract folder name from image path: "images/designs/folder-name/folder-name.webp"
+            const pathParts = design.image.split('/');
+            if (pathParts.length >= 3) {
+                console.log(`✅ Found folder name "${pathParts[2]}" for design ID ${designId}`);
+                return pathParts[2]; // Return the folder name
+            }
+        }
+        
+        // Fallback: return the design ID if no match found
+        console.log(`⚠️ No folder name found for design ID ${designId}, using design ID as folder name`);
+        return designId;
+    } catch (error) {
+        console.error('❌ Error getting design folder name from ID:', error);
+        return designId; // Fallback to original ID
+    }
+};
+
+const getNumericDesignId = async (folderName) => {
+    try {
+        // Load the designs database
+        const designsData = JSON.parse(fs.readFileSync('designs-database.json', 'utf8'));
+        
+        // Find the design by folder name in the image path
+        const design = designsData.designs.find(d => {
+            if (d.image) {
+                const pathParts = d.image.split('/');
+                if (pathParts.length >= 3) {
+                    return pathParts[2] === folderName;
+                }
+            }
+            return false;
+        });
+        
+        if (design) {
+            console.log(`✅ Found design ID ${design.id} for folder "${folderName}"`);
+            return design.id.toString();
+        }
+        
+        // Fallback: return the folder name if no match found
+        console.log(`⚠️ No design found for folder "${folderName}", using folder name as ID`);
+        return folderName;
+    } catch (error) {
+        console.error('❌ Error getting numeric design ID:', error);
+        return folderName; // Fallback to original folder name
+    }
+};
 
 // Export app after all routes are defined
 module.exports = app;
