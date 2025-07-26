@@ -786,71 +786,81 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-// Google OAuth Strategy
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: 'https://lyricartstudio.shop/auth/google/callback' // Always use production domain for OAuth
-}, async (accessToken, refreshToken, profile, done) => {
-    try {
-        console.log('🔐 Google OAuth profile:', profile.id);
-        
-        // Check if user exists
-        let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-        
-        if (result.rows.length === 0) {
-            // Create new user
-            const userId = crypto.randomUUID();
-            await pool.query(
-                'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
-                [userId, profile.emails[0].value, profile.displayName, 'oauth-google-' + profile.id]
-            );
-            console.log('✅ New Google user created:', profile.emails[0].value);
-        } else {
-            console.log('✅ Existing Google user found:', profile.emails[0].value);
+// Google OAuth Strategy - Only configure if credentials are available
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(new GoogleStrategy({
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: 'https://lyricartstudio.shop/auth/google/callback' // Always use production domain for OAuth
+    }, async (accessToken, refreshToken, profile, done) => {
+        try {
+            console.log('🔐 Google OAuth profile:', profile.id);
+            
+            // Check if user exists
+            let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+            
+            if (result.rows.length === 0) {
+                // Create new user
+                const userId = crypto.randomUUID();
+                await pool.query(
+                    'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
+                    [userId, profile.emails[0].value, profile.displayName, 'oauth-google-' + profile.id]
+                );
+                console.log('✅ New Google user created:', profile.emails[0].value);
+            } else {
+                console.log('✅ Existing Google user found:', profile.emails[0].value);
+            }
+            
+            // Get user data
+            result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+            return done(null, result.rows[0]);
+        } catch (error) {
+            console.error('❌ Google OAuth error:', error);
+            return done(error, null);
         }
-        
-        // Get user data
-        result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-        return done(null, result.rows[0]);
-    } catch (error) {
-        console.error('❌ Google OAuth error:', error);
-        return done(error, null);
-    }
-}));
+    }));
+    console.log('✅ Google OAuth strategy configured');
+} else {
+    console.log('⚠️ Google OAuth credentials not configured - skipping Google OAuth');
+}
 
-// GitHub OAuth Strategy
-passport.use(new GitHubStrategy({
-    clientID: process.env.GITHUB_CLIENT_ID,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: 'https://lyricartstudio.shop/auth/github/callback' // Always use production domain for OAuth
-}, async (accessToken, refreshToken, profile, done) => {
-    try {
-        console.log('🔐 GitHub OAuth profile:', profile.id);
-        
-        // Check if user exists
-        let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-        
-        if (result.rows.length === 0) {
-            // Create new user
-            const userId = crypto.randomUUID();
-            await pool.query(
-                'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
-                [userId, profile.emails[0].value, profile.displayName, 'oauth-github-' + profile.id]
-            );
-            console.log('✅ New GitHub user created:', profile.emails[0].value);
-        } else {
-            console.log('✅ Existing GitHub user found:', profile.emails[0].value);
+// GitHub OAuth Strategy - Only configure if credentials are available
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    passport.use(new GitHubStrategy({
+        clientID: process.env.GITHUB_CLIENT_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        callbackURL: 'https://lyricartstudio.shop/auth/github/callback' // Always use production domain for OAuth
+    }, async (accessToken, refreshToken, profile, done) => {
+        try {
+            console.log('🔐 GitHub OAuth profile:', profile.id);
+            
+            // Check if user exists
+            let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+            
+            if (result.rows.length === 0) {
+                // Create new user
+                const userId = crypto.randomUUID();
+                await pool.query(
+                    'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
+                    [userId, profile.emails[0].value, profile.displayName, 'oauth-github-' + profile.id]
+                );
+                console.log('✅ New GitHub user created:', profile.emails[0].value);
+            } else {
+                console.log('✅ Existing GitHub user found:', profile.emails[0].value);
+            }
+            
+            // Get user data
+            result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+            return done(null, result.rows[0]);
+        } catch (error) {
+            console.error('❌ GitHub OAuth error:', error);
+            return done(error, null);
         }
-        
-        // Get user data
-        result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-        return done(null, result.rows[0]);
-    } catch (error) {
-        console.error('❌ GitHub OAuth error:', error);
-        return done(error, null);
-    }
-}));
+    }));
+    console.log('✅ GitHub OAuth strategy configured');
+} else {
+    console.log('⚠️ GitHub OAuth credentials not configured - skipping GitHub OAuth');
+}
 
 // 🎯 CORS FIX - ALLOW COOKIES TO BE SENT
 app.use((req, res, next) => {
@@ -2349,71 +2359,75 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/login.html'));
 });
 
-// OAuth Routes
-app.get('/auth/google', passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    prompt: 'select_account' // Force account selection every time
-}));
+// OAuth Routes - Only register if credentials are configured
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    app.get('/auth/google', passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        prompt: 'select_account' // Force account selection every time
+    }));
 
-// Special route for testing with forced account selection
-app.get('/auth/google/test', passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    prompt: 'select_account',
-    access_type: 'offline' // Request refresh token for better testing
-}));
+    // Special route for testing with forced account selection
+    app.get('/auth/google/test', passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        prompt: 'select_account',
+        access_type: 'offline' // Request refresh token for better testing
+    }));
 
-app.get('/auth/google/callback', 
-    passport.authenticate('google', { failureRedirect: '/login' }),
-    (req, res) => {
-        console.log('✅ Google OAuth successful for user:', req.user.email);
-        // Set session data
-        req.session.userId = req.user.id;
-        req.session.userEmail = req.user.email;
-        req.session.userName = req.user.name;
-        
-        // Redirect to local development server if running locally
-        const redirectUrl = process.env.NODE_ENV === 'production' 
-            ? '/homepage' 
-            : 'http://localhost:3001/homepage';
-        res.redirect(redirectUrl);
-    }
-);
+    app.get('/auth/google/callback', 
+        passport.authenticate('google', { failureRedirect: '/login' }),
+        (req, res) => {
+            console.log('✅ Google OAuth successful for user:', req.user.email);
+            // Set session data
+            req.session.userId = req.user.id;
+            req.session.userEmail = req.user.email;
+            req.session.userName = req.user.name;
+            
+            // Redirect to local development server if running locally
+            const redirectUrl = process.env.NODE_ENV === 'production' 
+                ? '/homepage' 
+                : 'http://localhost:3001/homepage';
+            res.redirect(redirectUrl);
+        }
+    );
 
-app.get('/auth/google/test/callback', 
-    passport.authenticate('google', { failureRedirect: '/login' }),
-    (req, res) => {
-        console.log('✅ Google OAuth TEST successful for user:', req.user.email);
-        // Set session data
-        req.session.userId = req.user.id;
-        req.session.userEmail = req.user.email;
-        req.session.userName = req.user.name;
-        
-        // Redirect to local development server if running locally
-        const redirectUrl = process.env.NODE_ENV === 'production' 
-            ? '/homepage' 
-            : 'http://localhost:3001/homepage';
-        res.redirect(redirectUrl);
-    }
-);
+    app.get('/auth/google/test/callback', 
+        passport.authenticate('google', { failureRedirect: '/login' }),
+        (req, res) => {
+            console.log('✅ Google OAuth TEST successful for user:', req.user.email);
+            // Set session data
+            req.session.userId = req.user.id;
+            req.session.userEmail = req.user.email;
+            req.session.userName = req.user.name;
+            
+            // Redirect to local development server if running locally
+            const redirectUrl = process.env.NODE_ENV === 'production' 
+                ? '/homepage' 
+                : 'http://localhost:3001/homepage';
+            res.redirect(redirectUrl);
+        }
+    );
+}
 
-app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
 
-app.get('/auth/github/callback',
-    passport.authenticate('github', { failureRedirect: '/login' }),
-    (req, res) => {
-        console.log('✅ GitHub OAuth successful for user:', req.user.email);
-        // Set session data
-        req.session.userId = req.user.id;
-        req.session.userEmail = req.user.email;
-        req.session.userName = req.user.name;
-        
-        // Redirect to local development server if running locally
-        const redirectUrl = process.env.NODE_ENV === 'production' 
-            ? '/homepage' 
-            : 'http://localhost:3001/homepage';
-        res.redirect(redirectUrl);
-    }
-);
+    app.get('/auth/github/callback',
+        passport.authenticate('github', { failureRedirect: '/login' }),
+        (req, res) => {
+            console.log('✅ GitHub OAuth successful for user:', req.user.email);
+            // Set session data
+            req.session.userId = req.user.id;
+            req.session.userEmail = req.user.email;
+            req.session.userName = req.user.name;
+            
+            // Redirect to local development server if running locally
+            const redirectUrl = process.env.NODE_ENV === 'production' 
+                ? '/homepage' 
+                : 'http://localhost:3001/homepage';
+            res.redirect(redirectUrl);
+        }
+    );
+}
 
 app.get('/auth/logout', (req, res) => {
     req.logout((err) => {
