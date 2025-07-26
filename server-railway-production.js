@@ -552,7 +552,7 @@ const createPayPalOrder = async (items, total) => {
                 },
                 custom_id: `order_${Date.now()}_${designId}`,
                 items: items.map(item => ({
-                    name: item.title || 'LyricArt Design',
+                    name: item.designName || item.title || 'LyricArt Design',
                     unit_amount: {
                         currency_code: 'USD',
                         value: (item.price || 3.00).toFixed(2)
@@ -586,7 +586,21 @@ const createPayPalOrder = async (items, total) => {
         if (!response.ok) {
             const errorData = await response.text();
             console.error('❌ PayPal order creation failed:', response.status, errorData);
-            throw new Error(`PayPal order creation failed: ${response.status} ${response.statusText}`);
+            
+            // Try to parse the error response for more details
+            let errorMessage = `PayPal order creation failed: ${response.status} ${response.statusText}`;
+            try {
+                const parsedError = JSON.parse(errorData);
+                if (parsedError.details && parsedError.details.length > 0) {
+                    errorMessage = `PayPal Error: ${parsedError.details[0].description || parsedError.details[0].issue}`;
+                } else if (parsedError.message) {
+                    errorMessage = `PayPal Error: ${parsedError.message}`;
+                }
+            } catch (parseError) {
+                console.error('❌ Could not parse PayPal error response:', parseError);
+            }
+            
+            throw new Error(errorMessage);
         }
 
         const order = await response.json();
@@ -787,79 +801,87 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // Google OAuth Strategy - Only configure if credentials are available
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(new GoogleStrategy({
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: 'https://lyricartstudio.shop/auth/google/callback' // Always use production domain for OAuth
-    }, async (accessToken, refreshToken, profile, done) => {
-        try {
-            console.log('🔐 Google OAuth profile:', profile.id);
-            
-            // Check if user exists
-            let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-            
-            if (result.rows.length === 0) {
-                // Create new user
-                const userId = crypto.randomUUID();
-                await pool.query(
-                    'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
-                    [userId, profile.emails[0].value, profile.displayName, 'oauth-google-' + profile.id]
-                );
-                console.log('✅ New Google user created:', profile.emails[0].value);
-            } else {
-                console.log('✅ Existing Google user found:', profile.emails[0].value);
+try {
+    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+        passport.use(new GoogleStrategy({
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: 'https://lyricartstudio.shop/auth/google/callback' // Always use production domain for OAuth
+        }, async (accessToken, refreshToken, profile, done) => {
+            try {
+                console.log('🔐 Google OAuth profile:', profile.id);
+                
+                // Check if user exists
+                let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                
+                if (result.rows.length === 0) {
+                    // Create new user
+                    const userId = crypto.randomUUID();
+                    await pool.query(
+                        'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
+                        [userId, profile.emails[0].value, profile.displayName, 'oauth-google-' + profile.id]
+                    );
+                    console.log('✅ New Google user created:', profile.emails[0].value);
+                } else {
+                    console.log('✅ Existing Google user found:', profile.emails[0].value);
+                }
+                
+                // Get user data
+                result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                return done(null, result.rows[0]);
+            } catch (error) {
+                console.error('❌ Google OAuth error:', error);
+                return done(error, null);
             }
-            
-            // Get user data
-            result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-            return done(null, result.rows[0]);
-        } catch (error) {
-            console.error('❌ Google OAuth error:', error);
-            return done(error, null);
-        }
-    }));
-    console.log('✅ Google OAuth strategy configured');
-} else {
-    console.log('⚠️ Google OAuth credentials not configured - skipping Google OAuth');
+        }));
+        console.log('✅ Google OAuth strategy configured');
+    } else {
+        console.log('⚠️ Google OAuth credentials not configured - skipping Google OAuth');
+    }
+} catch (error) {
+    console.log('⚠️ Google OAuth configuration failed - skipping:', error.message);
 }
 
 // GitHub OAuth Strategy - Only configure if credentials are available
-if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-    passport.use(new GitHubStrategy({
-        clientID: process.env.GITHUB_CLIENT_ID,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL: 'https://lyricartstudio.shop/auth/github/callback' // Always use production domain for OAuth
-    }, async (accessToken, refreshToken, profile, done) => {
-        try {
-            console.log('🔐 GitHub OAuth profile:', profile.id);
-            
-            // Check if user exists
-            let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-            
-            if (result.rows.length === 0) {
-                // Create new user
-                const userId = crypto.randomUUID();
-                await pool.query(
-                    'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
-                    [userId, profile.emails[0].value, profile.displayName, 'oauth-github-' + profile.id]
-                );
-                console.log('✅ New GitHub user created:', profile.emails[0].value);
-            } else {
-                console.log('✅ Existing GitHub user found:', profile.emails[0].value);
+try {
+    if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+        passport.use(new GitHubStrategy({
+            clientID: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+            callbackURL: 'https://lyricartstudio.shop/auth/github/callback' // Always use production domain for OAuth
+        }, async (accessToken, refreshToken, profile, done) => {
+            try {
+                console.log('🔐 GitHub OAuth profile:', profile.id);
+                
+                // Check if user exists
+                let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                
+                if (result.rows.length === 0) {
+                    // Create new user
+                    const userId = crypto.randomUUID();
+                    await pool.query(
+                        'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
+                        [userId, profile.emails[0].value, profile.displayName, 'oauth-github-' + profile.id]
+                    );
+                    console.log('✅ New GitHub user created:', profile.emails[0].value);
+                } else {
+                    console.log('✅ Existing GitHub user found:', profile.emails[0].value);
+                }
+                
+                // Get user data
+                result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                return done(null, result.rows[0]);
+            } catch (error) {
+                console.error('❌ GitHub OAuth error:', error);
+                return done(error, null);
             }
-            
-            // Get user data
-            result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-            return done(null, result.rows[0]);
-        } catch (error) {
-            console.error('❌ GitHub OAuth error:', error);
-            return done(error, null);
-        }
-    }));
-    console.log('✅ GitHub OAuth strategy configured');
-} else {
-    console.log('⚠️ GitHub OAuth credentials not configured - skipping GitHub OAuth');
+        }));
+        console.log('✅ GitHub OAuth strategy configured');
+    } else {
+        console.log('⚠️ GitHub OAuth credentials not configured - skipping GitHub OAuth');
+    }
+} catch (error) {
+    console.log('⚠️ GitHub OAuth configuration failed - skipping:', error.message);
 }
 
 // 🎯 CORS FIX - ALLOW COOKIES TO BE SENT
