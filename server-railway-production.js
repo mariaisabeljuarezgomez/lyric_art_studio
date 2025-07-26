@@ -790,9 +790,7 @@ passport.deserializeUser(async (id, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.NODE_ENV === 'production' 
-        ? 'https://lyricartstudio.shop/auth/google/callback'
-        : 'http://localhost:3001/auth/google/callback'
+    callbackURL: 'https://lyricartstudio.shop/auth/google/callback' // Always use production domain for OAuth
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         console.log('🔐 Google OAuth profile:', profile.id);
@@ -825,9 +823,7 @@ passport.use(new GoogleStrategy({
 passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: process.env.NODE_ENV === 'production'
-        ? 'https://lyricartstudio.shop/auth/github/callback'
-        : 'http://localhost:3001/auth/github/callback'
+    callbackURL: 'https://lyricartstudio.shop/auth/github/callback' // Always use production domain for OAuth
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         console.log('🔐 GitHub OAuth profile:', profile.id);
@@ -2374,7 +2370,12 @@ app.get('/auth/google/callback',
         req.session.userId = req.user.id;
         req.session.userEmail = req.user.email;
         req.session.userName = req.user.name;
-        res.redirect('/homepage');
+        
+        // Redirect to local development server if running locally
+        const redirectUrl = process.env.NODE_ENV === 'production' 
+            ? '/homepage' 
+            : 'http://localhost:3001/homepage';
+        res.redirect(redirectUrl);
     }
 );
 
@@ -2386,7 +2387,12 @@ app.get('/auth/google/test/callback',
         req.session.userId = req.user.id;
         req.session.userEmail = req.user.email;
         req.session.userName = req.user.name;
-        res.redirect('/homepage');
+        
+        // Redirect to local development server if running locally
+        const redirectUrl = process.env.NODE_ENV === 'production' 
+            ? '/homepage' 
+            : 'http://localhost:3001/homepage';
+        res.redirect(redirectUrl);
     }
 );
 
@@ -2400,7 +2406,12 @@ app.get('/auth/github/callback',
         req.session.userId = req.user.id;
         req.session.userEmail = req.user.email;
         req.session.userName = req.user.name;
-        res.redirect('/homepage');
+        
+        // Redirect to local development server if running locally
+        const redirectUrl = process.env.NODE_ENV === 'production' 
+            ? '/homepage' 
+            : 'http://localhost:3001/homepage';
+        res.redirect(redirectUrl);
     }
 );
 
@@ -2430,7 +2441,10 @@ app.get('/auth/logout-test', (req, res) => {
                 console.error('❌ Session destroy error:', err);
             }
             // Redirect to Google logout, then back to our homepage
-            res.redirect('https://accounts.google.com/logout?continue=' + encodeURIComponent(process.env.SITE_URL || 'http://localhost:3001') + '/homepage');
+            const continueUrl = process.env.NODE_ENV === 'production' 
+                ? (process.env.SITE_URL || 'https://lyricartstudio.shop') + '/homepage'
+                : 'http://localhost:3001/homepage';
+            res.redirect('https://accounts.google.com/logout?continue=' + encodeURIComponent(continueUrl));
         });
     });
 });
