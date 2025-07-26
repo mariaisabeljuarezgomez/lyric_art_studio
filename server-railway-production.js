@@ -1911,7 +1911,7 @@ app.get('/api/my-collection/designs', authenticateUser, async (req, res) => {
         
         const designs = [];
         for (const row of result.rows) {
-            const folderName = await getDesignFolderName(row.design_id);
+            const folderName = getDesignFolderNameFromId(row.design_id);
             // Get proper design name from designs database
             const properDesignName = getDesignNameFromFolderName(folderName);
             designs.push({
@@ -2541,7 +2541,7 @@ app.get('/api/my-collection/download-order/:orderId', authenticateUser, async (r
             // Convert numeric design ID to folder name
             let folderName = designId;
             if (!designId.includes('-')) {
-                folderName = await getDesignFolderName(designId);
+                folderName = getDesignFolderNameFromId(designId);
             }
             
             // Check if design files exist
