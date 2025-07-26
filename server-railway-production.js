@@ -1897,12 +1897,6 @@ app.get('/debug-design-ids', (req, res) => {
 // My Collection API routes
 app.get('/api/my-collection/designs', authenticateUser, async (req, res) => {
     console.log('🎯 /api/my-collection/designs accessed for user:', req.session.userId);
-    console.log('🔍 DEBUG: Session details:', {
-        userId: req.session.userId,
-        userEmail: req.session.userEmail,
-        userName: req.session.userName,
-        sessionId: req.sessionID
-    });
     try {
         // Get user's purchased designs from database
         const result = await pool.query(`
@@ -1912,9 +1906,6 @@ app.get('/api/my-collection/designs', authenticateUser, async (req, res) => {
             GROUP BY design_id, design_name
             ORDER BY first_purchase_date DESC
         `, [req.session.userId]);
-        
-        console.log('🔍 DEBUG: Query executed with user_id:', req.session.userId);
-        console.log('🔍 DEBUG: Query result count:', result.rows.length);
         
         console.log(`🔍 DEBUG: Raw database result:`, result.rows);
         
