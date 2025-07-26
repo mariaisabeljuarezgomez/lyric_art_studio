@@ -508,6 +508,19 @@ app.use((req, res, next) => {
     next();
 });
 
+// HEALTH CHECK FIRST - Before any middleware that depends on database
+app.get('/api/health', (req, res) => {
+    console.log('🏥 Health check requested');
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        message: 'Server is running'
+    });
+});
+
+console.log('🚀 STARTUP: Health check endpoint registered BEFORE session middleware');
+
 // Session configuration using PostgreSQL
 app.use(session({
     store: new pgSession({
@@ -1781,16 +1794,7 @@ app.get('/payment/cancel', (req, res) => {
     `);
 });
 
-// SIMPLIFIED health check for debugging startup issues
-app.get('/api/health', (req, res) => {
-    console.log('🏥 Health check requested');
-    res.status(200).json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        message: 'Server is running'
-    });
-});
+// Health check moved before session middleware to avoid database dependency issues
 
 // Additional health endpoints
 app.get('/health', async (req, res) => {
