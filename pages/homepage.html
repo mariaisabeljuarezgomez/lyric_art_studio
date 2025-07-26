@@ -45,7 +45,7 @@
                 </div>
 
                 <!-- Search & User Actions -->
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     <button onclick="openHeaderSearch()" class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -61,15 +61,15 @@
                     </button>
                     
                     <!-- User Authentication -->
-                    <div id="auth-buttons" class="flex items-center space-x-2">
-                        <a href="/login" class="text-text-secondary hover:text-accent transition-smooth text-sm font-medium">Login</a>
-                        <a href="/register" class="bg-accent text-background px-4 py-2 rounded-lg hover:bg-accent/90 transition-smooth text-sm font-medium">Register</a>
+                    <div id="auth-buttons" class="flex items-center space-x-1 sm:space-x-2">
+                        <a href="/login" class="text-text-secondary hover:text-accent transition-smooth text-xs sm:text-sm font-medium">Login</a>
+                        <a href="/register" class="bg-accent text-background px-2 sm:px-4 py-2 rounded-lg hover:bg-accent/90 transition-smooth text-xs sm:text-sm font-medium">Register</a>
                     </div>
                     
                     <!-- User Menu (hidden when not logged in) -->
-                    <div id="user-menu" class="hidden flex items-center space-x-2">
-                        <span id="user-email" class="text-text-secondary text-sm"></span>
-                        <button onclick="logout()" class="text-text-secondary hover:text-accent transition-smooth text-sm font-medium">Logout</button>
+                    <div id="user-menu" class="hidden flex items-center space-x-1 sm:space-x-2">
+                        <span id="user-email" class="text-text-secondary text-xs sm:text-sm max-w-24 sm:max-w-32 md:max-w-48 truncate" title=""></span>
+                        <button onclick="logout()" class="text-text-secondary hover:text-accent transition-smooth text-xs sm:text-sm font-medium">Logout</button>
                     </div>
                     
                     <!-- Auth Status Indicator (for debugging) -->
@@ -273,14 +273,14 @@
                 <button onclick="openCommissionModal()" class="btn-primary text-lg px-8 py-4">CUSTOM DESIGN REQUEST</button>
                 
                 <!-- Newsletter Subscription -->
-                <div class="mt-8 max-w-md mx-auto">
-                    <div class="bg-surface/50 backdrop-blur-md rounded-lg p-6 border border-border-subtle">
+                <div class="mt-8 w-full max-w-md mx-auto px-4 sm:px-0">
+                    <div class="bg-surface/50 backdrop-blur-md rounded-lg p-4 sm:p-6 border border-border-subtle">
                         <h3 class="text-lg font-semibold text-text-primary mb-3">Stay Updated</h3>
                         <p class="text-text-secondary text-sm mb-4">Get notified about new designs and exclusive offers!</p>
-                        <div class="flex space-x-2">
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                             <input type="email" id="subscription-email" placeholder="Enter your email" 
-                                   class="flex-1 px-4 py-2 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary text-sm">
-                            <button onclick="subscribe()" class="bg-accent text-background px-4 py-2 rounded-lg hover:bg-accent/90 transition-smooth text-sm font-medium">
+                                   class="flex-1 px-3 sm:px-4 py-2 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary text-sm">
+                            <button onclick="subscribe()" class="bg-accent text-background px-4 py-2 rounded-lg hover:bg-accent/90 transition-smooth text-sm font-medium whitespace-nowrap">
                                 Subscribe
                             </button>
                         </div>
@@ -1482,6 +1482,7 @@
             
             if (userEmail) {
                 userEmail.textContent = user.email;
+                userEmail.title = user.email; // Add tooltip for full email on hover
                 console.log('✅ User email set to:', user.email);
             }
             
