@@ -135,6 +135,40 @@
                                     <!-- Summary will be loaded here -->
                                 </div>
 
+                                <!-- Discount Code Section -->
+                                <div class="mb-6 sm:mb-8 p-4 bg-accent/5 border border-accent/20 rounded-xl">
+                                    <h3 class="text-lg font-semibold text-text-primary mb-3 flex items-center space-x-2">
+                                        <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                                        </svg>
+                                        <span>Discount Code</span>
+                                    </h3>
+                                    <div class="space-y-3">
+                                        <div class="flex space-x-2">
+                                            <input type="text" id="discount-code" placeholder="Enter code (e.g., WELCOME100)" 
+                                                   class="flex-1 px-3 py-2 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary text-sm">
+                                            <button onclick="applyDiscountCode()" id="apply-discount-btn" 
+                                                    class="bg-accent text-background px-4 py-2 rounded-lg hover:bg-accent/90 transition-smooth text-sm font-medium whitespace-nowrap">
+                                                Apply
+                                            </button>
+                                        </div>
+                                        <div id="discount-message" class="text-sm hidden"></div>
+                                        <div id="discount-applied" class="hidden">
+                                            <div class="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                                <div class="flex items-center space-x-2">
+                                                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                    <span class="text-green-600 font-medium" id="discount-description"></span>
+                                                </div>
+                                                <button onclick="removeDiscountCode()" class="text-red-500 hover:text-red-600 text-sm font-medium">
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Checkout Button -->
                                 <button id="checkout-button" onclick="processCheckout()" class="w-full bg-gradient-to-r from-accent to-accent/90 text-background py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:from-accent/90 hover:to-accent transition-all duration-300 font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                                     <div class="flex items-center justify-center space-x-2 sm:space-x-3">
@@ -281,9 +315,10 @@
         function displayOrderSummary(cart) {
             const container = document.getElementById('summary-container');
             
-            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
-            const tax = subtotal * 0.08; // 8% tax
-            const total = subtotal + tax;
+                            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
+                const tax = subtotal * 0.08; // 8% tax
+                const discountAmount = currentDiscount ? currentDiscount.discountAmount : 0;
+                const total = subtotal + tax - discountAmount;
             
             container.innerHTML = `
                 <div class="space-y-3 sm:space-y-4">
@@ -369,12 +404,26 @@
                         total = 0;
                     }
                 }
-                console.log('💰 Calculated total:', total);
+                
+                // Apply discount if available
+                if (currentDiscount && currentDiscount.valid) {
+                    const discountAmount = currentDiscount.discountAmount;
+                    total = Math.max(0, total - discountAmount);
+                    console.log('🎫 Applied discount:', discountAmount, 'New total:', total);
+                }
+                
+                console.log('💰 Final total (after discount):', total);
                 
                 // Prepare PayPal order data
                 const paypalOrderData = {
                     items: items,
-                    total: total
+                    total: total,
+                    discount: currentDiscount ? {
+                        code: currentDiscount.code,
+                        discountAmount: currentDiscount.discountAmount,
+                        discountType: currentDiscount.discountType,
+                        discountValue: currentDiscount.discountValue
+                    } : null
                 };
                 console.log('💳 PayPal order data:', paypalOrderData);
                 
@@ -534,6 +583,153 @@
                 showError('Failed to clear cart. Please try again.');
             }
         }
+
+        // Discount code functionality
+        let currentDiscount = null;
+
+        async function applyDiscountCode() {
+            const codeInput = document.getElementById('discount-code');
+            const applyButton = document.getElementById('apply-discount-btn');
+            const messageDiv = document.getElementById('discount-message');
+            const appliedDiv = document.getElementById('discount-applied');
+            
+            const code = codeInput.value.trim().toUpperCase();
+            
+            if (!code) {
+                showDiscountMessage('Please enter a discount code', 'error');
+                return;
+            }
+
+            // Show loading state
+            applyButton.disabled = true;
+            applyButton.textContent = 'Applying...';
+
+            try {
+                // Get current cart total
+                const cartResponse = await fetch('/api/cart', { credentials: 'include' });
+                const cartData = await cartResponse.json();
+                
+                let items = [];
+                if (cartData && typeof cartData === 'object') {
+                    if (cartData.cart && Array.isArray(cartData.cart.items)) {
+                        items = cartData.cart.items;
+                    } else if (Array.isArray(cartData.items)) {
+                        items = cartData.items;
+                    } else if (Array.isArray(cartData)) {
+                        items = cartData;
+                    }
+                }
+
+                const subtotal = items.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
+                const orderTotal = subtotal + (subtotal * 0.08); // Include tax
+                
+                // Determine order type (all downloadable for now)
+                const orderType = 'downloadable';
+
+                console.log('🎫 Validating discount code:', { code, orderTotal, orderType });
+
+                const response = await fetch('/api/discount/validate', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        orderTotal: orderTotal,
+                        orderType: orderType
+                    })
+                });
+
+                const data = await response.json();
+                console.log('🎫 Discount validation response:', data);
+
+                if (data.valid) {
+                    currentDiscount = data;
+                    showDiscountMessage(`Discount applied! You saved $${data.discountAmount.toFixed(2)}`, 'success');
+                    appliedDiv.classList.remove('hidden');
+                    document.getElementById('discount-description').textContent = 
+                        `${data.code} - ${data.discountType === 'percentage' ? data.discountValue + '%' : '$' + data.discountValue} off`;
+                    
+                    // Update order summary with discount
+                    updateOrderSummaryWithDiscount(items, data.discountAmount);
+                } else {
+                    showDiscountMessage(data.reason || 'Invalid discount code', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Discount code error:', error);
+                showDiscountMessage('Failed to apply discount code', 'error');
+            } finally {
+                // Restore button state
+                applyButton.disabled = false;
+                applyButton.textContent = 'Apply';
+            }
+        }
+
+        function removeDiscountCode() {
+            currentDiscount = null;
+            document.getElementById('discount-code').value = '';
+            document.getElementById('discount-applied').classList.add('hidden');
+            document.getElementById('discount-message').classList.add('hidden');
+            
+            // Reload cart to reset order summary
+            loadCartData();
+        }
+
+        function showDiscountMessage(message, type) {
+            const messageDiv = document.getElementById('discount-message');
+            messageDiv.textContent = message;
+            messageDiv.className = `text-sm ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
+            messageDiv.classList.remove('hidden');
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function updateOrderSummaryWithDiscount(items, discountAmount) {
+            const container = document.getElementById('summary-container');
+            
+            const subtotal = items.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
+            const tax = subtotal * 0.08; // 8% tax
+            const total = subtotal + tax - discountAmount;
+            
+            container.innerHTML = `
+                <div class="space-y-3 sm:space-y-4">
+                    <div class="flex justify-between items-center py-2 sm:py-3 border-b border-border-subtle">
+                        <span class="text-text-secondary text-sm sm:text-base">Subtotal:</span>
+                        <span class="font-semibold text-text-primary text-base sm:text-lg">$${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 sm:py-3 border-b border-border-subtle">
+                        <span class="text-text-secondary text-sm sm:text-base">Tax (8%):</span>
+                        <span class="font-semibold text-text-primary text-base sm:text-lg">$${tax.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 sm:py-3 border-b border-border-subtle">
+                        <span class="text-text-secondary text-sm sm:text-base">Discount:</span>
+                        <span class="font-semibold text-green-600 text-base sm:text-lg">-$${discountAmount.toFixed(2)}</span>
+                    </div>
+                    <div class="pt-3 sm:pt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg sm:text-xl font-bold text-text-primary">Total:</span>
+                            <span class="text-2xl sm:text-3xl font-bold text-accent">$${total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Add Enter key support for discount code
+        document.addEventListener('DOMContentLoaded', function() {
+            const discountInput = document.getElementById('discount-code');
+            if (discountInput) {
+                discountInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        applyDiscountCode();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html> 

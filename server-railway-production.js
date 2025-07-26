@@ -349,7 +349,115 @@ const emailTemplates = {
             </body>
             </html>
         `
-    })
+    }),
+
+    newsletterWelcomeEmail: (subscriberData) => ({
+        subject: `🎵 Welcome to Lyric Art Studio - Your 25% Discount Code Inside!`,
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Welcome to Lyric Art Studio</title>
+                <style>
+                    body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #ffffff; background-color: #0a0a0a; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #00FFFF 0%, #000000 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #1a1a1a; padding: 30px; border-radius: 0 0 10px 10px; color: #ffffff; }
+                    .discount-box { background: #000000; border: 2px solid #00FFFF; padding: 20px; margin: 20px 0; border-radius: 10px; text-align: center; }
+                    .discount-code { font-size: 24px; font-weight: bold; color: #00FFFF; letter-spacing: 2px; }
+                    .button { display: inline-block; background: #00FFFF; color: #000000; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; font-weight: bold; transition: all 0.3s ease; }
+                    .button:hover { background: #00CCCC; transform: translateY(-2px); }
+                    .footer { text-align: center; margin-top: 30px; color: #cccccc; font-size: 14px; }
+                    .highlight { color: #00FFFF; font-weight: bold; }
+                    .feature-list { background: #000000; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #00FFFF; }
+                    .feature-list ul { margin: 0; padding-left: 20px; }
+                    .feature-list li { margin: 5px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1 style="margin: 0; font-size: 32px; font-weight: bold;">🎵 Welcome to Lyric Art Studio!</h1>
+                        <p style="margin: 10px 0 0 0; font-size: 18px;">Where Lyrics Become Art</p>
+                        <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Professional Design Services by Maria Juarez</p>
+                    </div>
+                    <div class="content">
+                        <h2 style="color: #00FFFF; margin-top: 0;">Hello ${subscriberData.name || 'Music Lover'}! 👋</h2>
+                        
+                        <p style="color: #ffffff;">Welcome to the Lyric Art Studio family! We're thrilled to have you join our community of music enthusiasts and art lovers.</p>
+                        
+                        <div class="discount-box">
+                            <h3 style="color: #00FFFF; margin-top: 0;">🎉 Your Welcome Gift: 25% OFF!</h3>
+                            <p style="margin: 10px 0;">Use this exclusive discount code on your first purchase:</p>
+                            <div class="discount-code">WELCOME100</div>
+                            <p style="font-size: 14px; margin: 10px 0; opacity: 0.8;">*Valid on downloadable designs only. One-time use per customer.</p>
+                        </div>
+
+                        <h3 style="color: #00FFFF;">✨ What Makes Us Special</h3>
+                        <div class="feature-list">
+                            <ul>
+                                <li><strong>Custom Design Requests:</strong> Any artist, any song - we create it for you!</li>
+                                <li><strong>Lightning Fast Turnaround:</strong> Usually less than 24 hours, often within 2 hours!</li>
+                                <li><strong>Personal Touch:</strong> Every design is manually crafted by Maria Juarez personally</li>
+                                <li><strong>100% Satisfaction Guaranteed:</strong> We ensure your complete satisfaction</li>
+                                <li><strong>Daily Catalog Updates:</strong> New designs added every day</li>
+                                <li><strong>Bulk Order Discounts:</strong> Up to 50% off for larger orders</li>
+                            </ul>
+                        </div>
+
+                        <h3 style="color: #00FFFF;">🎨 Our Premium Services</h3>
+                        <p style="color: #ffffff;">Transform your favorite song lyrics into stunning visual art. Our designs are perfect for:</p>
+                        <ul style="color: #ffffff;">
+                            <li>T-shirts, hoodies, and apparel</li>
+                            <li>Wall art and home decor</li>
+                            <li>Vinyl decals and stickers</li>
+                            <li>Laser engraving projects</li>
+                            <li>Embroidery designs</li>
+                            <li>And so much more!</li>
+                        </ul>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${process.env.SITE_URL || 'https://lyricartstudio.shop'}/browse" class="button">🎵 Browse Our Gallery</a>
+                            <a href="${process.env.SITE_URL || 'https://lyricartstudio.shop'}/custom-request" class="button">🎨 Custom Request</a>
+                        </div>
+
+                        <h3 style="color: #00FFFF;">📧 Stay Connected</h3>
+                        <p style="color: #ffffff;">Don't miss out on our latest designs and exclusive offers! Make sure to:</p>
+                        <ul style="color: #ffffff;">
+                            <li>Turn on notifications in your Purchase Dashboard</li>
+                            <li>Follow us for daily design updates</li>
+                            <li>Contact us for bulk order inquiries</li>
+                        </ul>
+
+                        <div style="background: #000000; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #00FFFF;">
+                            <h4 style="color: #00FFFF; margin-top: 0;">💡 Pro Tip</h4>
+                            <p style="color: #ffffff; margin: 0;">For bulk orders and special pricing, send us a message with your requirements. We handle each case individually to give you the best possible deal!</p>
+                        </div>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="mailto:${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}" class="button">📧 Contact Us</a>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 Lyric Art Studio. All rights reserved.</p>
+                        <p>Professional Design Services by Maria Juarez</p>
+                        <p>This email was sent to ${subscriberData.email}</p>
+                        <p style="font-size: 12px; opacity: 0.7;">
+                            You're receiving this email because you subscribed to our newsletter. 
+                            <a href="#" style="color: #00FFFF;">Unsubscribe</a> if you no longer wish to receive these emails.
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
+    }),
+
+    async close() {
+        // This method is implied by the original file, but it's not used in the code block
+        // You might want to implement a close method for your email templates
+    }
 };
 
 // Email sending function
@@ -771,30 +879,16 @@ const getDesignInfo = async (designId) => {
 
 // Initialize database with users and purchases
 const initializeDatabase = async () => {
-    let retries = 5;
-    while (retries > 0) {
-        try {
-            console.log(`🔄 Database connection attempt ${6 - retries}`);
-            await pool.query('SELECT 1');
-            console.log('✅ Database connected');
-            break;
-        } catch (error) {
-            console.error(`❌ Database connection failed, ${retries - 1} retries left`);
-            retries -= 1;
-            if (retries === 0) {
-                console.error('❌ All database connection attempts failed');
-                throw error;
-            }
-            await new Promise(resolve => setTimeout(resolve, 5000));
-        }
-    }
-
     try {
-        // Check if tables exist, create them if they don't
+        console.log('🔄 Database connection attempt 1');
+        await pool.query('SELECT NOW()');
+        console.log('✅ STARTUP: Database connection successful');
+        console.log('✅ Database connected');
+        
         console.log('🔍 Checking database schema...');
         
         // Check if users table exists
-        const usersTableExists = await pool.query(`
+        const usersTableCheck = await pool.query(`
             SELECT EXISTS (
                 SELECT FROM information_schema.tables 
                 WHERE table_schema = 'public' 
@@ -802,151 +896,118 @@ const initializeDatabase = async () => {
             );
         `);
         
-        if (!usersTableExists.rows[0].exists) {
-            console.log('📊 Creating users table...');
-            await pool.query(`
-                CREATE TABLE users (
-                    id VARCHAR(255) PRIMARY KEY,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    password VARCHAR(255) NOT NULL,
-                    name VARCHAR(255) NOT NULL
-                );
-            `);
-        }
-        
-        // Check if purchases table exists
-        const purchasesTableExists = await pool.query(`
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = 'purchases'
-            );
-        `);
-        
-        if (!purchasesTableExists.rows[0].exists) {
-            console.log('📊 Creating purchases table...');
-            await pool.query(`
-                CREATE TABLE purchases (
-                    id SERIAL PRIMARY KEY,
-                    user_id VARCHAR(255) NOT NULL,
-                    design_id VARCHAR(255) NOT NULL,
-                    design_name VARCHAR(255) NOT NULL,
-                    payment_id VARCHAR(255) NOT NULL,
-                    order_id VARCHAR(255),
-                    amount DECIMAL(10,2) NOT NULL,
-                    purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (user_id) REFERENCES users(id)
-                );
-            `);
-        }
-        
-        // Check if wishlist table exists
-        const wishlistTableExists = await pool.query(`
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = 'wishlist'
-            );
-        `);
-        
-        if (!wishlistTableExists.rows[0].exists) {
-            console.log('📊 Creating wishlist table...');
-            await pool.query(`
-                CREATE TABLE wishlist (
-                    id SERIAL PRIMARY KEY,
-                    user_id VARCHAR(255) NOT NULL,
-                    design_id VARCHAR(255) NOT NULL,
-                    added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(user_id, design_id),
-                    FOREIGN KEY (user_id) REFERENCES users(id)
-                );
-            `);
-        }
-        
-        // Check if pending_orders table exists
-        const pendingOrdersTableExists = await pool.query(`
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = 'pending_orders'
-            );
-        `);
-        
-        if (!pendingOrdersTableExists.rows[0].exists) {
-            console.log('📊 Creating pending_orders table...');
-            await pool.query(`
-                CREATE TABLE pending_orders (
-                    id SERIAL PRIMARY KEY,
-                    order_id VARCHAR(255) UNIQUE NOT NULL,
-                    user_id VARCHAR(255) NOT NULL,
-                    user_email VARCHAR(255) NOT NULL,
-                    user_name VARCHAR(255) NOT NULL,
-                    items JSONB NOT NULL,
-                    total DECIMAL(10,2) NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    processed BOOLEAN DEFAULT FALSE,
-                    FOREIGN KEY (user_id) REFERENCES users(id)
-                );
-            `);
-        }
-
-        // Check if user_preferences table exists
-        const userPreferencesTableExists = await pool.query(`
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = 'user_preferences'
-            );
-        `);
-        
-        if (!userPreferencesTableExists.rows[0].exists) {
-            console.log('📊 Creating user_preferences table...');
-            await pool.query(`
-                CREATE TABLE user_preferences (
-                    id SERIAL PRIMARY KEY,
-                    user_id VARCHAR(255) UNIQUE NOT NULL,
-                    notification_new_releases BOOLEAN DEFAULT TRUE,
-                    notification_artist_updates BOOLEAN DEFAULT TRUE,
-                    notification_promotional_offers BOOLEAN DEFAULT FALSE,
-                    notification_wishlist_alerts BOOLEAN DEFAULT TRUE,
-                    download_format VARCHAR(50) DEFAULT 'svg',
-                    auto_download_after_purchase BOOLEAN DEFAULT TRUE,
-                    offline_storage_enabled BOOLEAN DEFAULT FALSE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-                );
-            `);
-        }
-
-        // Check if users exist
-        const userCheck = await pool.query('SELECT COUNT(*) FROM users');
-        if (parseInt(userCheck.rows[0].count) === 0) {
-            // Create default users
-            const hashedPassword1 = await bcrypt.hash('password123', 10);
-            const hashedPassword2 = await bcrypt.hash('123456789', 10);
-            
-            await pool.query(`
-                INSERT INTO users (id, email, password, name) VALUES 
-                ('a1d4f3f989e2e99be3968cbc77648050', 'test@example.com', $1, 'Test User'),
-                ('8a428e2c-095c-3d60-5076-dc5415592a21', 'mariaisabeljuarezgomez85@gmail.com', $2, 'Maria Isabel Juarez Gomez')
-            `, [hashedPassword1, hashedPassword2]);
-            
-            console.log('📊 Database initialized with 2 users');
-        } else {
+        if (usersTableCheck.rows[0].exists) {
             console.log('📊 Database already has users');
+        } else {
+            console.log('📊 Database needs initialization');
         }
         
-        // NO MORE TEST PURCHASE DATA - Database is now clean for real purchases only
+        console.log('✅ SUCCESS: Database initialization completed');
+        
+        // Initialize the WELCOME100 discount code
+        await initializeWelcomeDiscountCode();
         
     } catch (error) {
         console.error('❌ Database initialization error:', error);
+        throw error;
+    }
+};
+
+// Initialize the WELCOME100 discount code
+const initializeWelcomeDiscountCode = async () => {
+    try {
+        console.log('🎫 Initializing WELCOME100 discount code...');
+        
+        // Check if the code already exists
+        const existingCode = await pool.query(`
+            SELECT * FROM discount_codes WHERE code = 'WELCOME100'
+        `);
+        
+        if (existingCode.rows.length === 0) {
+            // Create the WELCOME100 discount code
+            await pool.query(`
+                INSERT INTO discount_codes (
+                    code, description, discount_type, discount_value, 
+                    minimum_order, maximum_discount, usage_limit, 
+                    valid_until, applicable_to, is_active
+                ) VALUES (
+                    'WELCOME100', 
+                    'Welcome discount for new newsletter subscribers - 25% off first purchase',
+                    'percentage',
+                    25.00,
+                    0.00,
+                    NULL,
+                    NULL,
+                    NULL,
+                    'downloadable',
+                    TRUE
+                )
+            `);
+            
+            console.log('✅ WELCOME100 discount code created successfully');
+        } else {
+            console.log('✅ WELCOME100 discount code already exists');
+        }
+    } catch (error) {
+        console.error('❌ Error initializing WELCOME100 discount code:', error);
     }
 };
 
 // Database will be initialized when server starts
 
 // API Routes
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+        console.log('🔐 Registration attempt:', { name, email, password: '***' });
+
+        // Check if user already exists
+        const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ error: 'User with this email already exists' });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Generate UUID for user ID
+        const userId = crypto.randomUUID();
+
+        // Create new user
+        const result = await pool.query(
+            'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4) RETURNING id, email, name',
+            [userId, email, name, hashedPassword]
+        );
+
+        const user = result.rows[0];
+
+        // Set session data
+        req.session.userId = user.id;
+        req.session.userEmail = user.email;
+        req.session.userName = user.name;
+
+        console.log('✅ New user registered:', user.id);
+        console.log('💾 Setting session data:', {
+            sessionId: req.sessionID,
+            userId: user.id,
+            userEmail: user.email,
+            userName: user.name
+        });
+
+        res.json({ 
+            success: true, 
+            user: { 
+                id: user.id, 
+                email: user.email, 
+                name: user.name 
+            } 
+        });
+    } catch (err) {
+        console.error('Registration error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -1356,13 +1417,211 @@ app.post('/api/email/test', async (req, res) => {
     }
 });
 
+// Newsletter Subscription API Routes
+app.post('/api/subscription/create', async (req, res) => {
+    try {
+        console.log('📧 Newsletter subscription request received');
+        const { email, name } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Get IP address and user agent
+        const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+        const userAgent = req.headers['user-agent'];
+
+        console.log('📧 Adding newsletter subscriber:', { email, name, ipAddress });
+
+        // Add subscriber to database
+        const subscriber = await pool.query(`
+            INSERT INTO newsletter_subscribers (email, name, ip_address, user_agent)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (email) 
+            DO UPDATE SET 
+                status = 'active',
+                subscribed_at = CURRENT_TIMESTAMP,
+                ip_address = COALESCE($3, newsletter_subscribers.ip_address),
+                user_agent = COALESCE($4, newsletter_subscribers.user_agent)
+            RETURNING *
+        `, [email, name, ipAddress, userAgent]);
+
+        console.log('✅ Newsletter subscriber added/updated:', subscriber.rows[0]);
+
+        // Send welcome email with discount code
+        const emailResult = await sendEmail(email, 'newsletterWelcomeEmail', {
+            email: email,
+            name: name || 'Music Lover'
+        });
+
+        if (emailResult.success) {
+            console.log('✅ Newsletter welcome email sent successfully');
+            
+            // Mark welcome email as sent
+            await pool.query(`
+                UPDATE newsletter_subscribers 
+                SET welcome_email_sent = TRUE, last_email_sent = CURRENT_TIMESTAMP
+                WHERE email = $1
+            `, [email]);
+
+            res.json({ 
+                success: true, 
+                message: 'Successfully subscribed! Check your email for your welcome gift.' 
+            });
+        } else {
+            console.error('❌ Newsletter welcome email failed:', emailResult.error);
+            res.status(500).json({ error: 'Subscription successful but welcome email failed' });
+        }
+    } catch (error) {
+        console.error('❌ Newsletter subscription error:', error);
+        res.status(500).json({ error: 'Failed to subscribe to newsletter' });
+    }
+});
+
+// Discount code validation endpoint
+app.post('/api/discount/validate', async (req, res) => {
+    try {
+        console.log('🎫 Discount code validation request received');
+        const { code, orderTotal, orderType } = req.body;
+        
+        if (!code) {
+            return res.status(400).json({ error: 'Discount code is required' });
+        }
+
+        // Get user information
+        const userId = req.session?.userId;
+        const userEmail = req.session?.userEmail;
+        const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+
+        console.log('🎫 Validating discount code:', { code, orderTotal, orderType, userId, userEmail });
+
+        // Get discount code from database
+        const codeResult = await pool.query(`
+            SELECT * FROM discount_codes 
+            WHERE code = $1 AND is_active = TRUE 
+            AND (valid_until IS NULL OR valid_until > CURRENT_TIMESTAMP)
+        `, [code.toUpperCase()]);
+
+        if (codeResult.rows.length === 0) {
+            return res.json({ valid: false, reason: 'Invalid or expired discount code' });
+        }
+
+        const discountCode = codeResult.rows[0];
+        console.log('🎫 Found discount code:', discountCode);
+
+        // Check usage limit
+        if (discountCode.usage_limit && discountCode.used_count >= discountCode.usage_limit) {
+            return res.json({ valid: false, reason: 'Discount code usage limit reached' });
+        }
+
+        // Check if user has already used this code
+        const usageResult = await pool.query(`
+            SELECT COUNT(*) as usage_count FROM discount_code_usage 
+            WHERE code_id = $1 
+            AND (user_id = $2 OR email = $3 OR ip_address = $4)
+        `, [discountCode.id, userId, userEmail, ipAddress]);
+
+        const usageCount = parseInt(usageResult.rows[0].usage_count);
+        if (usageCount > 0) {
+            return res.json({ valid: false, reason: 'Discount code already used by this user' });
+        }
+
+        // Check minimum order requirement
+        if (discountCode.minimum_order && orderTotal < discountCode.minimum_order) {
+            return res.json({ 
+                valid: false, 
+                reason: `Minimum order amount of $${discountCode.minimum_order} required` 
+            });
+        }
+
+        // Check if code applies to this order type
+        if (discountCode.applicable_to !== 'all' && discountCode.applicable_to !== orderType) {
+            return res.json({ 
+                valid: false, 
+                reason: `This code is only valid for ${discountCode.applicable_to} orders` 
+            });
+        }
+
+        // Calculate discount amount
+        let discountAmount = 0;
+        if (discountCode.discount_type === 'percentage') {
+            discountAmount = (orderTotal * discountCode.discount_value) / 100;
+            if (discountCode.maximum_discount) {
+                discountAmount = Math.min(discountAmount, discountCode.maximum_discount);
+            }
+        } else {
+            discountAmount = discountCode.discount_value;
+        }
+
+        console.log('✅ Discount code validated successfully:', { discountAmount, discountCode });
+
+        res.json({
+            valid: true,
+            code: discountCode.code,
+            discountType: discountCode.discount_type,
+            discountValue: discountCode.discount_value,
+            discountAmount: discountAmount,
+            description: discountCode.description
+        });
+    } catch (error) {
+        console.error('❌ Discount code validation error:', error);
+        res.status(500).json({ error: 'Failed to validate discount code' });
+            }
+    });
+
+// Discount code usage tracking endpoint
+app.post('/api/discount/use', async (req, res) => {
+    try {
+        console.log('🎫 Discount code usage tracking request received');
+        const { codeId, orderId, discountAmount } = req.body;
+        
+        if (!codeId || !orderId || !discountAmount) {
+            return res.status(400).json({ error: 'Missing required discount information' });
+        }
+
+        // Get user information
+        const userId = req.session?.userId;
+        const userEmail = req.session?.userEmail;
+        const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+
+        console.log('🎫 Recording discount code usage:', { codeId, orderId, discountAmount, userId, userEmail });
+
+        // Record the discount code usage
+        await pool.query(`
+            INSERT INTO discount_code_usage (
+                code_id, user_id, email, ip_address, order_id, discount_amount
+            ) VALUES ($1, $2, $3, $4, $5, $6)
+        `, [codeId, userId, userEmail, ipAddress, orderId, discountAmount]);
+
+        // Update usage count
+        await pool.query(`
+            UPDATE discount_codes 
+            SET used_count = used_count + 1 
+            WHERE id = $1
+        `, [codeId]);
+
+        console.log('✅ Discount code usage recorded successfully');
+
+        res.json({ success: true, message: 'Discount code usage recorded' });
+    } catch (error) {
+        console.error('❌ Discount code usage tracking error:', error);
+        res.status(500).json({ error: 'Failed to record discount code usage' });
+    }
+});
+
 // PayPal payment routes
 app.post('/api/payment/create-paypal-order', async (req, res) => {
     try {
         console.log('🔄 PayPal order creation request received');
-        const { items, total } = req.body;
+        const { items, total, discount } = req.body;
         
-        console.log('📦 Request data:', { items, total });
+        console.log('📦 Request data:', { items, total, discount });
         
         if (!items || items.length === 0) {
             console.error('❌ No items in cart');
@@ -1383,13 +1642,16 @@ app.post('/api/payment/create-paypal-order', async (req, res) => {
         
         if (userId) {
             try {
-                // Store pending order with user information
+                // Store pending order with user information including discount
                 await pool.query(`
-                    INSERT INTO pending_orders (order_id, user_id, user_email, user_name, items, total, created_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, NOW())
-                `, [orderId, userId, userEmail, userName, JSON.stringify(items), total]);
+                    INSERT INTO pending_orders (order_id, user_id, user_email, user_name, items, total, discount_info, created_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+                `, [orderId, userId, userEmail, userName, JSON.stringify(items), total, discount ? JSON.stringify(discount) : null]);
                 
                 console.log(`💾 Pending order stored for user ${userId}: ${orderId}`);
+                if (discount) {
+                    console.log(`🎫 Discount applied: ${discount.code} - $${discount.discountAmount} off`);
+                }
             } catch (error) {
                 console.error('❌ Error storing pending order:', error);
             }
@@ -1528,6 +1790,43 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
                         ]);
                         
                         console.log(`💾 Purchase recorded for user ${userId}, design: ${numericDesignId} (original itemId: ${itemId})`);
+                    }
+                    
+                    // Record discount usage if discount was applied
+                    if (pendingOrder.discount_info) {
+                        try {
+                            const discountInfo = pendingOrder.discount_info;
+                            console.log('🎫 Recording discount usage:', discountInfo);
+                            
+                            // Get the discount code ID
+                            const discountCodeResult = await pool.query(`
+                                SELECT id FROM discount_codes WHERE code = $1
+                            `, [discountInfo.code]);
+                            
+                            if (discountCodeResult.rows.length > 0) {
+                                const codeId = discountCodeResult.rows[0].id;
+                                
+                                // Record the discount usage
+                                await pool.query(`
+                                    INSERT INTO discount_code_usage (
+                                        code_id, user_id, email, ip_address, order_id, discount_amount
+                                    ) VALUES ($1, $2, $3, $4, $5, $6)
+                                `, [codeId, userId, pendingOrder.user_email, null, pendingOrder.order_id, discountInfo.discountAmount]);
+                                
+                                // Update usage count
+                                await pool.query(`
+                                    UPDATE discount_codes 
+                                    SET used_count = used_count + 1 
+                                    WHERE id = $1
+                                `, [codeId]);
+                                
+                                console.log('✅ Discount code usage recorded successfully');
+                            } else {
+                                console.error('❌ Discount code not found:', discountInfo.code);
+                            }
+                        } catch (discountError) {
+                            console.error('❌ Error recording discount usage:', discountError);
+                        }
                     }
                     
                     // Mark pending order as processed
