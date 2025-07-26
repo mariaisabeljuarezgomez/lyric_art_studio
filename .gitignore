@@ -28,3 +28,9 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+
+# Admin Upload System (LOCAL USE ONLY)
+pages/admin-upload.html
+design-upload-processor.js
+ADMIN_UPLOAD_SYSTEM_GUIDE.md
+QUICK_INSTALL_UPLOAD_SYSTEM.md

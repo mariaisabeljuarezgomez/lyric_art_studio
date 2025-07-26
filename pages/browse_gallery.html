@@ -429,6 +429,84 @@
 
     <!-- JavaScript -->
     <script>
+        // **QUICK SEARCH FIX** - Test search functionality
+        function testSearch() {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput && window.songCatalog) {
+                console.log('🔍 Testing search with current value:', searchInput.value);
+                console.log('📊 Total songs loaded:', window.songCatalog.songs.length);
+                console.log('📊 Current search filter:', window.songCatalog.currentFilters.search);
+                
+                // Test Tom Petty search
+                window.songCatalog.currentFilters.search = 'tom petty';
+                window.songCatalog.applyFilters();
+                console.log('📊 Filtered results for "tom petty":', window.songCatalog.filteredSongs.length);
+                window.songCatalog.filteredSongs.forEach(song => {
+                    console.log('- Found:', song.artist, '-', song.song);
+                });
+            }
+        }
+
+        // Add test button and enhanced search
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for catalog to load, then add test functionality
+            setTimeout(() => {
+                if (window.songCatalog) {
+                    console.log('✅ SongCatalog loaded with', window.songCatalog.songs.length, 'songs');
+                    
+                    // Find Tom Petty designs
+                    const tomPettyDesigns = window.songCatalog.songs.filter(song => 
+                        song.artist.toLowerCase().includes('tom') && 
+                        (song.song.toLowerCase().includes('petty') || song.artist.toLowerCase().includes('petty'))
+                    );
+                    console.log('🎵 Tom Petty designs found:', tomPettyDesigns.length);
+                    tomPettyDesigns.forEach(design => {
+                        console.log('- ID:', design.id, '- Artist:', design.artist, '- Song:', design.song);
+                    });
+
+                    // Enhanced search input event listener
+                    const searchInput = document.getElementById('search-input');
+                    if (searchInput) {
+                        searchInput.addEventListener('input', function(e) {
+                            const searchTerm = e.target.value.toLowerCase();
+                            console.log('🔍 Searching for:', searchTerm);
+                            window.songCatalog.currentFilters.search = searchTerm;
+                            window.songCatalog.applyFilters();
+                            console.log('📊 Results found:', window.songCatalog.filteredSongs.length);
+                        });
+
+                        // Add placeholder text to help find Tom Petty
+                        searchInput.placeholder = "Search by song, artist... (try 'Tom Petty' or 'Heartbreakers')";
+                    }
+
+                    // Add quick search buttons for testing
+                    const searchContainer = searchInput?.parentElement;
+                    if (searchContainer) {
+                        const testDiv = document.createElement('div');
+                        testDiv.innerHTML = `
+                            <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button onclick="quickSearch('tom petty')" style="padding: 5px 10px; background: #00bcd4; color: white; border: none; border-radius: 4px; cursor: pointer;">Search Tom Petty</button>
+                                <button onclick="quickSearch('heartbreakers')" style="padding: 5px 10px; background: #00bcd4; color: white; border: none; border-radius: 4px; cursor: pointer;">Search Heartbreakers</button>
+                                <button onclick="quickSearch('')" style="padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">Show All</button>
+                            </div>
+                        `;
+                        searchContainer.appendChild(testDiv);
+                    }
+                }
+            }, 2000);
+        });
+
+        // Quick search function
+        function quickSearch(term) {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput && window.songCatalog) {
+                searchInput.value = term;
+                window.songCatalog.currentFilters.search = term.toLowerCase();
+                window.songCatalog.applyFilters();
+                console.log(`🔍 Quick search for "${term}" found:`, window.songCatalog.filteredSongs.length, 'results');
+            }
+        }
+
         // Mobile filter sidebar functionality
         function openMobileFilters() {
             document.getElementById('mobile-filter-sidebar').classList.remove('translate-x-full');

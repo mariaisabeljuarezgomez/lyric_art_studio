@@ -606,6 +606,35 @@ const initializeDatabase = async () => {
             `);
         }
 
+        // Check if user_preferences table exists
+        const userPreferencesTableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'user_preferences'
+            );
+        `);
+        
+        if (!userPreferencesTableExists.rows[0].exists) {
+            console.log('📊 Creating user_preferences table...');
+            await pool.query(`
+                CREATE TABLE user_preferences (
+                    id SERIAL PRIMARY KEY,
+                    user_id VARCHAR(255) UNIQUE NOT NULL,
+                    notification_new_releases BOOLEAN DEFAULT TRUE,
+                    notification_artist_updates BOOLEAN DEFAULT TRUE,
+                    notification_promotional_offers BOOLEAN DEFAULT FALSE,
+                    notification_wishlist_alerts BOOLEAN DEFAULT TRUE,
+                    download_format VARCHAR(50) DEFAULT 'svg',
+                    auto_download_after_purchase BOOLEAN DEFAULT TRUE,
+                    offline_storage_enabled BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                );
+            `);
+        }
+
         // Check if users exist
         const userCheck = await pool.query('SELECT COUNT(*) FROM users');
         if (parseInt(userCheck.rows[0].count) === 0) {
@@ -1156,17 +1185,17 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
                     // Record each purchased item
                     for (const item of items) {
                         const itemId = item.itemId;
-                        const designName = item.title || itemId;
+                        const folderName = itemId; // Always use folder name for design_name
                         const amount = item.price || 3.00;
                         
                         // Look up the correct design ID from the designs database
-                        let designId = itemId;
+                        let numericDesignId = itemId;
                         try {
                             // Use the same getNumericDesignId function for consistency
                             if (typeof itemId === 'string' && itemId.includes('-')) {
                                 // This looks like a folder name, convert it to numeric ID
-                                designId = await getNumericDesignId(itemId);
-                                console.log(`🔍 Converted folder name "${itemId}" to numeric design ID: ${designId}`);
+                                numericDesignId = await getNumericDesignId(itemId);
+                                console.log(`🔍 Converted folder name "${itemId}" to numeric design ID: ${numericDesignId}`);
                             } else {
                                 // This might already be a numeric ID
                                 console.log(`🔍 Using itemId as designId (appears to be numeric): ${itemId}`);
@@ -1176,14 +1205,14 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
                             console.log(`⚠️ Using itemId as designId: ${itemId}`);
                         }
                         
-                        // Store purchase in database
+                        // Store purchase in database - ALWAYS use folder name for design_name
                         await pool.query(`
                             INSERT INTO purchases (user_id, design_id, design_name, payment_id, order_id, amount)
                             VALUES ($1, $2, $3, $4, $5, $6)
                         `, [
                             userId,
-                            designId,
-                            designName,
+                            numericDesignId,  // Numeric ID for design_id
+                            folderName,       // Folder name for design_name (THIS IS THE FIX!)
                             captureResult.capture.id,
                             pendingOrder.order_id, // Use the actual pending order ID
                             amount
@@ -1265,20 +1294,28 @@ app.post('/api/paypal/webhook', async (req, res) => {
                 // Get design info from custom_id (format: order_timestamp_designId)
                 const customId = webhookBody.resource.custom_id;
                 console.log('🔍 Custom ID:', customId);
-                let designId = customId ? customId.split('_')[2] : null;
-                console.log('🔍 Extracted design ID:', designId);
+                let originalDesignId = customId ? customId.split('_')[2] : null;
+                console.log('🔍 Extracted design ID:', originalDesignId);
                 
-                // Convert folder name to numeric ID if needed
-                if (designId && typeof designId === 'string' && designId.includes('-')) {
-                    const numericDesignId = await getNumericDesignId(designId);
-                    console.log(`🔍 Converted folder name "${designId}" to numeric design ID: ${numericDesignId}`);
-                    designId = numericDesignId;
+                // Preserve the original folder name and get numeric ID
+                let folderName = originalDesignId;
+                let numericDesignId = originalDesignId;
+                
+                if (originalDesignId && typeof originalDesignId === 'string' && originalDesignId.includes('-')) {
+                    // This is a folder name, keep it for design_name and convert to numeric for design_id
+                    folderName = originalDesignId;
+                    numericDesignId = await getNumericDesignId(originalDesignId);
+                    console.log(`🔍 Converted folder name "${folderName}" to numeric design ID: ${numericDesignId}`);
+                } else {
+                    // This might already be a numeric ID
+                    numericDesignId = originalDesignId;
+                    console.log(`🔍 Using originalDesignId as numeric ID: ${originalDesignId}`);
                 }
                 
-                if (designId) {
+                if (numericDesignId) {
                     try {
                         // Get design info from database
-                        const designInfo = await getDesignInfo(designId);
+                        const designInfo = await getDesignInfo(numericDesignId);
                         
                         if (designInfo) {
                             // Find the pending order to get user information
@@ -1307,26 +1344,26 @@ app.post('/api/paypal/webhook', async (req, res) => {
                                 console.warn(`⚠️ No pending order found for ${orderId}, using default user`);
                             }
                             
-                            // Store purchase in database for the actual user
+                            // Store purchase in database for the actual user - ALWAYS use folder name for design_name
                             await pool.query(`
                                 INSERT INTO purchases (user_id, design_id, design_name, payment_id, order_id, amount)
                                 VALUES ($1, $2, $3, $4, $5, $6)
                             `, [
                                 userId,
-                                designId,
-                                designInfo.title || designId,
+                                numericDesignId,  // Numeric ID for design_id
+                                folderName,       // Folder name for design_name (THIS IS THE FIX!)
                                 paymentId,
                                 orderId || `order_${Date.now()}`,
                                 amount
                             ]);
                             
-                            console.log(`💾 Purchase stored in database for user ${userId}, design: ${designId}`);
+                            console.log(`💾 Purchase stored in database for user ${userId}, design: ${numericDesignId} (folder: ${folderName})`);
                             
                             // Prepare order data for file delivery
                             const orderData = {
                                 orderId: orderId || `order_${Date.now()}`,
-                                designId: designId,
-                                designName: designInfo.title || designId,
+                                designId: folderName,  // Use folder name for file delivery
+                                designName: designInfo.title || folderName,
                                 customerEmail: userEmail,
                                 customerName: userName,
                                 amount: amount,
@@ -2005,19 +2042,22 @@ app.get('/api/my-collection/download/:designId', authenticateUser, async (req, r
             console.log(`🔍 Converted folder name "${designId}" to numeric design ID: ${numericDesignId}`);
         }
         
-        // Verify user owns this design using the folder name (what's actually stored)
+        // Verify user owns this design - check both design_name (folder) and design_id (numeric)
         const purchaseCheck = await pool.query(`
             SELECT * FROM purchases 
-            WHERE user_id = $1 AND design_name = $2
-        `, [req.session.userId, designId]);
+            WHERE user_id = $1 AND (design_name = $2 OR design_id = $3)
+        `, [req.session.userId, designId, numericDesignId.toString()]);
         
         if (purchaseCheck.rows.length === 0) {
             console.log(`❌ User ${req.session.userId} does not own design ${numericDesignId} (folder: ${designId})`);
+            console.log(`🔍 Checked both design_name='${designId}' and design_id='${numericDesignId}'`);
             return res.status(403).json({ 
                 success: false, 
                 message: 'You do not own this design' 
             });
         }
+        
+        console.log(`✅ User ${req.session.userId} owns design ${numericDesignId} (folder: ${designId})`);
         
         // Use the original folder name for file paths
         const folderName = designId;
@@ -2465,6 +2505,400 @@ app.get('/api/my-collection/download-order/:orderId', authenticateUser, async (r
     }
 });
 
+// User Preferences API Endpoints
+// Get user preferences
+app.get('/api/user-preferences', authenticateUser, async (req, res) => {
+    const userId = req.session.userId;
+    console.log('🎯 /api/user-preferences accessed for user:', userId);
+    
+    try {
+        const result = await pool.query(`
+            SELECT * FROM user_preferences 
+            WHERE user_id = $1
+        `, [userId]);
+        
+        if (result.rows.length === 0) {
+            // Create default preferences for new user
+            const defaultPrefs = await pool.query(`
+                INSERT INTO user_preferences (
+                    user_id, 
+                    notification_new_releases,
+                    notification_artist_updates,
+                    notification_promotional_offers,
+                    notification_wishlist_alerts,
+                    download_format,
+                    auto_download_after_purchase,
+                    offline_storage_enabled
+                ) VALUES ($1, true, true, false, true, 'svg', true, false)
+                RETURNING *
+            `, [userId]);
+            
+            console.log('✅ Created default preferences for user:', userId);
+            res.json({ 
+                success: true, 
+                preferences: defaultPrefs.rows[0] 
+            });
+        } else {
+            console.log('✅ Retrieved preferences for user:', userId);
+            res.json({ 
+                success: true, 
+                preferences: result.rows[0] 
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error retrieving user preferences:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error retrieving user preferences' 
+        });
+    }
+});
+
+// Update user preferences
+app.put('/api/user-preferences', authenticateUser, async (req, res) => {
+    const userId = req.session.userId;
+    const { 
+        notification_new_releases,
+        notification_artist_updates,
+        notification_promotional_offers,
+        notification_wishlist_alerts,
+        download_format,
+        auto_download_after_purchase,
+        offline_storage_enabled
+    } = req.body;
+    
+    console.log('🎯 /api/user-preferences UPDATE accessed for user:', userId);
+    
+    try {
+        // Check if preferences exist for user
+        const existingResult = await pool.query(`
+            SELECT id FROM user_preferences WHERE user_id = $1
+        `, [userId]);
+        
+        let result;
+        if (existingResult.rows.length === 0) {
+            // Insert new preferences
+            result = await pool.query(`
+                INSERT INTO user_preferences (
+                    user_id, 
+                    notification_new_releases,
+                    notification_artist_updates,
+                    notification_promotional_offers,
+                    notification_wishlist_alerts,
+                    download_format,
+                    auto_download_after_purchase,
+                    offline_storage_enabled,
+                    updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+                RETURNING *
+            `, [userId, notification_new_releases, notification_artist_updates, 
+                notification_promotional_offers, notification_wishlist_alerts,
+                download_format, auto_download_after_purchase, offline_storage_enabled]);
+        } else {
+            // Update existing preferences
+            result = await pool.query(`
+                UPDATE user_preferences SET 
+                    notification_new_releases = $2,
+                    notification_artist_updates = $3,
+                    notification_promotional_offers = $4,
+                    notification_wishlist_alerts = $5,
+                    download_format = $6,
+                    auto_download_after_purchase = $7,
+                    offline_storage_enabled = $8,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $1
+                RETURNING *
+            `, [userId, notification_new_releases, notification_artist_updates, 
+                notification_promotional_offers, notification_wishlist_alerts,
+                download_format, auto_download_after_purchase, offline_storage_enabled]);
+        }
+        
+        console.log('✅ Updated preferences for user:', userId);
+        res.json({ 
+            success: true, 
+            preferences: result.rows[0],
+            message: 'Preferences updated successfully'
+        });
+    } catch (error) {
+        console.error('❌ Error updating user preferences:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error updating user preferences' 
+        });
+    }
+});
+
+// Export user data
+app.get('/api/export-user-data', authenticateUser, async (req, res) => {
+    const userId = req.session.userId;
+    console.log('📤 /api/export-user-data accessed for user:', userId);
+    
+    try {
+        // Get user info
+        const userResult = await pool.query(`
+            SELECT id, email, name, created_at FROM users WHERE id = $1
+        `, [userId]);
+        
+        if (userResult.rows.length === 0) {
+            console.log('❌ User not found:', userId);
+            return res.status(404).json({ 
+                success: false, 
+                message: 'User not found' 
+            });
+        }
+        
+        // Get user purchases
+        const purchasesResult = await pool.query(`
+            SELECT design_id, design_name, payment_id, order_id, amount, purchase_date 
+            FROM purchases WHERE user_id = $1 ORDER BY purchase_date DESC
+        `, [userId]);
+        
+        // Get user wishlist
+        const wishlistResult = await pool.query(`
+            SELECT design_id, added_date FROM wishlist WHERE user_id = $1 ORDER BY added_date DESC
+        `, [userId]);
+        
+        // Get user preferences (handle case where preferences don't exist yet)
+        let preferencesResult;
+        try {
+            preferencesResult = await pool.query(`
+                SELECT * FROM user_preferences WHERE user_id = $1
+            `, [userId]);
+        } catch (prefError) {
+            console.log('⚠️ User preferences table might not exist or other error:', prefError.message);
+            preferencesResult = { rows: [] };
+        }
+        
+        const exportData = {
+            user: userResult.rows[0],
+            purchases: purchasesResult.rows || [],
+            wishlist: wishlistResult.rows || [],
+            preferences: preferencesResult.rows[0] || null,
+            exported_at: new Date().toISOString(),
+            export_summary: {
+                total_purchases: purchasesResult.rows.length,
+                total_wishlist_items: wishlistResult.rows.length,
+                user_since: userResult.rows[0].created_at,
+                preferences_configured: preferencesResult.rows.length > 0
+            }
+        };
+        
+        console.log('📤 Export data prepared:', {
+            userId: userId,
+            purchases: exportData.purchases.length,
+            wishlist: exportData.wishlist.length,
+            hasPreferences: !!exportData.preferences
+        });
+        
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="lyric-art-studio-data-${userId}.json"`);
+        res.json(exportData);
+        
+        console.log('✅ Exported data for user:', userId);
+    } catch (error) {
+        console.error('❌ Error exporting user data:', error);
+        console.error('❌ Error details:', error.stack);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error exporting user data: ' + error.message 
+        });
+    }
+});
+
+// Delete user account
+app.delete('/api/delete-account', authenticateUser, async (req, res) => {
+    const userId = req.session.userId;
+    const { confirmEmail } = req.body;
+    
+    console.log('🗑️ /api/delete-account accessed for user:', userId);
+    
+    try {
+        // Get user email for confirmation
+        const userResult = await pool.query(`
+            SELECT email FROM users WHERE id = $1
+        `, [userId]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'User not found' 
+            });
+        }
+        
+        const userEmail = userResult.rows[0].email;
+        
+        // Verify email confirmation
+        if (confirmEmail !== userEmail) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email confirmation does not match' 
+            });
+        }
+        
+        // Delete user data (foreign key constraints will cascade)
+        await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
+        
+        // Destroy session
+        req.session.destroy();
+        
+        console.log('✅ Account deleted for user:', userId);
+        res.json({ 
+            success: true, 
+            message: 'Account deleted successfully' 
+        });
+    } catch (error) {
+        console.error('❌ Error deleting account:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error deleting account' 
+        });
+    }
+});
+
+// ========== ADMIN ROUTES (MUST BE BEFORE STATIC MIDDLEWARE) ==========
+
+// Configure multer for file uploads (MUST BE BEFORE ADMIN ROUTES)
+const multer = require('multer');
+const DesignUploadProcessor = require('./design-upload-processor');
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB per file
+        files: 20 // Max 20 files per upload
+    },
+    fileFilter: (req, file, cb) => {
+        // Allow SVG, PNG, PDF, EPS files
+        const allowedTypes = ['image/svg+xml', 'image/png', 'application/pdf', 'application/postscript'];
+        const allowedExtensions = ['.svg', '.png', '.pdf', '.eps'];
+        
+        const fileExt = path.extname(file.originalname).toLowerCase();
+        const isValidType = allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExt);
+        
+        if (isValidType) {
+            cb(null, true);
+        } else {
+            cb(new Error(`Invalid file type: ${file.originalname}. Only SVG, PNG, PDF, and EPS files are allowed.`));
+        }
+    }
+});
+
+// Initialize design upload processor
+const designUploadProcessor = new DesignUploadProcessor();
+
+const authenticateAdmin = (req, res, next) => {
+    // Simple admin check - you can enhance this with proper admin roles
+    const adminKey = req.headers['x-admin-key'] || req.query.adminKey;
+    const validAdminKey = process.env.ADMIN_KEY || 'lyric-admin-2025'; // Set in environment variables
+    
+    if (adminKey === validAdminKey) {
+        next();
+    } else {
+        res.status(401).json({ 
+            success: false, 
+            message: 'Admin access required. Please provide valid admin key.' 
+        });
+    }
+};
+
+// Debug route to check file paths
+app.get('/debug', (req, res) => {
+    const fs = require('fs');
+    const filePath = path.join(__dirname, 'pages', 'admin-upload.html');
+    
+    res.json({
+        cwd: process.cwd(),
+        __dirname: __dirname,
+        fileExists: fs.existsSync(filePath),
+        filePath: filePath,
+        pagesDir: path.join(__dirname, 'pages'),
+        pagesDirExists: fs.existsSync(path.join(__dirname, 'pages'))
+    });
+});
+
+// Simple test route (no middleware)
+app.get('/admin-test', (req, res) => {
+    console.log('🧪 Simple admin test route accessed!');
+    res.send('Simple admin test works!');
+});
+
+// Test route
+app.get('/admin/test', (req, res) => {
+    console.log('🧪 Test route accessed!');
+    res.send('Admin test route works!');
+});
+
+// Serve admin upload page (both routes)
+app.get('/admin/upload', (req, res) => {
+    console.log('🎯 Admin route accessed!');
+    res.sendFile(path.join(__dirname, 'pages', 'admin-upload.html'));
+});
+
+app.get('/admin/upload.html', (req, res) => {
+    console.log('🎯 Admin route (.html) accessed!');
+    res.sendFile(path.join(__dirname, 'pages', 'admin-upload.html'));
+});
+
+// Handle design upload
+app.post('/api/admin/upload-design', authenticateAdmin, upload.array('files', 20), async (req, res) => {
+    console.log('🎯 Admin design upload initiated');
+    
+    try {
+        // Validate request
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No files uploaded. Please select a design folder with SVG, PNG, PDF, and EPS files.'
+            });
+        }
+
+        // Extract file paths from request body
+        const filePaths = req.body.filePaths;
+        
+        if (!filePaths || !Array.isArray(filePaths)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid file structure. Please upload a complete folder.'
+            });
+        }
+
+        console.log(`📁 Processing ${req.files.length} files from uploaded folder`);
+
+        // Process the upload
+        const result = await designUploadProcessor.processUpload(req.files, filePaths);
+        
+        console.log('✅ Design upload completed successfully:', result);
+        
+        res.json({
+            success: true,
+            designId: result.designId,
+            designName: result.designName,
+            folderName: result.folderName,
+            filesCreated: result.filesCreated,
+            message: 'Design successfully added and is now live for purchase!'
+        });
+
+    } catch (error) {
+        console.error('❌ Design upload failed:', error);
+        
+        // Attempt cleanup if folder name is available
+        if (error.folderName) {
+            await designUploadProcessor.cleanup(error.folderName).catch(console.error);
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Upload processing failed. Please check your files and try again.'
+        });
+    }
+});
+
+console.log('🎯 Admin design upload system initialized');
+console.log('📁 Upload endpoint: /api/admin/upload-design');
+console.log('🔐 Admin page: /admin/upload (requires admin key)');
+
+// ========== END ADMIN ROUTES ==========
+
 // Serve static files for HTML pages (after all API routes)
 app.use(express.static(path.join(__dirname)));
 
@@ -2514,7 +2948,7 @@ app.use((req, res) => {
     `);
 });
 
-module.exports = app;
+// =================================
 
 
 // Start server
@@ -2733,3 +3167,5 @@ const getDesignShapeFromFolderName = (folderName) => {
     }
 };
 
+// Export app after all routes are defined
+module.exports = app;

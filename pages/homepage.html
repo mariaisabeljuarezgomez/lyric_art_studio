@@ -46,7 +46,7 @@
 
                 <!-- Search & User Actions -->
                 <div class="flex items-center space-x-4">
-                    <button class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth">
+                    <button onclick="openHeaderSearch()" class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
@@ -187,7 +187,7 @@
                         </svg>
                     </button>
                 </div>
-                <p class="text-text-secondary mt-4">Try: "Hotel California", "The Beatles", or "We are the champions"</p>
+                <p class="text-text-secondary mt-4">Try: "Hotel California", "The Beatles", "Tom Petty", or "We are the champions"</p>
             </div>
         </div>
     </section>
@@ -387,6 +387,17 @@
             if (searchTerm) {
                 // Redirect to browse gallery with search term
                 window.location.href = `/browse?search=${encodeURIComponent(searchTerm)}`;
+            }
+        }
+
+        // Header search functionality
+        function openHeaderSearch() {
+            // Create a modal search overlay
+            const searchTerm = prompt('Search for songs, artists, or lyrics:');
+            
+            if (searchTerm && searchTerm.trim()) {
+                // Redirect to browse gallery with search term
+                window.location.href = `/browse?search=${encodeURIComponent(searchTerm.trim())}`;
             }
         }
 

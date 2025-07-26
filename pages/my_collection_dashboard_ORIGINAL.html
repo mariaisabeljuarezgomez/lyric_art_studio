@@ -359,7 +359,7 @@
                                         <p class="text-text-secondary text-sm">Get notified about new design releases</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked />
+                                        <input type="checkbox" id="notification-new-releases" class="sr-only peer" checked onchange="updatePreferences()" />
                                         <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                     </label>
                                 </div>
@@ -369,7 +369,7 @@
                                         <p class="text-text-secondary text-sm">Updates from your favorite artists</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked />
+                                        <input type="checkbox" id="notification-artist-updates" class="sr-only peer" checked onchange="updatePreferences()" />
                                         <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                     </label>
                                 </div>
@@ -379,7 +379,7 @@
                                         <p class="text-text-secondary text-sm">Special deals and discounts</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" />
+                                        <input type="checkbox" id="notification-promotional-offers" class="sr-only peer" onchange="updatePreferences()" />
                                         <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                     </label>
                                 </div>
@@ -389,7 +389,7 @@
                                         <p class="text-text-secondary text-sm">Get notified when wishlist items go on sale</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked />
+                                        <input type="checkbox" id="notification-wishlist-alerts" class="sr-only peer" checked onchange="updatePreferences()" />
                                         <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                     </label>
                                 </div>
@@ -402,17 +402,17 @@
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Default Download Format</label>
-                                    <select class="w-full bg-surface border border-border-subtle rounded-lg px-3 py-2 text-text-primary focus:border-accent focus:outline-none transition-smooth">
-                                        <option>SVG (Recommended)</option>
-                                        <option>PNG (High Resolution)</option>
-                                        <option>PDF (Print Ready)</option>
-                                        <option>EPS (Vector)</option>
+                                    <select id="download-format" class="w-full bg-surface border border-border-subtle rounded-lg px-3 py-2 text-text-primary focus:border-accent focus:outline-none transition-smooth" onchange="updatePreferences()">
+                                        <option value="svg">SVG (Recommended)</option>
+                                        <option value="png">PNG (High Resolution)</option>
+                                        <option value="pdf">PDF (Print Ready)</option>
+                                        <option value="eps">EPS (Vector)</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Auto-Download After Purchase</label>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked />
+                                        <input type="checkbox" id="auto-download-after-purchase" class="sr-only peer" checked onchange="updatePreferences()" />
                                         <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                         <span class="ml-3 text-sm text-text-secondary">Automatically start download after purchase</span>
                                     </label>
@@ -425,7 +425,7 @@
                                             <p class="text-xs text-text-secondary">Store purchased designs locally for offline access</p>
                                         </div>
                                         <label class="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" class="sr-only peer" />
+                                            <input type="checkbox" id="offline-storage-enabled" class="sr-only peer" onchange="updatePreferences()" />
                                             <div class="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                         </label>
                                     </div>
@@ -438,13 +438,13 @@
                     <div class="card-surface p-6 mt-8">
                         <h3 class="text-lg font-montserrat font-semibold mb-4">Account Management</h3>
                         <div class="flex flex-col md:flex-row gap-4">
-                            <button class="bg-surface border border-border-subtle text-text-primary px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
+                            <button id="export-data-btn" onclick="exportUserData()" class="bg-surface border border-border-subtle text-text-primary px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
                                 Export All Data
                             </button>
-                            <button class="bg-surface border border-border-subtle text-text-primary px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
+                            <button id="download-receipt-btn" onclick="downloadPurchaseReceipt()" class="bg-surface border border-border-subtle text-text-primary px-6 py-3 rounded-lg hover:border-accent hover:text-accent transition-smooth">
                                 Download Purchase Receipt
                             </button>
-                            <button class="bg-error/20 border border-error text-error px-6 py-3 rounded-lg hover:bg-error hover:text-white transition-smooth">
+                            <button id="delete-account-btn" onclick="deleteAccount()" class="bg-error/20 border border-error text-error px-6 py-3 rounded-lg hover:bg-error hover:text-white transition-smooth">
                                 Delete Account
                             </button>
                         </div>
@@ -2323,6 +2323,411 @@
             console.log(`❌ ERROR: ${message}`);
             // You can enhance this with actual UI notifications
             showNotification(message, 'error');
+        }
+
+        // ===============================
+        // ACCOUNT SETTINGS FUNCTIONALITY
+        // ===============================
+
+        // Load user preferences when the settings tab is shown
+        async function loadUserPreferences() {
+            try {
+                console.log('🎯 Loading user preferences...');
+                const response = await fetch('/api/user-preferences', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const prefs = data.preferences;
+                    
+                    // Set notification preferences
+                    document.getElementById('notification-new-releases').checked = prefs.notification_new_releases;
+                    document.getElementById('notification-artist-updates').checked = prefs.notification_artist_updates;
+                    document.getElementById('notification-promotional-offers').checked = prefs.notification_promotional_offers;
+                    document.getElementById('notification-wishlist-alerts').checked = prefs.notification_wishlist_alerts;
+                    
+                    // Set download preferences
+                    document.getElementById('download-format').value = prefs.download_format;
+                    document.getElementById('auto-download-after-purchase').checked = prefs.auto_download_after_purchase;
+                    document.getElementById('offline-storage-enabled').checked = prefs.offline_storage_enabled;
+                    
+                    console.log('✅ User preferences loaded successfully');
+                } else {
+                    console.error('❌ Failed to load preferences:', data.message);
+                    showError('Failed to load preferences');
+                }
+            } catch (error) {
+                console.error('❌ Error loading preferences:', error);
+                showError('Error loading preferences');
+            }
+        }
+
+        // Update user preferences
+        async function updatePreferences() {
+            try {
+                console.log('🔄 Updating user preferences...');
+                
+                const preferences = {
+                    notification_new_releases: document.getElementById('notification-new-releases').checked,
+                    notification_artist_updates: document.getElementById('notification-artist-updates').checked,
+                    notification_promotional_offers: document.getElementById('notification-promotional-offers').checked,
+                    notification_wishlist_alerts: document.getElementById('notification-wishlist-alerts').checked,
+                    download_format: document.getElementById('download-format').value,
+                    auto_download_after_purchase: document.getElementById('auto-download-after-purchase').checked,
+                    offline_storage_enabled: document.getElementById('offline-storage-enabled').checked
+                };
+                
+                const response = await fetch('/api/user-preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(preferences)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('✅ Preferences updated successfully');
+                    showSuccess('Settings saved successfully!');
+                } else {
+                    console.error('❌ Failed to update preferences:', data.message);
+                    showError('Failed to save settings');
+                }
+            } catch (error) {
+                console.error('❌ Error updating preferences:', error);
+                showError('Error saving settings');
+            }
+        }
+
+        // Export user data
+        async function exportUserData() {
+            try {
+                console.log('📤 Exporting user data...');
+                const exportBtn = document.getElementById('export-data-btn');
+                const originalText = exportBtn.textContent;
+                
+                exportBtn.textContent = 'Exporting...';
+                exportBtn.disabled = true;
+                
+                const response = await fetch('/api/export-user-data', {
+                    credentials: 'include'
+                });
+                
+                console.log('📤 Export response status:', response.status);
+                console.log('📤 Export response headers:', response.headers);
+                
+                if (response.ok) {
+                    // Check if response is JSON or blob
+                    const contentType = response.headers.get('content-type');
+                    console.log('📤 Content type:', contentType);
+                    
+                    if (contentType && contentType.includes('application/json')) {
+                        // It's a JSON response (probably an error or success with data)
+                        const data = await response.json();
+                        console.log('📤 Export data received:', data);
+                        
+                        // Convert to blob for download
+                        const jsonString = JSON.stringify(data, null, 2);
+                        const blob = new Blob([jsonString], { type: 'application/json' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `lyric-art-studio-data-${new Date().toISOString().split('T')[0]}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        showSuccess('Data exported successfully!');
+                        console.log('✅ Data exported successfully');
+                    } else {
+                        // It's already a blob
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `lyric-art-studio-data-${new Date().toISOString().split('T')[0]}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        showSuccess('Data exported successfully!');
+                        console.log('✅ Data exported successfully');
+                    }
+                } else {
+                    // Error response
+                    const errorText = await response.text();
+                    console.error('❌ Export failed with status:', response.status, 'Response:', errorText);
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        showError(errorData.message || 'Failed to export data');
+                    } catch (e) {
+                        showError(`Export failed: ${response.status} ${response.statusText}`);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error exporting data:', error);
+                showError('Error exporting data: ' + error.message);
+            } finally {
+                const exportBtn = document.getElementById('export-data-btn');
+                if (exportBtn) {
+                    exportBtn.textContent = 'Export All Data';
+                    exportBtn.disabled = false;
+                }
+            }
+        }
+
+        // Helper function to convert folder names to proper design names
+        function getDesignNameFromFolderName(folderName) {
+            if (!folderName || typeof folderName !== 'string') return folderName;
+            
+            // If it doesn't contain dashes, return as is
+            if (!folderName.includes('-')) return folderName;
+            
+            // Convert folder name to readable format
+            return folderName
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ')
+                .replace(/\b(And|Of|The|A|An|In|On|At|To|For|With|By)\b/gi, (match) => match.toLowerCase())
+                .replace(/^(the|a|an)/i, (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase());
+        }
+
+        // Download purchase receipt - fetch fresh data from API with complete information
+        async function downloadPurchaseReceipt() {
+            try {
+                console.log('📄 Generating comprehensive purchase receipt...');
+                const receiptBtn = document.getElementById('download-receipt-btn');
+                const originalText = receiptBtn.textContent;
+                
+                receiptBtn.textContent = 'Generating...';
+                receiptBtn.disabled = true;
+                
+                // Fetch detailed purchase data from export endpoint (has more complete data)
+                const response = await fetch('/api/my-collection/history', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.history || data.history.length === 0) {
+                    showError('No purchase history available');
+                    return;
+                }
+                
+                console.log('✅ Complete purchase data:', data);
+                
+                // Create professional receipt content
+                const currentDate = new Date().toLocaleDateString();
+                const currentTime = new Date().toLocaleTimeString();
+                
+                let receiptContent = '';
+                
+                // Header
+                receiptContent += '╔══════════════════════════════════════════════════════════════╗\n';
+                receiptContent += '║                      LYRIC ART STUDIO                        ║\n';
+                receiptContent += '║                   PURCHASE RECEIPT                          ║\n';
+                receiptContent += '╚══════════════════════════════════════════════════════════════╝\n\n';
+                
+                // Customer Information
+                receiptContent += 'CUSTOMER INFORMATION:\n';
+                receiptContent += '─────────────────────\n';
+                receiptContent += `Customer: ${data.user?.name || 'N/A'}\n`;
+                receiptContent += `Email: ${data.user?.email || 'N/A'}\n`;
+                receiptContent += `Member Since: ${data.user?.created_at ? new Date(data.user.created_at).toLocaleDateString() : 'N/A'}\n`;
+                receiptContent += `Receipt Generated: ${currentDate} at ${currentTime}\n\n`;
+                
+                // Purchase Summary
+                const totalAmount = data.history.reduce((sum, purchase) => sum + parseFloat(purchase.amount || 0), 0);
+                const totalItems = data.history.length;
+                const uniqueOrders = [...new Set(data.history.map(p => p.order_id).filter(Boolean))].length;
+                
+                receiptContent += 'PURCHASE SUMMARY:\n';
+                receiptContent += '─────────────────\n';
+                receiptContent += `Total Orders: ${uniqueOrders}\n`;
+                receiptContent += `Total Items: ${totalItems}\n`;
+                receiptContent += `Total Amount: $${totalAmount.toFixed(2)}\n\n`;
+                
+                // Detailed Purchase History
+                receiptContent += 'DETAILED PURCHASE HISTORY:\n';
+                receiptContent += '═══════════════════════════════════════════════════════════════\n\n';
+                
+                // Group purchases by order
+                const orderGroups = {};
+                data.purchases.forEach(purchase => {
+                    const orderId = purchase.order_id || purchase.payment_id || 'Unknown Order';
+                    if (!orderGroups[orderId]) {
+                        orderGroups[orderId] = [];
+                    }
+                    orderGroups[orderId].push(purchase);
+                });
+                
+                let orderCounter = 1;
+                for (const [orderId, purchases] of Object.entries(orderGroups)) {
+                    const orderDate = purchases[0].purchase_date ? new Date(purchases[0].purchase_date).toLocaleDateString() : 'Unknown Date';
+                    const orderTotal = purchases.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+                    
+                    receiptContent += `ORDER #${orderCounter}: ${orderId}\n`;
+                    receiptContent += `Date: ${orderDate}\n`;
+                    receiptContent += `Payment Transaction ID: ${purchases[0].payment_id || 'N/A'}\n`;
+                    receiptContent += '─────────────────────────────────────────────────────────────\n';
+                    
+                    purchases.forEach((purchase, index) => {
+                        // Try to get proper design name
+                        let designName = purchase.design_name || purchase.design_id;
+                        
+                        // If it's a folder name, try to get proper name
+                        if (designName && designName.includes('-')) {
+                            const properName = getDesignNameFromFolderName(designName);
+                            if (properName && properName !== designName) {
+                                designName = properName;
+                            }
+                        }
+                        
+                        receiptContent += `  ${index + 1}. ${designName}\n`;
+                        receiptContent += `     Design ID: ${purchase.design_id}\n`;
+                        receiptContent += `     Amount: $${parseFloat(purchase.amount || 0).toFixed(2)}\n`;
+                        receiptContent += `     Format: SVG, PNG, PDF, EPS\n\n`;
+                    });
+                    
+                    receiptContent += `Order Total: $${orderTotal.toFixed(2)}\n`;
+                    receiptContent += '═════════════════════════════════════════════════════════════\n\n';
+                    orderCounter++;
+                }
+                
+                // Footer
+                receiptContent += 'ADDITIONAL INFORMATION:\n';
+                receiptContent += '──────────────────────\n';
+                receiptContent += `• All purchases include SVG, PNG, PDF, and EPS formats\n`;
+                receiptContent += `• Downloads are available in your My Collection dashboard\n`;
+                receiptContent += `• Questions? Contact support@lyricartstudio.com\n`;
+                receiptContent += `• Visit us at: https://lyricartstudio.com\n\n`;
+                
+                receiptContent += 'Thank you for your business!\n';
+                receiptContent += '╔════════════════════════════════════════════════════════════════╗\n';
+                receiptContent += '║  This receipt serves as proof of purchase for tax purposes     ║\n';
+                receiptContent += '╚════════════════════════════════════════════════════════════════╝';
+                
+                // Download as text file (more appropriate for a receipt)
+                const blob = new Blob([receiptContent], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Lyric-Art-Studio-Receipt-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showSuccess('Professional purchase receipt downloaded!');
+                console.log('✅ Professional receipt downloaded successfully');
+                
+            } catch (error) {
+                console.error('❌ Error downloading receipt:', error);
+                showError('Error downloading purchase receipt: ' + error.message);
+            } finally {
+                const receiptBtn = document.getElementById('download-receipt-btn');
+                if (receiptBtn) {
+                    receiptBtn.textContent = 'Download Purchase Receipt';
+                    receiptBtn.disabled = false;
+                }
+            }
+        }
+
+        // Delete account
+        async function deleteAccount() {
+            try {
+                console.log('🗑️ Delete account requested...');
+                
+                // First confirmation
+                if (!confirm('Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.')) {
+                    return;
+                }
+                
+                // Get user email for confirmation
+                const email = prompt('To confirm, please enter your email address:');
+                if (!email) {
+                    return;
+                }
+                
+                // Final confirmation
+                if (!confirm('This will permanently delete your account and all associated data. Are you absolutely sure?')) {
+                    return;
+                }
+                
+                const deleteBtn = document.getElementById('delete-account-btn');
+                const originalText = deleteBtn.textContent;
+                
+                deleteBtn.textContent = 'Deleting...';
+                deleteBtn.disabled = true;
+                
+                const response = await fetch('/api/delete-account', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ confirmEmail: email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Your account has been deleted successfully. You will be redirected to the homepage.');
+                    window.location.href = '/';
+                } else {
+                    showError(data.message || 'Failed to delete account');
+                }
+            } catch (error) {
+                console.error('❌ Error deleting account:', error);
+                showError('Error deleting account');
+            } finally {
+                const deleteBtn = document.getElementById('delete-account-btn');
+                if (deleteBtn) {
+                    deleteBtn.textContent = 'Delete Account';
+                    deleteBtn.disabled = false;
+                }
+            }
+        }
+
+        // Load preferences when settings tab is activated
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.dashboard-tab');
+            tabButtons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab content
+            const targetTab = document.getElementById(tabName);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // Add active class to clicked tab button
+            const clickedButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+            
+            // Load preferences when settings tab is shown
+            if (tabName === 'settings') {
+                loadUserPreferences();
+            }
+            
+            console.log(`🎯 Switched to ${tabName} tab`);
         }
     </script>
 
