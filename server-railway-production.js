@@ -12,8 +12,7 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
-// PayPal SDK removed - was never properly configured with real credentials
-// const paypal = require('@paypal/paypal-server-sdk');
+const { Client, Environment } = require('@paypal/paypal-server-sdk');
 const FileDeliveryService = require('./file-delivery-service');
 const fs = require('fs');
 
