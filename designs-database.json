@@ -9429,6 +9429,138 @@
         "png": "music_lyricss/led-zeppelin-thank-you-guitar/led-zeppelin-thank-you-guitar.png",
         "eps": "music_lyricss/led-zeppelin-thank-you-guitar/led-zeppelin-thank-you-guitar.eps"
       }
+    },
+    {
+      "id": 433,
+      "artist": "New",
+      "song": "Kids on the Block You Got It",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/new-kids-on-the-block-you-got-it-guitar/new-kids-on-the-block-you-got-it-guitar.webp",
+      "webp": "images/designs/new-kids-on-the-block-you-got-it-guitar/new-kids-on-the-block-you-got-it-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/new-kids-on-the-block-you-got-it-guitar/new-kids-on-the-block-you-got-it-guitar.svg",
+        "pdf": "music_lyricss/new-kids-on-the-block-you-got-it-guitar/new-kids-on-the-block-you-got-it-guitar.pdf",
+        "png": "music_lyricss/new-kids-on-the-block-you-got-it-guitar/new-kids-on-the-block-you-got-it-guitar.png",
+        "eps": "music_lyricss/new-kids-on-the-block-you-got-it-guitar/new-kids-on-the-block-you-got-it-guitar.eps"
+      }
+    },
+    {
+      "id": 434,
+      "artist": "Rob",
+      "song": "Thomas Her Diamonds",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/rob-thomas-her-diamonds-guitar/rob-thomas-her-diamonds-guitar.webp",
+      "webp": "images/designs/rob-thomas-her-diamonds-guitar/rob-thomas-her-diamonds-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/rob-thomas-her-diamonds-guitar/rob-thomas-her-diamonds-guitar.svg",
+        "pdf": "music_lyricss/rob-thomas-her-diamonds-guitar/rob-thomas-her-diamonds-guitar.pdf",
+        "png": "music_lyricss/rob-thomas-her-diamonds-guitar/rob-thomas-her-diamonds-guitar.png",
+        "eps": "music_lyricss/rob-thomas-her-diamonds-guitar/rob-thomas-her-diamonds-guitar.eps"
+      }
+    },
+    {
+      "id": 435,
+      "artist": "Nsync",
+      "song": "Bye Bye Bye",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/nsync-bye-bye-bye-guitar/nsync-bye-bye-bye-guitar.webp",
+      "webp": "images/designs/nsync-bye-bye-bye-guitar/nsync-bye-bye-bye-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/nsync-bye-bye-bye-guitar/nsync-bye-bye-bye-guitar.svg",
+        "pdf": "music_lyricss/nsync-bye-bye-bye-guitar/nsync-bye-bye-bye-guitar.pdf",
+        "png": "music_lyricss/nsync-bye-bye-bye-guitar/nsync-bye-bye-bye-guitar.png",
+        "eps": "music_lyricss/nsync-bye-bye-bye-guitar/nsync-bye-bye-bye-guitar.eps"
+      }
+    },
+    {
+      "id": 436,
+      "artist": "Queen",
+      "song": "We Will Rock You",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/queen-we-will-rock-you-guitar/queen-we-will-rock-you-guitar.webp",
+      "webp": "images/designs/queen-we-will-rock-you-guitar/queen-we-will-rock-you-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/queen-we-will-rock-you-guitar/queen-we-will-rock-you-guitar.svg",
+        "pdf": "music_lyricss/queen-we-will-rock-you-guitar/queen-we-will-rock-you-guitar.pdf",
+        "png": "music_lyricss/queen-we-will-rock-you-guitar/queen-we-will-rock-you-guitar.png",
+        "eps": "music_lyricss/queen-we-will-rock-you-guitar/queen-we-will-rock-you-guitar.eps"
+      }
+    },
+    {
+      "id": 437,
+      "artist": "Backstreet",
+      "song": "Boys I Want It That Way",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/backstreet-boys-i-want-it-that-way-guitar/backstreet-boys-i-want-it-that-way-guitar.webp",
+      "webp": "images/designs/backstreet-boys-i-want-it-that-way-guitar/backstreet-boys-i-want-it-that-way-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/backstreet-boys-i-want-it-that-way-guitar/backstreet-boys-i-want-it-that-way-guitar.svg",
+        "pdf": "music_lyricss/backstreet-boys-i-want-it-that-way-guitar/backstreet-boys-i-want-it-that-way-guitar.pdf",
+        "png": "music_lyricss/backstreet-boys-i-want-it-that-way-guitar/backstreet-boys-i-want-it-that-way-guitar.png",
+        "eps": "music_lyricss/backstreet-boys-i-want-it-that-way-guitar/backstreet-boys-i-want-it-that-way-guitar.eps"
+      }
+    },
+    {
+      "id": 438,
+      "artist": "Bob",
+      "song": "Dylan Like A Rolling Stone",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/bob-dylan-like-a-rolling-stone-guitar/bob-dylan-like-a-rolling-stone-guitar.webp",
+      "webp": "images/designs/bob-dylan-like-a-rolling-stone-guitar/bob-dylan-like-a-rolling-stone-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/bob-dylan-like-a-rolling-stone-guitar/bob-dylan-like-a-rolling-stone-guitar.svg",
+        "pdf": "music_lyricss/bob-dylan-like-a-rolling-stone-guitar/bob-dylan-like-a-rolling-stone-guitar.pdf",
+        "png": "music_lyricss/bob-dylan-like-a-rolling-stone-guitar/bob-dylan-like-a-rolling-stone-guitar.png",
+        "eps": "music_lyricss/bob-dylan-like-a-rolling-stone-guitar/bob-dylan-like-a-rolling-stone-guitar.eps"
+      }
     }
   ],
   "metadata": {

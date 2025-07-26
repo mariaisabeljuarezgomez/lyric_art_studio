@@ -38,7 +38,7 @@
 
                 <!-- Search & User Actions -->
                 <div class="flex items-center space-x-4">
-                    <button class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth">
+                    <button onclick="focusSearchInput()" class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth" title="Search designs">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
@@ -73,21 +73,29 @@
 
     <!-- Main Content -->
     <main class="pt-20">
-        <!-- Search & Filter Header -->
+        <!-- Search Bar - Full Width -->
         <section class="bg-secondary/50 py-6 sm:py-8">
             <div class="container mx-auto px-4 sm:px-6">
+                <div class="relative w-full">
+                    <input
+                        type="text" 
+                        placeholder="Search songs and artists..." 
+                        id="search-input"
+                        style="width: 100%; padding: 20px; border: 4px solid #000000; background-color: #ffffff; color: #000000; font-size: 24px; font-family: Arial; border-radius: 10px;"
+                    />
+                    <button onclick="performSearch()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Header -->
+        <section class="bg-secondary/30 py-4 sm:py-6">
+            <div class="container mx-auto px-4 sm:px-6">
                 <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start lg:items-center justify-between">
-                    <!-- Search Bar -->
-                    <div class="flex-1 max-w-2xl w-full">
-                        <div class="relative">
-                            <input type="text" placeholder="Search by song, artist, or lyric snippet..." class="w-full bg-surface border border-border-subtle rounded-lg px-4 sm:px-6 py-3 sm:py-4 pr-12 text-text-primary placeholder-text-secondary focus:border-accent focus:outline-none transition-smooth text-sm sm:text-base" id="search-input" />
-                            <button class="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-accent">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
 
                     <!-- View Toggle & Sort -->
                     <div class="flex items-center space-x-3 sm:space-x-4 w-full lg:w-auto">
@@ -429,20 +437,28 @@
 
     <!-- JavaScript -->
     <script>
-        // **QUICK SEARCH FIX** - Test search functionality
-        function testSearch() {
+        // Initialize search functionality
+        function initializeSearch() {
             const searchInput = document.getElementById('search-input');
             if (searchInput && window.songCatalog) {
-                console.log('🔍 Testing search with current value:', searchInput.value);
-                console.log('📊 Total songs loaded:', window.songCatalog.songs.length);
-                console.log('📊 Current search filter:', window.songCatalog.currentFilters.search);
+                console.log('✅ Search initialized with', window.songCatalog.songs.length, 'designs');
                 
-                // Test Tom Petty search
-                window.songCatalog.currentFilters.search = 'tom petty';
-                window.songCatalog.applyFilters();
-                console.log('📊 Filtered results for "tom petty":', window.songCatalog.filteredSongs.length);
-                window.songCatalog.filteredSongs.forEach(song => {
-                    console.log('- Found:', song.artist, '-', song.song);
+                // Update initial results count
+                const resultsCount = document.getElementById('results-count');
+                if (resultsCount) {
+                    resultsCount.textContent = window.songCatalog.songs.length;
+                }
+                
+                // Add Enter key support
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const searchTerm = e.target.value.toLowerCase().trim();
+                        if (window.songCatalog) {
+                            window.songCatalog.currentFilters.search = searchTerm;
+                            window.songCatalog.applyFilters();
+                        }
+                    }
                 });
             }
         }
@@ -454,43 +470,72 @@
                 if (window.songCatalog) {
                     console.log('✅ SongCatalog loaded with', window.songCatalog.songs.length, 'songs');
                     
-                    // Find Tom Petty designs
-                    const tomPettyDesigns = window.songCatalog.songs.filter(song => 
-                        song.artist.toLowerCase().includes('tom') && 
-                        (song.song.toLowerCase().includes('petty') || song.artist.toLowerCase().includes('petty'))
-                    );
-                    console.log('🎵 Tom Petty designs found:', tomPettyDesigns.length);
-                    tomPettyDesigns.forEach(design => {
-                        console.log('- ID:', design.id, '- Artist:', design.artist, '- Song:', design.song);
-                    });
+                    // Initialize search functionality
+                    initializeSearch();
 
                     // Enhanced search input event listener
                     const searchInput = document.getElementById('search-input');
                     if (searchInput) {
+                        // Real-time search functionality
                         searchInput.addEventListener('input', function(e) {
-                            const searchTerm = e.target.value.toLowerCase();
+                            const searchTerm = e.target.value.toLowerCase().trim();
                             console.log('🔍 Searching for:', searchTerm);
-                            window.songCatalog.currentFilters.search = searchTerm;
-                            window.songCatalog.applyFilters();
-                            console.log('📊 Results found:', window.songCatalog.filteredSongs.length);
+                            
+                            if (window.songCatalog) {
+                                window.songCatalog.currentFilters.search = searchTerm;
+                                window.songCatalog.applyFilters();
+                                console.log('📊 Results found:', window.songCatalog.filteredSongs.length);
+                                
+                                // Update results count
+                                const resultsCount = document.getElementById('results-count');
+                                if (resultsCount) {
+                                    resultsCount.textContent = window.songCatalog.filteredSongs.length;
+                                }
+                            }
                         });
 
-                        // Add placeholder text to help find Tom Petty
-                        searchInput.placeholder = "Search by song, artist... (try 'Tom Petty' or 'Heartbreakers')";
+                        // Better placeholder text
+                        searchInput.placeholder = "Search by song, artist, or lyric snippet...";
+                        
+                        // Handle URL search parameter
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const searchParam = urlParams.get('search');
+                        if (searchParam) {
+                            searchInput.value = searchParam;
+                            if (window.songCatalog) {
+                                window.songCatalog.currentFilters.search = searchParam.toLowerCase();
+                                window.songCatalog.applyFilters();
+                            }
+                        }
                     }
 
-                    // Add quick search buttons for testing
+                    // Add dynamic quick search buttons based on popular artists
                     const searchContainer = searchInput?.parentElement;
-                    if (searchContainer) {
-                        const testDiv = document.createElement('div');
-                        testDiv.innerHTML = `
-                            <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                <button onclick="quickSearch('tom petty')" style="padding: 5px 10px; background: #00bcd4; color: white; border: none; border-radius: 4px; cursor: pointer;">Search Tom Petty</button>
-                                <button onclick="quickSearch('heartbreakers')" style="padding: 5px 10px; background: #00bcd4; color: white; border: none; border-radius: 4px; cursor: pointer;">Search Heartbreakers</button>
-                                <button onclick="quickSearch('')" style="padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">Show All</button>
+                    if (searchContainer && window.songCatalog) {
+                        // Get top 3 most popular artists
+                        const artistCounts = {};
+                        window.songCatalog.songs.forEach(song => {
+                            const artist = song.artist;
+                            artistCounts[artist] = (artistCounts[artist] || 0) + 1;
+                        });
+                        
+                        const topArtists = Object.entries(artistCounts)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 3)
+                            .map(([artist, count]) => artist);
+
+                        const quickSearchDiv = document.createElement('div');
+                        quickSearchDiv.className = 'mt-3';
+                        quickSearchDiv.innerHTML = `
+                            <div class="flex flex-wrap gap-2">
+                                <span class="text-sm text-text-secondary">Quick search:</span>
+                                ${topArtists.map(artist => 
+                                    `<button onclick="quickSearch('${artist.toLowerCase()}')" class="px-3 py-1 bg-accent/20 text-accent rounded-full text-sm hover:bg-accent/30 transition-smooth">${artist}</button>`
+                                ).join('')}
+                                <button onclick="quickSearch('')" class="px-3 py-1 bg-surface border border-border-subtle text-text-secondary rounded-full text-sm hover:bg-secondary transition-smooth">Show All</button>
                             </div>
                         `;
-                        searchContainer.appendChild(testDiv);
+                        searchContainer.appendChild(quickSearchDiv);
                     }
                 }
             }, 2000);
@@ -503,11 +548,45 @@
                 searchInput.value = term;
                 window.songCatalog.currentFilters.search = term.toLowerCase();
                 window.songCatalog.applyFilters();
+                
+                // Update results count
+                const resultsCount = document.getElementById('results-count');
+                if (resultsCount) {
+                    resultsCount.textContent = window.songCatalog.filteredSongs.length;
+                }
+                
                 console.log(`🔍 Quick search for "${term}" found:`, window.songCatalog.filteredSongs.length, 'results');
             }
         }
 
-        // Mobile filter sidebar functionality
+        // Perform search when search button is clicked
+        function performSearch() {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput && window.songCatalog) {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                window.songCatalog.currentFilters.search = searchTerm;
+                window.songCatalog.applyFilters();
+                
+                // Update results count
+                const resultsCount = document.getElementById('results-count');
+                if (resultsCount) {
+                    resultsCount.textContent = window.songCatalog.filteredSongs.length;
+                }
+                
+                console.log(`🔍 Search for "${searchTerm}" found:`, window.songCatalog.filteredSongs.length, 'results');
+            }
+                 }
+
+         // Focus search input when header search icon is clicked
+         function focusSearchInput() {
+             const searchInput = document.getElementById('search-input');
+             if (searchInput) {
+                 searchInput.focus();
+                 searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+             }
+         }
+
+         // Mobile filter sidebar functionality
         function openMobileFilters() {
             document.getElementById('mobile-filter-sidebar').classList.remove('translate-x-full');
         }

@@ -12,15 +12,13 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
-// PayPal SDK temporarily disabled
-// const { Client, Environment } = require('@paypal/paypal-server-sdk');
+// Simple PayPal integration - no complex SDK needed
 const FileDeliveryService = require('./file-delivery-service');
 const fs = require('fs');
 
-// Import fetch for Node.js v3 (ESM import)
-import('node-fetch').then(module => {
-    globalThis.fetch = module.default;
-}).catch(err => console.error('Failed to import node-fetch:', err));
+// Import fetch for Node.js - using require for synchronous import
+const fetch = require('node-fetch');
+global.fetch = fetch;
 
 console.log('🚀 STARTUP: Creating Express app...');
 const app = express();
@@ -374,27 +372,45 @@ console.log('   PORT:', process.env.PORT);
 console.log('   PAYPAL_CLIENT_ID exists:', !!process.env.PAYPAL_CLIENT_ID);
 console.log('   PAYPAL_CLIENT_SECRET exists:', !!process.env.PAYPAL_CLIENT_SECRET);
 
-// TEMPORARILY DISABLED PayPal SDK to fix startup crash
-// TODO: Update PayPal SDK initialization for new @paypal/paypal-server-sdk
-console.log('   PayPal SDK temporarily disabled for debugging');
-console.log('   Server will start without PayPal functionality');
-
-// Use sandbox for local development (localhost) regardless of NODE_ENV
+// Simple PayPal configuration
 const isLocalhost = process.env.PORT === '3001' || process.env.PORT === '8080' || !process.env.PORT;
 const useSandbox = process.env.NODE_ENV !== 'production' || isLocalhost;
 
-// const environment = useSandbox
-//     ? new paypal.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
-//     : new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
+const PAYPAL_BASE_URL = useSandbox 
+    ? 'https://api-m.sandbox.paypal.com' 
+    : 'https://api-m.paypal.com';
 
-console.log('   Using environment:', useSandbox ? 'SANDBOX (DISABLED)' : 'LIVE (DISABLED)');
-console.log('   Reason:', isLocalhost ? 'Localhost detected' : 'Production environment');
+console.log('   Using environment:', useSandbox ? 'SANDBOX' : 'LIVE');
+console.log('   PayPal Base URL:', PAYPAL_BASE_URL);
+console.log('✅ PayPal configuration ready');
 
-// TEMPORARILY DISABLED - PayPal client initialization
-// const paypalClient = new paypal.core.PayPalHttpClient(environment);
-let paypalClient = null; // Placeholder for disabled PayPal
+// Modern PayPal Helper Functions using REST API
+const getPayPalAccessToken = async () => {
+    try {
+        const credentials = Buffer.from(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`).toString('base64');
+        
+        const response = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${credentials}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'grant_type=client_credentials'
+        });
 
-// PayPal Helper Functions
+        if (!response.ok) {
+            throw new Error(`PayPal auth failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ PayPal access token obtained');
+        return data.access_token;
+    } catch (error) {
+        console.error('❌ PayPal access token error:', error);
+        throw error;
+    }
+};
+
 const createPayPalOrder = async (items, total) => {
     // Extract design ID from items (assuming single item for now)
     const designId = items[0]?.itemId || 'unknown';
@@ -402,8 +418,7 @@ const createPayPalOrder = async (items, total) => {
     console.log('🔧 Creating PayPal order with data:', { items, total, designId });
     
     try {
-        const request = new paypal.orders.OrdersCreateRequest();
-        request.prefer("return=representation");
+        const accessToken = await getPayPalAccessToken();
         
         const requestBody = {
             intent: 'CAPTURE',
@@ -440,13 +455,27 @@ const createPayPalOrder = async (items, total) => {
         };
         
         console.log('📋 PayPal request body:', JSON.stringify(requestBody, null, 2));
-        request.requestBody(requestBody);
 
-        console.log('🚀 Executing PayPal request...');
-        const order = await paypalClient.execute(request);
-        console.log('✅ PayPal order created:', order.result.id);
-        console.log('📋 PayPal order result:', JSON.stringify(order.result, null, 2));
-        return { success: true, order: order.result };
+        const response = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                'PayPal-Request-Id': `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            console.error('❌ PayPal order creation failed:', response.status, errorData);
+            throw new Error(`PayPal order creation failed: ${response.status} ${response.statusText}`);
+        }
+
+        const order = await response.json();
+        console.log('✅ PayPal order created:', order.id);
+        console.log('📋 PayPal order result:', JSON.stringify(order, null, 2));
+        return { success: true, order };
     } catch (error) {
         console.error('❌ PayPal order creation error:', error);
         console.error('❌ Error details:', {
@@ -461,14 +490,28 @@ const createPayPalOrder = async (items, total) => {
 const capturePayPalOrder = async (orderId) => {
     try {
         console.log('💳 Starting PayPal capture for orderId:', orderId);
-        const request = new paypal.orders.OrdersCaptureRequest(orderId);
-        request.requestBody({});
+        const accessToken = await getPayPalAccessToken();
         
-        console.log('💳 Executing PayPal capture request...');
-        const capture = await paypalClient.execute(request);
-        console.log('✅ PayPal order captured successfully:', capture.result.id);
-        console.log('✅ Capture result:', capture.result);
-        return { success: true, capture: capture.result };
+        const response = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}/capture`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                'PayPal-Request-Id': `capture_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            },
+            body: JSON.stringify({})
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            console.error('❌ PayPal capture failed:', response.status, errorData);
+            throw new Error(`PayPal capture failed: ${response.status} ${response.statusText}`);
+        }
+
+        const capture = await response.json();
+        console.log('✅ PayPal order captured successfully:', capture.id);
+        console.log('✅ Capture result:', JSON.stringify(capture, null, 2));
+        return { success: true, capture };
     } catch (error) {
         console.error('❌ PayPal order capture error:', error);
         console.error('❌ Error details:', error.message);
@@ -1698,7 +1741,7 @@ app.get('/payment/success', async (req, res) => {
                     <h1>✅ Payment Successful!</h1>
                     <div class="order-details">
                         <p><strong>Order ID:</strong> ${captureData.capture.id}</p>
-                        <p><strong>Amount:</strong> $${captureData.capture.amount?.value || 'N/A'}</p>
+                        <p><strong>Amount:</strong> $${captureData.capture.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value || 'N/A'}</p>
                         <p><strong>Status:</strong> ${captureData.capture.status}</p>
                     </div>
                     <p>Thank you for your purchase! You will receive an email with download links shortly.</p>
