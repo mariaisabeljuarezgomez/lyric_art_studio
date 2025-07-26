@@ -373,18 +373,25 @@ console.log('   PORT:', process.env.PORT);
 console.log('   PAYPAL_CLIENT_ID exists:', !!process.env.PAYPAL_CLIENT_ID);
 console.log('   PAYPAL_CLIENT_SECRET exists:', !!process.env.PAYPAL_CLIENT_SECRET);
 
+// TEMPORARILY DISABLED PayPal SDK to fix startup crash
+// TODO: Update PayPal SDK initialization for new @paypal/paypal-server-sdk
+console.log('   PayPal SDK temporarily disabled for debugging');
+console.log('   Server will start without PayPal functionality');
+
 // Use sandbox for local development (localhost) regardless of NODE_ENV
 const isLocalhost = process.env.PORT === '3001' || process.env.PORT === '8080' || !process.env.PORT;
 const useSandbox = process.env.NODE_ENV !== 'production' || isLocalhost;
 
-const environment = useSandbox
-    ? new paypal.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
-    : new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
+// const environment = useSandbox
+//     ? new paypal.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
+//     : new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
 
-console.log('   Using environment:', useSandbox ? 'SANDBOX' : 'LIVE');
+console.log('   Using environment:', useSandbox ? 'SANDBOX (DISABLED)' : 'LIVE (DISABLED)');
 console.log('   Reason:', isLocalhost ? 'Localhost detected' : 'Production environment');
 
-const paypalClient = new paypal.core.PayPalHttpClient(environment);
+// TEMPORARILY DISABLED - PayPal client initialization
+// const paypalClient = new paypal.core.PayPalHttpClient(environment);
+let paypalClient = null; // Placeholder for disabled PayPal
 
 // PayPal Helper Functions
 const createPayPalOrder = async (items, total) => {
