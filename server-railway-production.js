@@ -660,8 +660,7 @@ const initializeDatabase = async () => {
     }
 };
 
-// Initialize database on startup
-initializeDatabase();
+// Database will be initialized when server starts
 
 // API Routes
 app.post('/api/auth/login', async (req, res) => {
@@ -2955,15 +2954,15 @@ module.exports = app;
 
 // Start the server if this file is run directly
 if (require.main === module) {
-    // Initialize database and start server
-    initializeDatabase().then(() => {
-        app.listen(PORT, () => {
-            console.log(`🚀 Lyric Art Studio Server running on port ${PORT}`);
-            console.log(`🌐 Health check available at: http://localhost:${PORT}/api/health`);
-            console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    // Start server and initialize database in parallel
+    app.listen(PORT, () => {
+        console.log(`🚀 Lyric Art Studio Server running on port ${PORT}`);
+        console.log(`🌐 Health check available at: http://localhost:${PORT}/api/health`);
+        console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+        
+        // Initialize database after server starts
+        initializeDatabase().catch(err => {
+            console.error('❌ Database initialization failed (but server is running):', err);
         });
-    }).catch(err => {
-        console.error('❌ Failed to initialize database:', err);
-        process.exit(1);
     });
 }
