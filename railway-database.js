@@ -13,8 +13,11 @@ class RailwayDatabase {
 
     init() {
         // Railway provides DATABASE_URL environment variable
-        const connectionString = process.env.DATABASE_URL || 
-            'postgresql://postgres:password@localhost:5432/lyricart_studio';
+        const connectionString = process.env.DATABASE_URL;
+        
+        if (!connectionString) {
+            throw new Error('DATABASE_URL environment variable is required');
+        }
         
         this.pool = new Pool({
             connectionString: connectionString,

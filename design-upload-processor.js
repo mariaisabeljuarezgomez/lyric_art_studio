@@ -11,7 +11,7 @@ class DesignUploadProcessor {
         
         // PostgreSQL connection
         this.pool = new Pool({
-            connectionString: process.env.DATABASE_URL || "postgresql://postgres:OCrMfnkeqCuKljjsbXJVzpVqXnEFMwAG@nozomi.proxy.rlwy.net:18246/railway",
+            connectionString: process.env.DATABASE_URL,
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
         });
         
