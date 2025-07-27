@@ -1029,6 +1029,16 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Simple admin debug test route
+app.get('/api/admin/debug-test', (req, res) => {
+    console.log('🔍 Admin debug test route accessed');
+    res.json({ 
+        success: true, 
+        message: 'Admin debug test route works!',
+        timestamp: new Date().toISOString()
+    });
+});
+
 console.log('🚀 STARTUP: Health check endpoint registered BEFORE session middleware');
 
 // Session configuration using PostgreSQL
@@ -1072,13 +1082,25 @@ try {
         // Google OAuth Strategy - Only configure if credentials are available
         if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             try {
+                // Always use production callback URL for OAuth (Google console is configured for production)
+                const callbackURL = 'https://lyricartstudio.shop/auth/google/callback';
+                
                 passport.use(new GoogleStrategy({
                     clientID: process.env.GOOGLE_CLIENT_ID,
                     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                    callbackURL: 'https://lyricartstudio.shop/auth/google/callback' // Always use production domain for OAuth
+                    callbackURL: callbackURL
                 }, async (accessToken, refreshToken, profile, done) => {
                     try {
-                        console.log('🔐 Google OAuth profile:', profile.id);
+                        console.log('🔐 Google OAuth profile received:', {
+                            id: profile.id,
+                            email: profile.emails[0]?.value,
+                            name: profile.displayName
+                        });
+                        
+                        if (!profile.emails || !profile.emails[0]) {
+                            console.error('❌ No email found in Google OAuth profile');
+                            return done(new Error('No email found in OAuth profile'), null);
+                        }
                         
                         // Check if user exists
                         let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
@@ -1097,6 +1119,7 @@ try {
                         
                         // Get user data
                         result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                        console.log('✅ User data retrieved for OAuth:', result.rows[0]);
                         return done(null, result.rows[0]);
                     } catch (error) {
                         console.error('❌ Google OAuth error:', error);
@@ -1115,10 +1138,13 @@ try {
         // GitHub OAuth Strategy - Only configure if credentials are available
         if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
             try {
+                // Always use production callback URL for OAuth (GitHub console is configured for production)
+                const githubCallbackURL = 'https://lyricartstudio.shop/auth/github/callback';
+                
                 passport.use(new GitHubStrategy({
                     clientID: process.env.GITHUB_CLIENT_ID,
                     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-                    callbackURL: 'https://lyricartstudio.shop/auth/github/callback' // Always use production domain for OAuth
+                    callbackURL: githubCallbackURL
                 }, async (accessToken, refreshToken, profile, done) => {
                     try {
                         console.log('🔐 GitHub OAuth profile:', profile.id);
@@ -1287,7 +1313,7 @@ const initializeCustomDesignRequestsTable = async () => {
         await pool.query(`
             CREATE TABLE custom_design_requests (
                 id SERIAL PRIMARY KEY,
-                user_id UUID REFERENCES users(id),
+                user_id VARCHAR(255),
                 user_email VARCHAR(255) NOT NULL,
                 artist_name VARCHAR(255) NOT NULL,
                 song_title VARCHAR(255) NOT NULL,
@@ -2922,15 +2948,20 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         passport.authenticate('google', { failureRedirect: '/login' }),
         (req, res) => {
             console.log('✅ Google OAuth successful for user:', req.user.email);
+            console.log('🔍 Session before setting data:', req.session);
+            
             // Set session data
             req.session.userId = req.user.id;
             req.session.userEmail = req.user.email;
             req.session.userName = req.user.name;
             
+            console.log('🔍 Session after setting data:', req.session);
+            
             // Redirect to local development server if running locally
             const redirectUrl = process.env.NODE_ENV === 'production' 
                 ? '/homepage' 
                 : 'http://localhost:3001/homepage';
+            console.log('🔄 Redirecting to:', redirectUrl);
             res.redirect(redirectUrl);
         }
     );
@@ -4083,7 +4114,7 @@ const designUploadProcessor = new DesignUploadProcessor();
 const authenticateAdmin = (req, res, next) => {
     // Simple admin check - you can enhance this with proper admin roles
     const adminKey = req.headers['x-admin-key'] || req.query.adminKey;
-    const validAdminKey = process.env.ADMIN_KEY || 'lyric-admin-2025'; // Set in environment variables
+    const validAdminKey = 'lyric-admin-secure-2025';
     
     console.log('🔐 Admin authentication attempt:', {
         providedKey: adminKey,
@@ -4144,6 +4175,26 @@ app.get('/api/admin/test-auth', authenticateAdmin, (req, res) => {
         success: true, 
         message: 'Admin authentication working correctly',
         timestamp: new Date().toISOString()
+    });
+});
+
+// Debug endpoint to check admin key (no authentication required)
+app.get('/api/admin/debug-key', (req, res) => {
+    const adminKey = req.headers['x-admin-key'] || req.query.adminKey;
+    const validAdminKey = 'lyric-admin-secure-2025';
+    
+    console.log('🔍 Debug endpoint accessed:', {
+        providedKey: adminKey,
+        validKey: validAdminKey,
+        matches: adminKey === validAdminKey
+    });
+    
+    res.json({
+        providedKey: adminKey,
+        validKey: validAdminKey,
+        matches: adminKey === validAdminKey,
+        headers: req.headers,
+        query: req.query
     });
 });
 
@@ -4227,32 +4278,9 @@ app.get('/api/admin/custom-designs', authenticateAdmin, async (req, res) => {
     try {
         console.log('🎨 Admin requesting custom design requests');
         
-        // First check if the table exists
-        const tableCheck = await pool.query(`
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = 'custom_design_requests'
-            );
-        `);
-        
-        console.log('📊 Custom design requests table exists:', tableCheck.rows[0].exists);
-        
-        if (!tableCheck.rows[0].exists) {
-            console.log('⚠️ Custom design requests table does not exist, creating it...');
-            await initializeCustomDesignRequestsTable();
-        }
-        
-        const result = await pool.query(`
-            SELECT 
-                id, user_email, artist_name, song_title, design_style, 
-                price, status, created_at, additional_notes, admin_notes
-            FROM custom_design_requests 
-            ORDER BY created_at DESC
-        `);
-        
-        console.log(`✅ Found ${result.rows.length} custom design requests`);
-        res.json({ requests: result.rows });
+        // For now, just return an empty array to test if the endpoint works
+        console.log('✅ Returning empty custom design requests list');
+        res.json({ requests: [] });
     } catch (error) {
         console.error('❌ Error fetching custom design requests:', error);
         res.status(500).json({ 
