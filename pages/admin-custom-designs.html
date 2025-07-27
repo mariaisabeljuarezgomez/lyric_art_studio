@@ -128,30 +128,41 @@
             try {
                 const adminKey = document.getElementById('admin-key-input').value;
                 console.log('🔍 Loading custom design requests with admin key:', adminKey);
+                console.log('🔍 Making request to:', `/api/admin/custom-designs?adminKey=${adminKey}`);
+                
                 const response = await fetch(`/api/admin/custom-designs?adminKey=${adminKey}`, {
                     credentials: 'include'
                 });
                 
+                console.log('🔍 Response status:', response.status);
+                console.log('🔍 Response headers:', response.headers);
+                
                 if (!response.ok) {
-                    throw new Error('Failed to fetch custom design requests');
+                    const errorText = await response.text();
+                    console.error('❌ Response not OK:', response.status, errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
                 
                 const data = await response.json();
+                console.log('✅ Received data:', data);
                 displayCustomDesignRequests(data.requests);
             } catch (error) {
-                console.error('Error loading custom design requests:', error);
+                console.error('❌ Error loading custom design requests:', error);
                 document.getElementById('requests-container').innerHTML = `
                     <div class="no-requests">
-                        <p>Error loading custom design requests. Please try again.</p>
+                        <p>Error loading custom design requests: ${error.message}</p>
+                        <p>Please check the browser console for more details.</p>
                     </div>
                 `;
             }
         }
 
         function displayCustomDesignRequests(requests) {
+            console.log('🎨 Displaying custom design requests:', requests);
             const container = document.getElementById('requests-container');
             
             if (!requests || requests.length === 0) {
+                console.log('📭 No requests to display');
                 container.innerHTML = `
                     <div class="no-requests">
                         <p>No custom design requests found.</p>
@@ -159,6 +170,8 @@
                 `;
                 return;
             }
+            
+            console.log(`📊 Displaying ${requests.length} requests`);
             
             container.innerHTML = requests.map(request => `
                 <div class="request-card">

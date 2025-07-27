@@ -4251,6 +4251,12 @@ app.get('/admin/custom-designs', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'admin-custom-designs.html'));
 });
 
+// Also serve with .html extension for compatibility
+app.get('/admin-custom-designs.html', (req, res) => {
+    console.log('🎨 Custom design requests admin page accessed (with .html)!');
+    res.sendFile(path.join(__dirname, 'pages', 'admin-custom-designs.html'));
+});
+
 // Handle design upload
 app.post('/api/admin/upload-design', authenticateAdmin, upload.array('files', 20), async (req, res) => {
     console.log('🎯 Admin design upload initiated');
@@ -4314,9 +4320,29 @@ app.get('/api/admin/custom-designs', authenticateAdmin, async (req, res) => {
     try {
         console.log('🎨 Admin requesting custom design requests');
         
-        // For now, just return an empty array to test if the endpoint works
-        console.log('✅ Returning empty custom design requests list');
-        res.json({ requests: [] });
+        // Fetch all custom design requests from database
+        const result = await pool.query(`
+            SELECT 
+                id,
+                user_id,
+                user_email,
+                artist_name,
+                song_title,
+                lyrics,
+                design_style,
+                additional_notes,
+                price,
+                status,
+                created_at,
+                updated_at,
+                completed_at,
+                admin_notes
+            FROM custom_design_requests 
+            ORDER BY created_at DESC
+        `);
+        
+        console.log(`✅ Found ${result.rows.length} custom design requests`);
+        res.json({ requests: result.rows });
     } catch (error) {
         console.error('❌ Error fetching custom design requests:', error);
         res.status(500).json({ 
