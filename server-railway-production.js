@@ -2508,7 +2508,7 @@ app.get('/artist-profiles', (req, res) => {
 
 app.get('/my-collection', authenticateUser, (req, res) => {
     console.log('🎯 /my-collection route accessed for user:', req.session.userId);
-    res.sendFile(path.join(__dirname, 'pages/my_collection_dashboard_ORIGINAL.html'));
+    res.sendFile(path.join(__dirname, 'pages/my-collection.html'));
 });
 
 app.get('/my-collection-dashboard-v2', authenticateUser, (req, res) => {
