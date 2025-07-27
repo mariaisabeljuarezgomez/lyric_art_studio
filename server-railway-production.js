@@ -2492,6 +2492,15 @@ function getContentType(format) {
 }
 
 app.get('/payment/success', async (req, res) => {
+    // --- ADD THESE LOGS ---
+    console.log('--- LANDED ON /payment/success ROUTE ---');
+    console.log('Full requested URL from PayPal:', req.originalUrl);
+    console.log('Parsed query object:', req.query);
+    console.log('All request headers:', req.headers);
+    console.log('Request method:', req.method);
+    console.log('Request path:', req.path);
+    // --- END OF LOGS TO ADD ---
+    
     const { token, PayerID } = req.query;
     
     console.log('🎯 Payment success route accessed with token:', token);
