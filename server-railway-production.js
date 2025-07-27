@@ -590,18 +590,45 @@ const createPayPalOrder = async (items, total) => {
     try {
         const accessToken = await getPayPalAccessToken();
         
-        // Calculate the total from items to ensure it matches PayPal requirements
-        const calculatedTotal = items.reduce((sum, item) => {
+        // Calculate the original total from items for validation
+        const originalTotal = items.reduce((sum, item) => {
             const price = parseFloat(item.price) || 3.00;
             const quantity = parseInt(item.quantity || item.qty || 1);
             return sum + (price * quantity);
         }, 0);
         
-        console.log('💰 Calculated total from items:', calculatedTotal);
-        console.log('💰 Received total from frontend:', total);
+        console.log('💰 Original total from items:', originalTotal);
+        console.log('💰 Received total from frontend (with discount):', total);
         
-        // Use the calculated total to ensure PayPal validation passes
-        const finalTotal = calculatedTotal.toFixed(2);
+        // Use the discounted total from frontend, but validate it's reasonable
+        const finalTotal = parseFloat(total).toFixed(2);
+        
+        // Validate that the discounted total is not less than 0 or unreasonably low
+        if (parseFloat(finalTotal) < 0) {
+            throw new Error('Invalid total amount: cannot be negative');
+        }
+        
+        // Log discount information
+        const discountAmount = originalTotal - parseFloat(finalTotal);
+        if (discountAmount > 0) {
+            console.log('🎫 Discount applied: $' + discountAmount.toFixed(2) + ' off original total of $' + originalTotal.toFixed(2));
+        }
+        
+        // Prepare PayPal breakdown with discount if applicable
+        const breakdown = {
+            item_total: {
+                currency_code: 'USD',
+                value: originalTotal.toFixed(2)
+            }
+        };
+        
+        // Add discount to breakdown if there is one
+        if (discountAmount > 0) {
+            breakdown.discount = {
+                currency_code: 'USD',
+                value: discountAmount.toFixed(2)
+            };
+        }
         
         const requestBody = {
             intent: 'CAPTURE',
@@ -609,12 +636,7 @@ const createPayPalOrder = async (items, total) => {
                 amount: {
                     currency_code: 'USD',
                     value: finalTotal,
-                    breakdown: {
-                        item_total: {
-                            currency_code: 'USD',
-                            value: finalTotal
-                        }
-                    }
+                    breakdown: breakdown
                 },
                 custom_id: `order_${Date.now()}_${designId}`,
                 items: items.map(item => ({
