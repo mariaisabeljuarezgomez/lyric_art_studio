@@ -4379,6 +4379,38 @@ app.put('/api/admin/custom-designs/:id', authenticateAdmin, async (req, res) => 
     }
 });
 
+// Admin endpoint to view newsletter subscribers
+app.get('/api/admin/newsletter-subscribers', authenticateAdmin, async (req, res) => {
+    try {
+        console.log('📧 Admin requesting newsletter subscribers');
+        
+        // Fetch all newsletter subscribers from database
+        const result = await pool.query(`
+            SELECT 
+                id,
+                email,
+                name,
+                subscribed_at,
+                status,
+                ip_address,
+                user_agent,
+                welcome_email_sent,
+                last_email_sent
+            FROM newsletter_subscribers 
+            ORDER BY subscribed_at DESC
+        `);
+        
+        console.log(`✅ Found ${result.rows.length} newsletter subscribers`);
+        res.json({ subscribers: result.rows });
+    } catch (error) {
+        console.error('❌ Error fetching newsletter subscribers:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch newsletter subscribers',
+            details: error.message
+        });
+    }
+});
+
 // ========== END ADMIN ROUTES ==========
 
 // =================================
