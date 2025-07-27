@@ -1082,8 +1082,10 @@ try {
         // Google OAuth Strategy - Only configure if credentials are available
         if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             try {
-                // Always use production callback URL for OAuth (Google console is configured for production)
-                const callbackURL = 'https://lyricartstudio.shop/auth/google/callback';
+                // Use environment-specific callback URL
+                const callbackURL = process.env.NODE_ENV === 'production' 
+                    ? 'https://lyricartstudio.shop/auth/google/callback'
+                    : 'http://localhost:3001/auth/google/callback';
                 
                 passport.use(new GoogleStrategy({
                     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -1138,8 +1140,10 @@ try {
         // GitHub OAuth Strategy - Only configure if credentials are available
         if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
             try {
-                // Always use production callback URL for OAuth (GitHub console is configured for production)
-                const githubCallbackURL = 'https://lyricartstudio.shop/auth/github/callback';
+                // Use environment-specific callback URL
+                const githubCallbackURL = process.env.NODE_ENV === 'production' 
+                    ? 'https://lyricartstudio.shop/auth/github/callback'
+                    : 'http://localhost:3001/auth/github/callback';
                 
                 passport.use(new GitHubStrategy({
                     clientID: process.env.GITHUB_CLIENT_ID,
@@ -2949,6 +2953,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         (req, res) => {
             console.log('✅ Google OAuth successful for user:', req.user.email);
             console.log('🔍 Session before setting data:', req.session);
+            console.log('🔍 User object:', req.user);
             
             // Set session data
             req.session.userId = req.user.id;
@@ -2957,12 +2962,21 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             
             console.log('🔍 Session after setting data:', req.session);
             
-            // Redirect to local development server if running locally
-            const redirectUrl = process.env.NODE_ENV === 'production' 
-                ? '/homepage' 
-                : 'http://localhost:3001/homepage';
-            console.log('🔄 Redirecting to:', redirectUrl);
-            res.redirect(redirectUrl);
+            // Save session explicitly
+            req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Session save error:', err);
+                } else {
+                    console.log('✅ Session saved successfully');
+                }
+                
+                // Redirect to local development server if running locally
+                const redirectUrl = process.env.NODE_ENV === 'production' 
+                    ? '/homepage' 
+                    : 'http://localhost:3001/homepage';
+                console.log('🔄 Redirecting to:', redirectUrl);
+                res.redirect(redirectUrl);
+            });
         }
     );
 
