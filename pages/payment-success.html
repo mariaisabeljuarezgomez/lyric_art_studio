@@ -275,11 +275,13 @@
             }
             showError(errorMessage, error, token);
         } else if (token) {
-            // First check if payment was already processed by server
+            // Server already processes the payment, just check status
             checkPaymentStatus().then(alreadyProcessed => {
-                if (!alreadyProcessed) {
-                    // Process payment when page loads
-                    processPayment();
+                if (alreadyProcessed) {
+                    console.log('✅ Payment already processed by server');
+                } else {
+                    console.log('⏳ Waiting for server to process payment...');
+                    // Don't call processPayment() - server handles it
                 }
             });
         } else {
