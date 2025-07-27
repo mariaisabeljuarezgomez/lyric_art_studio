@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Design Requests - Admin Dashboard</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <style>
+        .custom-designs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .request-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .request-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-in-progress { background: #d1ecf1; color: #0c5460; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+        .request-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .lyrics-section {
+            background: var(--color-background);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border-subtle);
+        }
+        .lyrics-text {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--color-text-primary);
+        }
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .status-select {
+            padding: 8px 12px;
+            border: 1px solid var(--color-border-subtle);
+            border-radius: 4px;
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+        }
+        .admin-notes {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--color-border-subtle);
+            border-radius: 4px;
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+            resize: vertical;
+            min-height: 80px;
+        }
+        .refresh-btn {
+            background: var(--color-accent);
+            color: var(--color-background);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            opacity: 0.9;
+        }
+        .no-requests {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-text-secondary);
+        }
+    </style>
+</head>
+<body class="bg-background text-text-primary font-inter">
+    <div class="custom-designs-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1 style="margin: 0; color: var(--color-accent);">🎨 Custom Design Requests</h1>
+            <button class="refresh-btn" onclick="loadCustomDesignRequests()">🔄 Refresh</button>
+        </div>
+        
+        <div id="requests-container">
+            <div class="no-requests">
+                <p>Loading custom design requests...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load custom design requests on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCustomDesignRequests();
+        });
+
+        async function loadCustomDesignRequests() {
+            try {
+                const response = await fetch('/api/admin/custom-designs', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch custom design requests');
+                }
+                
+                const data = await response.json();
+                displayCustomDesignRequests(data.requests);
+            } catch (error) {
+                console.error('Error loading custom design requests:', error);
+                document.getElementById('requests-container').innerHTML = `
+                    <div class="no-requests">
+                        <p>Error loading custom design requests. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayCustomDesignRequests(requests) {
+            const container = document.getElementById('requests-container');
+            
+            if (!requests || requests.length === 0) {
+                container.innerHTML = `
+                    <div class="no-requests">
+                        <p>No custom design requests found.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = requests.map(request => `
+                <div class="request-card">
+                    <div class="request-header">
+                        <div>
+                            <h3 style="margin: 0; color: var(--color-accent);">${request.artist_name} - ${request.song_title}</h3>
+                            <p style="margin: 5px 0 0 0; color: var(--color-text-secondary);">
+                                Requested by: ${request.user_email} | ${new Date(request.created_at).toLocaleString()}
+                            </p>
+                        </div>
+                        <div>
+                            <span class="request-status status-${request.status}">${request.status.toUpperCase()}</span>
+                            <p style="margin: 5px 0 0 0; text-align: right; color: var(--color-accent); font-weight: bold;">
+                                $${request.price}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="request-details">
+                        <div>
+                            <p><strong>Design Style:</strong> ${request.design_style}</p>
+                            <p><strong>Additional Notes:</strong> ${request.additional_notes || 'None'}</p>
+                            <p><strong>Admin Notes:</strong> ${request.admin_notes || 'None'}</p>
+                        </div>
+                        <div class="lyrics-section">
+                            <h4 style="margin: 0 0 10px 0; color: var(--color-accent);">📝 Lyrics:</h4>
+                            <div class="lyrics-text">${request.lyrics}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-actions">
+                        <select class="status-select" id="status-${request.id}" onchange="updateRequestStatus(${request.id})">
+                            <option value="pending" ${request.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="in-progress" ${request.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="completed" ${request.status === 'completed' ? 'selected' : ''}>Completed</option>
+                            <option value="cancelled" ${request.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
+                        <textarea 
+                            class="admin-notes" 
+                            id="notes-${request.id}" 
+                            placeholder="Add admin notes..."
+                            onblur="updateRequestStatus(${request.id})"
+                        >${request.admin_notes || ''}</textarea>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateRequestStatus(requestId) {
+            try {
+                const status = document.getElementById(`status-${requestId}`).value;
+                const notes = document.getElementById(`notes-${requestId}`).value;
+                
+                const response = await fetch(`/api/admin/custom-designs/${requestId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        status: status,
+                        admin_notes: notes
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update request status');
+                }
+                
+                console.log('Request status updated successfully');
+            } catch (error) {
+                console.error('Error updating request status:', error);
+                alert('Failed to update request status. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html> 

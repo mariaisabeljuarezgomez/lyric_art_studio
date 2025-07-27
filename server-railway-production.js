@@ -221,6 +221,88 @@ const emailTemplates = {
         `
     }),
 
+    customDesignNotification: (data) => ({
+        subject: `🎨 NEW CUSTOM DESIGN REQUEST - Lyric Art Studio`,
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Custom Design Request</title>
+                <style>
+                    body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #ffffff; background-color: #0a0a0a; }
+                    .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #ff6b35 0%, #000000 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #1a1a1a; padding: 30px; border-radius: 0 0 10px 10px; color: #ffffff; }
+                    .alert { background: #ff6b35; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff4500; }
+                    .specs { background: #000000; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #00FFFF; }
+                    .lyrics { background: #1a1a1a; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #333; }
+                    .lyrics-text { white-space: pre-wrap; font-family: 'Courier New', monospace; line-height: 1.5; color: #ffffff; }
+                    .steps { background: #000000; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745; }
+                    .button { display: inline-block; background: #00FFFF; color: #000000; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; font-weight: bold; transition: all 0.3s ease; }
+                    .button:hover { background: #00CCCC; transform: translateY(-2px); }
+                    .footer { text-align: center; margin-top: 30px; color: #cccccc; font-size: 14px; }
+                    h2 { color: #ff6b35; margin-bottom: 20px; }
+                    h3 { color: #00FFFF; margin-top: 25px; margin-bottom: 15px; }
+                    a { color: #00FFFF; }
+                    a:hover { color: #00CCCC; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1 style="margin: 0; font-size: 28px; font-weight: bold;">🎨 NEW CUSTOM DESIGN REQUEST</h1>
+                        <p style="margin: 10px 0 0 0; font-size: 16px;">Lyric Art Studio - ACTION REQUIRED</p>
+                    </div>
+                    <div class="content">
+                        <div class="alert">
+                            <h2 style="margin: 0; color: #ffffff;">⚠️ ACTION REQUIRED</h2>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-weight: bold;">A new custom design request has been submitted and requires your attention.</p>
+                        </div>
+                        
+                        <h3>Customer Information:</h3>
+                        <p><strong>Customer Email:</strong> ${data.customerEmail}</p>
+                        <p><strong>Request Date:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Price:</strong> $${data.price}</p>
+                        
+                        <h3>Design Specifications:</h3>
+                        <div class="specs">
+                            <p><strong>Artist:</strong> ${data.artistName}</p>
+                            <p><strong>Song Title:</strong> ${data.songTitle}</p>
+                            <p><strong>Design Style:</strong> ${data.designStyle}</p>
+                            <p><strong>Additional Notes:</strong> ${data.additionalNotes || 'None provided'}</p>
+                            
+                            <div class="lyrics">
+                                <h4 style="color: #00FFFF; margin: 0 0 10px 0;">📝 LYRICS:</h4>
+                                <div class="lyrics-text">${data.lyrics}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="steps">
+                            <h3 style="color: #28a745;">📋 Next Steps:</h3>
+                            <ol style="color: #ffffff; margin: 0; padding-left: 20px;">
+                                <li>Review the design specifications above</li>
+                                <li>Create the custom design using the selected style</li>
+                                <li>Upload the completed design to the customer's account</li>
+                                <li>Update the request status in the admin dashboard</li>
+                                <li>Notify the customer that their design is ready</li>
+                            </ol>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${process.env.SITE_URL || 'https://lyricartstudio.shop'}/admin/custom-designs" class="button">View Admin Dashboard</a>
+                            <a href="mailto:${data.customerEmail}" class="button" style="background: #28a745;">Contact Customer</a>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 Lyric Art Studio. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
+    }),
+
     contactForm: (contactData) => ({
         subject: `New Contact Form Submission - ${contactData.subject || 'Lyric Art Studio'}`,
         html: `
@@ -518,6 +600,37 @@ const sendEmail = async (to, template, data = {}) => {
             responseCode: error.responseCode,
             response: error.response
         });
+        return { success: false, error: error.message };
+    }
+};
+
+// Custom Design Notification Function
+const sendCustomDesignNotification = async (commissionData, customerEmail) => {
+    try {
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@lyricartstudio.shop';
+        
+        const notificationData = {
+            customerEmail: customerEmail,
+            artistName: commissionData.artistName,
+            songTitle: commissionData.songTitle,
+            lyrics: commissionData.lyrics,
+            designStyle: commissionData.designStyle,
+            additionalNotes: commissionData.additionalNotes || '',
+            price: commissionData.price || 25.00
+        };
+        
+        console.log('📧 Sending custom design notification to admin:', adminEmail);
+        const result = await sendEmail(adminEmail, 'customDesignNotification', notificationData);
+        
+        if (result.success) {
+            console.log('✅ Custom design notification sent successfully');
+        } else {
+            console.error('❌ Failed to send custom design notification:', result.error);
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('❌ Error in sendCustomDesignNotification:', error);
         return { success: false, error: error.message };
     }
 };
@@ -1089,6 +1202,9 @@ const initializeDatabase = async () => {
         // Initialize the WELCOME100 discount code
         await initializeWelcomeDiscountCode();
         
+        // Initialize custom design requests table
+        await initializeCustomDesignRequestsTable();
+        
     } catch (error) {
         console.error('❌ Database initialization error:', error);
         throw error;
@@ -1132,6 +1248,51 @@ const initializeWelcomeDiscountCode = async () => {
         }
     } catch (error) {
         console.error('❌ Error initializing WELCOME100 discount code:', error);
+    }
+};
+
+// Initialize custom design requests table
+const initializeCustomDesignRequestsTable = async () => {
+    try {
+        console.log('🎨 Initializing custom design requests table...');
+        
+        // Check if the table already exists
+        const tableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'custom_design_requests'
+            );
+        `);
+        
+        if (tableExists.rows[0].exists) {
+            console.log('✅ Custom design requests table already exists');
+            return;
+        }
+        
+        // Create the custom_design_requests table
+        await pool.query(`
+            CREATE TABLE custom_design_requests (
+                id SERIAL PRIMARY KEY,
+                user_id UUID REFERENCES users(id),
+                user_email VARCHAR(255) NOT NULL,
+                artist_name VARCHAR(255) NOT NULL,
+                song_title VARCHAR(255) NOT NULL,
+                lyrics TEXT NOT NULL,
+                design_style VARCHAR(100) NOT NULL,
+                additional_notes TEXT,
+                price DECIMAL(10,2) NOT NULL,
+                status VARCHAR(50) DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP,
+                admin_notes TEXT
+            )
+        `);
+        
+        console.log('✅ Custom design requests table created successfully');
+    } catch (error) {
+        console.error('❌ Error creating custom design requests table:', error);
     }
 };
 
@@ -1283,8 +1444,41 @@ app.get('/api/cart', (req, res) => {
 });
 
 app.post('/api/cart/add', async (req, res) => {
-    const { itemId, designId, designName, format, price, quantity = 1 } = req.body;
+    const { itemId, designId, designName, format, price, quantity = 1, commissionData } = req.body;
     const id = itemId || designId; // Handle both parameter names
+    
+    // Handle custom design requests
+    if (commissionData) {
+        console.log('🎨 Custom design request received:', commissionData);
+        
+        try {
+            // Store custom design request in database
+            await pool.query(`
+                INSERT INTO custom_design_requests (
+                    user_id, user_email, artist_name, song_title, lyrics, 
+                    design_style, additional_notes, price, status, created_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            `, [
+                req.session.userId || null,
+                req.session.userEmail || 'guest@example.com',
+                commissionData.artistName,
+                commissionData.songTitle,
+                commissionData.lyrics,
+                commissionData.designStyle,
+                commissionData.additionalNotes || '',
+                price,
+                'pending',
+                new Date()
+            ]);
+            
+            // Send notification email to admin
+            await sendCustomDesignNotification(commissionData, req.session.userEmail || 'guest@example.com');
+            
+            console.log('✅ Custom design request stored and notification sent');
+        } catch (error) {
+            console.error('❌ Error processing custom design request:', error);
+        }
+    }
     
     if (!req.session.cart) {
         req.session.cart = { items: [], total: 0, itemCount: 0 };
@@ -3926,6 +4120,12 @@ app.get('/admin/upload.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'admin-upload.html'));
 });
 
+// Serve custom design requests admin page
+app.get('/admin/custom-designs', (req, res) => {
+    console.log('🎨 Custom design requests admin page accessed!');
+    res.sendFile(path.join(__dirname, 'pages', 'admin-custom-designs.html'));
+});
+
 // Handle design upload
 app.post('/api/admin/upload-design', authenticateAdmin, upload.array('files', 20), async (req, res) => {
     console.log('🎯 Admin design upload initiated');
@@ -3983,6 +4183,54 @@ app.post('/api/admin/upload-design', authenticateAdmin, upload.array('files', 20
 console.log('🎯 Admin design upload system initialized');
 console.log('📁 Upload endpoint: /api/admin/upload-design');
 console.log('🔐 Admin page: /admin/upload (requires admin key)');
+
+// Admin endpoint to view custom design requests
+app.get('/api/admin/custom-designs', authenticateAdmin, async (req, res) => {
+    try {
+        console.log('🎨 Admin requesting custom design requests');
+        
+        const result = await pool.query(`
+            SELECT 
+                id, user_email, artist_name, song_title, design_style, 
+                price, status, created_at, additional_notes, admin_notes
+            FROM custom_design_requests 
+            ORDER BY created_at DESC
+        `);
+        
+        console.log(`✅ Found ${result.rows.length} custom design requests`);
+        res.json({ requests: result.rows });
+    } catch (error) {
+        console.error('❌ Error fetching custom design requests:', error);
+        res.status(500).json({ error: 'Failed to fetch custom design requests' });
+    }
+});
+
+// Admin endpoint to update custom design request status
+app.put('/api/admin/custom-designs/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, admin_notes } = req.body;
+        
+        console.log(`🎨 Admin updating custom design request ${id}:`, { status, admin_notes });
+        
+        const result = await pool.query(`
+            UPDATE custom_design_requests 
+            SET status = $1, admin_notes = $2, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING *
+        `, [status, admin_notes, id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Custom design request not found' });
+        }
+        
+        console.log('✅ Custom design request updated successfully');
+        res.json({ request: result.rows[0] });
+    } catch (error) {
+        console.error('❌ Error updating custom design request:', error);
+        res.status(500).json({ error: 'Failed to update custom design request' });
+    }
+});
 
 // ========== END ADMIN ROUTES ==========
 
