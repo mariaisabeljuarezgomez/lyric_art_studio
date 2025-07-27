@@ -1913,9 +1913,9 @@ app.get('/api/payment/capture-paypal-order', async (req, res) => {
                         try {
                             // Record the purchase
                             await pool.query(`
-                                INSERT INTO purchases (user_id, design_id, design_name, amount, purchase_date)
-                                VALUES ($1, $2, $3, $4, NOW())
-                            `, [userId, numericDesignId, item.designName || folderName, amount]);
+                                INSERT INTO purchases (user_id, design_id, design_name, payment_id, order_id, amount, purchase_date)
+                                VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                            `, [userId, numericDesignId, item.designName || folderName, captureResult.capture.id, orderId, amount]);
                             
                             console.log(`💾 Purchase recorded for user ${userId}, design: ${numericDesignId} (original itemId: ${itemId})`);
                         } catch (error) {
@@ -1926,7 +1926,7 @@ app.get('/api/payment/capture-paypal-order', async (req, res) => {
                     // Mark the pending order as processed
                     await pool.query(`
                         UPDATE pending_orders 
-                        SET processed = true, processed_at = NOW() 
+                        SET processed = true 
                         WHERE id = $1
                     `, [pendingOrder.id]);
                     
@@ -2237,7 +2237,7 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
 });
 
 // PayPal Webhook Handler
-app.get('/api/paypal/webhook', (req, res) => {
+app.get('/api/payment/paypal-webhook', (req, res) => {
     // PayPal webhook validation endpoint
     res.status(200).json({ 
         status: 'ok', 
@@ -2246,7 +2246,7 @@ app.get('/api/paypal/webhook', (req, res) => {
     });
 });
 
-app.post('/api/paypal/webhook', async (req, res) => {
+app.post('/api/payment/paypal-webhook', async (req, res) => {
     try {
         const webhookBody = req.body;
         const headers = req.headers;
