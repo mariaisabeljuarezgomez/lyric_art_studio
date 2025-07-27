@@ -568,6 +568,327 @@ const emailTemplates = {
         `
     }),
 
+    adminNotification: (data) => ({
+        subject: `🎉 New Newsletter Subscriber - Lyric Art Studio`,
+        html: `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>New Newsletter Subscriber - Lyric Art Studio</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        line-height: 1.6;
+                        color: #333333;
+                        background-color: #f8f9fa;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    
+                    .email-container {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: #ffffff;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    }
+                    
+                    .header {
+                        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+                        color: white;
+                        padding: 40px 30px;
+                        text-align: center;
+                    }
+                    
+                    .header h1 {
+                        margin: 0;
+                        font-size: 28px;
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    }
+                    
+                    .header p {
+                        margin: 0;
+                        font-size: 16px;
+                        opacity: 0.9;
+                    }
+                    
+                    .content {
+                        padding: 40px 30px;
+                    }
+                    
+                    .notification-section {
+                        text-align: center;
+                        margin-bottom: 40px;
+                    }
+                    
+                    .notification-section h2 {
+                        color: #00d4ff;
+                        font-size: 24px;
+                        margin-bottom: 20px;
+                    }
+                    
+                    .notification-section p {
+                        font-size: 16px;
+                        color: #666666;
+                        margin-bottom: 20px;
+                    }
+                    
+                    .subscriber-card {
+                        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                        border: 2px solid #00d4ff;
+                        border-radius: 12px;
+                        padding: 30px;
+                        margin: 30px 0;
+                        text-align: center;
+                    }
+                    
+                    .subscriber-avatar {
+                        width: 80px;
+                        height: 80px;
+                        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+                        border-radius: 50%;
+                        margin: 0 auto 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 32px;
+                        color: white;
+                    }
+                    
+                    .subscriber-name {
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #00d4ff;
+                        margin-bottom: 10px;
+                    }
+                    
+                    .subscriber-email {
+                        font-size: 18px;
+                        color: #666666;
+                        margin-bottom: 20px;
+                    }
+                    
+                    .subscriber-details {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 20px;
+                        margin-top: 20px;
+                    }
+                    
+                    .detail-item {
+                        background-color: #ffffff;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border-left: 4px solid #00d4ff;
+                    }
+                    
+                    .detail-label {
+                        font-size: 12px;
+                        color: #999999;
+                        text-transform: uppercase;
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    
+                    .detail-value {
+                        font-size: 14px;
+                        color: #333333;
+                        font-weight: 600;
+                    }
+                    
+                    .stats-section {
+                        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+                        color: white;
+                        padding: 30px;
+                        border-radius: 12px;
+                        margin: 30px 0;
+                        text-align: center;
+                    }
+                    
+                    .stats-section h3 {
+                        margin: 0 0 15px 0;
+                        font-size: 20px;
+                    }
+                    
+                    .stats-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 20px;
+                        margin-top: 20px;
+                    }
+                    
+                    .stat-item {
+                        background-color: rgba(255, 255, 255, 0.1);
+                        padding: 15px;
+                        border-radius: 8px;
+                    }
+                    
+                    .stat-number {
+                        font-size: 24px;
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    
+                    .stat-label {
+                        font-size: 12px;
+                        opacity: 0.8;
+                    }
+                    
+                    .action-section {
+                        background-color: #fff3cd;
+                        border: 1px solid #ffeaa7;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin: 30px 0;
+                        text-align: center;
+                    }
+                    
+                    .action-section h3 {
+                        color: #856404;
+                        margin: 0 0 10px 0;
+                        font-size: 18px;
+                    }
+                    
+                    .action-section p {
+                        color: #856404;
+                        margin: 0;
+                        font-size: 14px;
+                    }
+                    
+                    .footer {
+                        background-color: #f8f9fa;
+                        padding: 30px;
+                        text-align: center;
+                        border-top: 1px solid #e9ecef;
+                    }
+                    
+                    .footer p {
+                        margin: 0;
+                        font-size: 14px;
+                        color: #666666;
+                    }
+                    
+                    .admin-links {
+                        margin-top: 20px;
+                    }
+                    
+                    .admin-links a {
+                        display: inline-block;
+                        margin: 0 10px;
+                        color: #00d4ff;
+                        text-decoration: none;
+                        font-size: 14px;
+                        font-weight: bold;
+                    }
+                    
+                    @media (max-width: 600px) {
+                        .subscriber-details {
+                            grid-template-columns: 1fr;
+                        }
+                        
+                        .stats-grid {
+                            grid-template-columns: 1fr;
+                        }
+                        
+                        .header, .content {
+                            padding: 20px 15px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="email-container">
+                    <!-- Header -->
+                    <div class="header">
+                        <h1>🎉 New Newsletter Subscriber!</h1>
+                        <p>Lyric Art Studio Admin Notification</p>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="content">
+                        <div class="notification-section">
+                            <h2>🎊 Congratulations!</h2>
+                            <p>You have a new newsletter subscriber! Someone just joined your Lyric Art Studio community.</p>
+                        </div>
+                        
+                        <!-- Subscriber Card -->
+                        <div class="subscriber-card">
+                            <div class="subscriber-avatar">
+                                👤
+                            </div>
+                            <div class="subscriber-name">${data.name || 'Not provided'}</div>
+                            <div class="subscriber-email">${data.email}</div>
+                            
+                            <div class="subscriber-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">IP Address</div>
+                                    <div class="detail-value">${data.ipAddress || 'Unknown'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Subscribed At</div>
+                                    <div class="detail-value">${new Date().toLocaleString()}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">User Agent</div>
+                                    <div class="detail-value">${data.userAgent || 'Unknown'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Status</div>
+                                    <div class="detail-value" style="color: #28a745;">✅ Active</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats Section -->
+                        <div class="stats-section">
+                            <h3>📊 Current Newsletter Stats</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-number">${data.totalSubscribers}</div>
+                                    <div class="stat-label">Total Subscribers</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">${data.activeSubscribers}</div>
+                                    <div class="stat-label">Active Subscribers</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Section -->
+                        <div class="action-section">
+                            <h3>🎯 Next Steps</h3>
+                            <p>Consider sending a personalized welcome email or reaching out to this subscriber to build engagement!</p>
+                        </div>
+                        
+                        <!-- Additional Info -->
+                        <div style="margin-top: 30px;">
+                            <p style="color: #666666; font-size: 14px; line-height: 1.6;">
+                                This notification was automatically sent when a new subscriber joined your newsletter. You can view all subscribers and manage your newsletter from your admin dashboard.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="footer">
+                        <p>🎨 <strong>Lyric Art Studio</strong> - Where Lyrics Become Art</p>
+                        
+                        <div class="admin-links">
+                            <a href="https://lyricartstudio.shop/admin-custom-designs.html">📊 Admin Dashboard</a>
+                            <a href="mailto:admin@lyricartstudio.shop">📧 Contact Support</a>
+                        </div>
+                        
+                        <p style="margin-top: 20px; font-size: 12px; color: #999999;">
+                            <em>This is an automated notification from your Lyric Art Studio website.</em>
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
+    }),
+
     async close() {
         // This method is implied by the original file, but it's not used in the code block
         // You might want to implement a close method for your email templates
@@ -1933,6 +2254,347 @@ app.post('/api/subscription/create', async (req, res) => {
                 SET welcome_email_sent = TRUE, last_email_sent = CURRENT_TIMESTAMP
                 WHERE email = $1
             `, [email]);
+
+            // Send admin notification email
+            try {
+                // Get current subscriber count for stats
+                const subscriberCountResult = await pool.query(
+                    'SELECT COUNT(*) as total, COUNT(CASE WHEN status = \'active\' THEN 1 END) as active FROM newsletter_subscribers'
+                );
+                const totalSubscribers = subscriberCountResult.rows[0].total;
+                const activeSubscribers = subscriberCountResult.rows[0].active;
+
+                const adminNotificationHtml = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>New Newsletter Subscriber - Lyric Art Studio</title>
+                        <style>
+                            body {
+                                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                line-height: 1.6;
+                                color: #333333;
+                                background-color: #f8f9fa;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            
+                            .email-container {
+                                max-width: 600px;
+                                margin: 0 auto;
+                                background-color: #ffffff;
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                            }
+                            
+                            .header {
+                                background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+                                color: white;
+                                padding: 40px 30px;
+                                text-align: center;
+                            }
+                            
+                            .header h1 {
+                                margin: 0;
+                                font-size: 28px;
+                                font-weight: bold;
+                                margin-bottom: 10px;
+                            }
+                            
+                            .header p {
+                                margin: 0;
+                                font-size: 16px;
+                                opacity: 0.9;
+                            }
+                            
+                            .content {
+                                padding: 40px 30px;
+                            }
+                            
+                            .notification-section {
+                                text-align: center;
+                                margin-bottom: 40px;
+                            }
+                            
+                            .notification-section h2 {
+                                color: #00d4ff;
+                                font-size: 24px;
+                                margin-bottom: 20px;
+                            }
+                            
+                            .notification-section p {
+                                font-size: 16px;
+                                color: #666666;
+                                margin-bottom: 20px;
+                            }
+                            
+                            .subscriber-card {
+                                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                                border: 2px solid #00d4ff;
+                                border-radius: 12px;
+                                padding: 30px;
+                                margin: 30px 0;
+                                text-align: center;
+                            }
+                            
+                            .subscriber-avatar {
+                                width: 80px;
+                                height: 80px;
+                                background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+                                border-radius: 50%;
+                                margin: 0 auto 20px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 32px;
+                                color: white;
+                            }
+                            
+                            .subscriber-name {
+                                font-size: 24px;
+                                font-weight: bold;
+                                color: #00d4ff;
+                                margin-bottom: 10px;
+                            }
+                            
+                            .subscriber-email {
+                                font-size: 18px;
+                                color: #666666;
+                                margin-bottom: 20px;
+                            }
+                            
+                            .subscriber-details {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 20px;
+                                margin-top: 20px;
+                            }
+                            
+                            .detail-item {
+                                background-color: #ffffff;
+                                padding: 15px;
+                                border-radius: 8px;
+                                border-left: 4px solid #00d4ff;
+                            }
+                            
+                            .detail-label {
+                                font-size: 12px;
+                                color: #999999;
+                                text-transform: uppercase;
+                                font-weight: bold;
+                                margin-bottom: 5px;
+                            }
+                            
+                            .detail-value {
+                                font-size: 14px;
+                                color: #333333;
+                                font-weight: 600;
+                            }
+                            
+                            .stats-section {
+                                background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+                                color: white;
+                                padding: 30px;
+                                border-radius: 12px;
+                                margin: 30px 0;
+                                text-align: center;
+                            }
+                            
+                            .stats-section h3 {
+                                margin: 0 0 15px 0;
+                                font-size: 20px;
+                            }
+                            
+                            .stats-grid {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 20px;
+                                margin-top: 20px;
+                            }
+                            
+                            .stat-item {
+                                background-color: rgba(255, 255, 255, 0.1);
+                                padding: 15px;
+                                border-radius: 8px;
+                            }
+                            
+                            .stat-number {
+                                font-size: 24px;
+                                font-weight: bold;
+                                margin-bottom: 5px;
+                            }
+                            
+                            .stat-label {
+                                font-size: 12px;
+                                opacity: 0.8;
+                            }
+                            
+                            .action-section {
+                                background-color: #fff3cd;
+                                border: 1px solid #ffeaa7;
+                                border-radius: 8px;
+                                padding: 20px;
+                                margin: 30px 0;
+                                text-align: center;
+                            }
+                            
+                            .action-section h3 {
+                                color: #856404;
+                                margin: 0 0 10px 0;
+                                font-size: 18px;
+                            }
+                            
+                            .action-section p {
+                                color: #856404;
+                                margin: 0;
+                                font-size: 14px;
+                            }
+                            
+                            .footer {
+                                background-color: #f8f9fa;
+                                padding: 30px;
+                                text-align: center;
+                                border-top: 1px solid #e9ecef;
+                            }
+                            
+                            .footer p {
+                                margin: 0;
+                                font-size: 14px;
+                                color: #666666;
+                            }
+                            
+                            .admin-links {
+                                margin-top: 20px;
+                            }
+                            
+                            .admin-links a {
+                                display: inline-block;
+                                margin: 0 10px;
+                                color: #00d4ff;
+                                text-decoration: none;
+                                font-size: 14px;
+                                font-weight: bold;
+                            }
+                            
+                            @media (max-width: 600px) {
+                                .subscriber-details {
+                                    grid-template-columns: 1fr;
+                                }
+                                
+                                .stats-grid {
+                                    grid-template-columns: 1fr;
+                                }
+                                
+                                .header, .content {
+                                    padding: 20px 15px;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <!-- Header -->
+                            <div class="header">
+                                <h1>🎉 New Newsletter Subscriber!</h1>
+                                <p>Lyric Art Studio Admin Notification</p>
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="content">
+                                <div class="notification-section">
+                                    <h2>🎊 Congratulations!</h2>
+                                    <p>You have a new newsletter subscriber! Someone just joined your Lyric Art Studio community.</p>
+                                </div>
+                                
+                                <!-- Subscriber Card -->
+                                <div class="subscriber-card">
+                                    <div class="subscriber-avatar">
+                                        👤
+                                    </div>
+                                    <div class="subscriber-name">${name || 'Not provided'}</div>
+                                    <div class="subscriber-email">${email}</div>
+                                    
+                                    <div class="subscriber-details">
+                                        <div class="detail-item">
+                                            <div class="detail-label">IP Address</div>
+                                            <div class="detail-value">${ipAddress || 'Unknown'}</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-label">Subscribed At</div>
+                                            <div class="detail-value">${new Date().toLocaleString()}</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-label">User Agent</div>
+                                            <div class="detail-value">${userAgent || 'Unknown'}</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-label">Status</div>
+                                            <div class="detail-value" style="color: #28a745;">✅ Active</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Stats Section -->
+                                <div class="stats-section">
+                                    <h3>📊 Current Newsletter Stats</h3>
+                                    <div class="stats-grid">
+                                        <div class="stat-item">
+                                            <div class="stat-number">${totalSubscribers}</div>
+                                            <div class="stat-label">Total Subscribers</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-number">${activeSubscribers}</div>
+                                            <div class="stat-label">Active Subscribers</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Section -->
+                                <div class="action-section">
+                                    <h3>🎯 Next Steps</h3>
+                                    <p>Consider sending a personalized welcome email or reaching out to this subscriber to build engagement!</p>
+                                </div>
+                                
+                                <!-- Additional Info -->
+                                <div style="margin-top: 30px;">
+                                    <p style="color: #666666; font-size: 14px; line-height: 1.6;">
+                                        This notification was automatically sent when a new subscriber joined your newsletter. You can view all subscribers and manage your newsletter from your admin dashboard.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Footer -->
+                            <div class="footer">
+                                <p>🎨 <strong>Lyric Art Studio</strong> - Where Lyrics Become Art</p>
+                                
+                                <div class="admin-links">
+                                    <a href="https://lyricartstudio.shop/admin-custom-designs.html">📊 Admin Dashboard</a>
+                                    <a href="mailto:admin@lyricartstudio.shop">📧 Contact Support</a>
+                                </div>
+                                
+                                <p style="margin-top: 20px; font-size: 12px; color: #999999;">
+                                    <em>This is an automated notification from your Lyric Art Studio website.</em>
+                                </p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                await sendEmail('mariaisabeljuarezgomez85@gmail.com', 'adminNotification', {
+                    name: name || 'Not provided',
+                    email: email,
+                    ipAddress: ipAddress || 'Unknown',
+                    userAgent: userAgent || 'Unknown',
+                    totalSubscribers: totalSubscribers,
+                    activeSubscribers: activeSubscribers
+                });
+                
+                console.log('✅ Admin notification email sent to mariaisabeljuarezgomez85@gmail.com');
+            } catch (adminEmailError) {
+                console.error('❌ Error sending admin notification email:', adminEmailError);
+            }
 
             res.json({ 
                 success: true, 
