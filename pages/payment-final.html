@@ -256,11 +256,12 @@
             }
             showError(errorMessage, error, token);
         } else if (token) {
-        // Re-enable frontend processing
-        if (token) {
-            processPayment();
-        } else {
-            showError("No payment token found in URL", "no_token");
+            // Re-enable frontend processing
+            if (token) {
+                processPayment();
+            } else {
+                showError("No payment token found in URL", "no_token");
+            }
         }
     </script>
 </body>
