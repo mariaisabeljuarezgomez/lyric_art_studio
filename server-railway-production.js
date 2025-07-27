@@ -801,7 +801,7 @@ const verifyPayPalWebhook = (headers, body) => {
 
 // Middleware
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' ? ['https://lyricartstudio-production.up.railway.app'] : true,
+    origin: process.env.NODE_ENV === 'production' ? ['https://lyricartstudio.shop'] : true,
     credentials: true
 }));
 app.use(express.json());
@@ -894,8 +894,8 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         maxAge: 24 * 60 * 60 * 1000, // 1 day
-        httpOnly: false, // Allow JavaScript access
-        secure: false, // Set to false for Railway debugging
+        httpOnly: true, // More secure - prevent XSS
+        secure: process.env.NODE_ENV === 'production', // Secure in production
         sameSite: 'lax'
     }
 }));
@@ -1994,7 +1994,7 @@ app.get('/api/payment/capture-paypal-order', async (req, res) => {
                         
                         await sendEmail(
                             emailData.customerEmail,
-                            'order-confirmation',
+                            'orderConfirmation',
                             emailData
                         );
                         
@@ -3271,6 +3271,8 @@ app.get('/api/wishlist/check/:designId', authenticateUser, async (req, res) => {
 app.delete('/api/my-collection/delete-design', authenticateUser, async (req, res) => {
     const { designId } = req.body;
     console.log('🗑️ /api/my-collection/delete-design accessed for user:', req.session.userId, 'design:', designId);
+    console.log('🔍 Request body:', req.body);
+    console.log('🔍 Session data:', req.session);
     
     if (!designId) {
         return res.status(400).json({ success: false, message: 'Design ID is required' });
