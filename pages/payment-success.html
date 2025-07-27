@@ -145,6 +145,13 @@
                 console.log('💳 Retry attempt:', retryCount + 1);
                 
                 // Capture the PayPal payment
+                console.log('🔍 Making fetch request to:', '/api/payment/capture-paypal-order');
+                console.log('🔍 Request body:', { orderId: token });
+                console.log('🔍 Request headers:', {
+                    'Content-Type': 'application/json',
+                    'credentials': 'include'
+                });
+                
                 const response = await fetch('/api/payment/capture-paypal-order', {
                     method: 'POST',
                     headers: {
