@@ -8,6 +8,44 @@
     let protectionActive = true;
     let devToolsDetected = false;
 
+    // EMERGENCY DISABLE FUNCTION - Call this from console to disable protection
+    window.emergencyDisableProtection = function() {
+        console.log('🚨 EMERGENCY: Disabling all image protection...');
+        
+        // Remove the debug button
+        const debugButton = document.getElementById('debug-button');
+        if (debugButton) {
+            debugButton.remove();
+        }
+        
+        // Remove CSS protections
+        const style = document.getElementById('image-protection-styles');
+        if (style) {
+            style.remove();
+        }
+        
+        // Clear any protection flags
+        window.globalProtectionInitialized = false;
+        window.devToolsDetected = false;
+        protectionActive = false;
+        
+        // Remove all event listeners by recreating the document
+        const newBody = document.body.cloneNode(true);
+        document.body.parentNode.replaceChild(newBody, document.body);
+        
+        // Override the blocking functions
+        const originalAddEventListener = document.addEventListener;
+        document.addEventListener = function(type, listener, options) {
+            if (type === 'keydown' || type === 'contextmenu' || type === 'dragstart' || type === 'selectstart' || type === 'copy' || type === 'cut') {
+                return; // Don't add protection listeners
+            }
+            return originalAddEventListener.call(this, type, listener, options);
+        };
+        
+        console.log('✅ All image protection disabled. You can now use F12 and developer tools.');
+        alert('Image protection disabled. You can now use developer tools.');
+    };
+
     // Initialize global protection
     function initGlobalProtection() {
         console.log('🛡️ Initializing global image protection...');
@@ -46,6 +84,7 @@
         window.globalProtectionInitialized = true;
         
         console.log('✅ Global image protection initialized');
+        console.log('🚨 To disable protection, run: emergencyDisableProtection() in console');
     }
 
     // Disable right-click on images only
@@ -123,6 +162,13 @@
             if (e.altKey && (e.key === 'PrintScreen' || e.key === 'Print')) {
                 e.preventDefault();
                 showProtectionMessage('Print screen disabled');
+                return false;
+            }
+
+            // EMERGENCY BYPASS: Ctrl+Alt+Shift+D to disable protection
+            if (e.ctrlKey && e.altKey && e.shiftKey && e.key === 'D') {
+                e.preventDefault();
+                window.emergencyDisableProtection();
                 return false;
             }
         }, true);

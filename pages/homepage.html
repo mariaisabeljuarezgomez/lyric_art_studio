@@ -7,7 +7,27 @@
     <link rel="stylesheet" href="../css/main.css" />
     <meta name="description" content="Transform your favorite song lyrics into stunning visual art. Premium digital marketplace for music-inspired typographic designs." />
     <!-- Google reCAPTCHA v3 for spam protection -->
-    <script src="https://www.google.com/recaptcha/api.js?render=6LdJ4JAr"></script>
+<script>
+// Dynamically load reCAPTCHA with secure site key
+async function loadRecaptcha() {
+    try {
+        console.log('🔄 Loading reCAPTCHA...');
+        const response = await fetch('/api/recaptcha-site-key');
+        const data = await response.json();
+        console.log('📋 Site key received:', data.siteKey ? 'SET' : 'NOT_SET');
+        
+        const script = document.createElement('script');
+        script.src = `https://www.google.com/recaptcha/api.js?render=${data.siteKey}`;
+        script.onload = () => console.log('✅ reCAPTCHA script loaded successfully');
+        script.onerror = () => console.error('❌ reCAPTCHA script failed to load');
+        document.head.appendChild(script);
+        console.log('✅ reCAPTCHA loaded with secure site key');
+    } catch (error) {
+        console.error('❌ Failed to load reCAPTCHA site key:', error);
+    }
+}
+loadRecaptcha();
+</script>
     <!-- OpenSeadragon for high-resolution zoomable images -->
     <script src="https://openseadragon.github.io/openseadragon/openseadragon.min.js"></script>
     <!-- Fallback CDN if main one fails -->
@@ -19,10 +39,10 @@
             document.head.appendChild(script);
         }
     </script>
-    <!-- Global Image Protection System -->
-    <script src="../public/global-image-protection.js"></script>
-    <!-- Enhanced protected image viewer -->
-    <script src="../public/openseadragon-viewer.js"></script>
+    <!-- Global Image Protection System - TEMPORARILY DISABLED FOR DEBUGGING -->
+    <!-- <script src="../public/global-image-protection.js"></script> -->
+    <!-- Enhanced protected image viewer - TEMPORARILY DISABLED FOR DEBUGGING -->
+    <!-- <script src="../public/openseadragon-viewer.js"></script> -->
     <!-- Rocket.js script removed to fix cart functionality -->
 </head>
 <body class="bg-background text-text-primary font-inter">
@@ -78,6 +98,8 @@
             </div>
         </nav>
     </header>
+
+
 
     <!-- Enhanced Particle Background -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
@@ -264,20 +286,46 @@
                 <button onclick="openCommissionModal()" class="btn-primary text-lg px-8 py-4">CUSTOM DESIGN REQUEST</button>
                 
                 <!-- Newsletter Subscription -->
-                <div class="mt-8 w-full max-w-md mx-auto px-4 sm:px-0">
-                    <div class="bg-surface/50 backdrop-blur-md rounded-lg p-4 sm:p-6 border border-border-subtle">
-                        <h3 class="text-lg font-semibold text-text-primary mb-3">Stay Updated</h3>
-                        <p class="text-text-secondary text-sm mb-4">Get notified about new designs and exclusive offers!</p>
-                        <div class="flex flex-col space-y-2">
+                <div class="mt-12 w-full max-w-2xl mx-auto px-4 sm:px-0">
+                    <div class="bg-gradient-to-r from-accent/10 to-accent/5 backdrop-blur-md rounded-xl p-8 border-2 border-accent/20 shadow-xl">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 mx-auto mb-4 bg-accent/20 rounded-full flex items-center justify-center">
+                                <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-2xl font-montserrat font-bold text-text-primary mb-3">
+                                Subscribe to Our Newsletter
+                            </h3>
+                            <div class="bg-accent/10 border border-accent/30 rounded-lg p-4 mb-4">
+                                <p class="text-lg font-montserrat font-semibold text-accent mb-1">
+                                    🎉 GET 25% OFF ANY AND ALL PURCHASES! 🎉
+                                </p>
+                                <p class="text-text-secondary text-sm">
+                                    Join our community and unlock exclusive discounts on every design
+                                </p>
+                            </div>
+                            <p class="text-text-secondary text-sm">
+                                Be the first to know about new designs, exclusive offers, and special promotions!
+                            </p>
+                        </div>
+                        
+                        <div class="space-y-4">
                             <input type="text" id="subscription-name" placeholder="Your name (optional)" 
-                                   class="w-full px-3 sm:px-4 py-2 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary text-sm">
-                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                                <input type="email" id="subscription-email" placeholder="Enter your email" 
-                                       class="flex-1 px-3 sm:px-4 py-2 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary text-sm">
-                                <button onclick="subscribe()" class="bg-accent text-background px-4 py-2 rounded-lg hover:bg-accent/90 transition-smooth text-sm font-medium whitespace-nowrap">
-                                    Subscribe
+                                   class="w-full px-4 py-3 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary text-base">
+                            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                                <input type="email" id="subscription-email" placeholder="Enter your email address" 
+                                       class="flex-1 px-4 py-3 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary text-base">
+                                <button onclick="subscribe()" class="bg-accent text-background px-8 py-3 rounded-lg hover:bg-accent/90 transition-smooth text-base font-montserrat font-semibold whitespace-nowrap shadow-lg hover:shadow-xl transform hover:scale-105">
+                                    Subscribe & Save 25%
                                 </button>
                             </div>
+                        </div>
+                        
+                        <div class="mt-4 text-center">
+                            <p class="text-xs text-text-secondary">
+                                🔒 We respect your privacy. Unsubscribe at any time.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -1482,10 +1530,16 @@
 
         // Subscription Function with reCAPTCHA protection
         async function subscribe() {
+            console.log('🎯 Subscribe function called!');
+            
             const email = document.getElementById('subscription-email').value;
             const name = document.getElementById('subscription-name').value;
             
+            console.log('📧 Email:', email);
+            console.log('👤 Name:', name);
+            
             if (!email) {
+                console.log('❌ No email provided');
                 showNotification('Please enter your email', 'error');
                 return;
             }
@@ -1497,11 +1551,29 @@
             subscribeButton.disabled = true;
 
             try {
-                // Get reCAPTCHA token
-                const recaptchaToken = await grecaptcha.execute('6LdJ4JAr', {action: 'newsletter_subscribe'});
+                // Get reCAPTCHA token (optional for debugging)
+                let recaptchaToken = null;
+                try {
+                    // Check if grecaptcha is available
+                    if (typeof grecaptcha !== 'undefined' && grecaptcha.execute) {
+                        // Get site key dynamically
+                        const keyResponse = await fetch('/api/recaptcha-site-key');
+                        const keyData = await keyResponse.json();
+                        recaptchaToken = await grecaptcha.execute(keyData.siteKey, {action: 'newsletter_subscribe'});
+                        console.log('✅ reCAPTCHA token obtained');
+                    } else {
+                        console.log('⚠️ reCAPTCHA not available, proceeding without token');
+                        recaptchaToken = null;
+                    }
+                } catch (recaptchaError) {
+                    console.log('⚠️ reCAPTCHA failed, proceeding without token:', recaptchaError);
+                    recaptchaToken = null;
+                }
                 
                 subscribeButton.textContent = 'Subscribing...';
 
+                console.log('📧 Sending subscription request:', { email, name, hasRecaptcha: !!recaptchaToken });
+                
                 const response = await fetch('/api/subscription/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1512,7 +1584,9 @@
                     })
                 });
 
+                console.log('📧 Subscription response status:', response.status);
                 const data = await response.json();
+                console.log('📧 Subscription response data:', data);
                 
                 if (data.success) {
                     showNotification('Successfully subscribed! Check your email for your welcome gift!', 'success');
@@ -1543,29 +1617,10 @@
             }
             
             console.log('🚀 Initializing secure authentication...');
-            checkAuthStatus();
             
-            // Intelligent retry system
-            const authRetryInterval = setInterval(() => {
-                authCheckAttempts++;
-                console.log(`🔄 Auth check attempt ${authCheckAttempts}/${MAX_AUTH_ATTEMPTS}`);
-                
-                if (authCheckAttempts >= MAX_AUTH_ATTEMPTS) {
-                    clearInterval(authRetryInterval);
-                    authInitialized = true;
-                    console.log('✅ Auth initialization complete');
-                    return;
-                }
-                
-                // Only retry if we haven't confirmed login status
-                if (lastAuthStatus === null) {
-                    checkAuthStatus();
-                } else {
-                    clearInterval(authRetryInterval);
-                    authInitialized = true;
-                    console.log('✅ Auth status confirmed, initialization complete');
-                }
-            }, 1000);
+            // Simple auth initialization for homepage
+            authInitialized = true;
+            console.log('✅ Auth initialization complete');
         }
         
         // Initialize on page load
@@ -1582,8 +1637,6 @@
         // Initialize page functionality
         document.addEventListener('DOMContentLoaded', function() {
             updateCartBadge();
-            checkAuthStatus();
-            setInterval(checkAuthStatus, 30000);
         });
 
         // Buy now functionality - add to cart and immediately checkout

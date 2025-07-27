@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page - No Protection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test Page - No Image Protection</h1>
+        
+        <div class="info">
+            <h3>✅ This page has NO image protection</h3>
+            <p>You can use F12, developer tools, and all browser features normally.</p>
+        </div>
+
+        <h2>Test Functions:</h2>
+        <button class="test-button" onclick="testFunction()">Test JavaScript</button>
+        <button class="test-button" onclick="alert('Button works!')">Test Alert</button>
+        <button class="test-button" onclick="console.log('Console works!')">Test Console</button>
+        
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Press <strong>F12</strong> to open developer tools</li>
+            <li>Go to the <strong>Console</strong> tab</li>
+            <li>Type: <code>window.location.href = '/homepage'</code> to go back to main site</li>
+            <li>Or click the button below to go back</li>
+        </ol>
+        
+        <button class="test-button" onclick="window.location.href='/homepage'" style="background: #28a745;">
+            ← Go Back to Main Site
+        </button>
+        
+        <h2>Debug Info:</h2>
+        <p>Current URL: <span id="current-url"></span></p>
+        <p>User Agent: <span id="user-agent"></span></p>
+        <p>Window Size: <span id="window-size"></span></p>
+    </div>
+
+    <script>
+        function testFunction() {
+            console.log('✅ JavaScript is working!');
+            alert('✅ JavaScript is working!');
+        }
+        
+        // Display debug info
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        document.getElementById('window-size').textContent = window.innerWidth + 'x' + window.innerHeight;
+        
+        console.log('🚀 Test page loaded successfully - no protection active');
+    </script>
+</body>
+</html> 
