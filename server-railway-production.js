@@ -2361,7 +2361,7 @@ app.post('/api/payment/paypal-webhook', async (req, res) => {
                             
                             console.log(`💾 Purchase stored in database for user ${userId}, design: ${numericDesignId} (folder: ${folderName})`);
                             
-                            // Prepare order data for file delivery
+                            // Prepare order data for file delivery and email
                             const orderData = {
                                 orderId: orderId || `order_${Date.now()}`,
                                 designId: folderName,  // Use folder name for file delivery
@@ -2369,7 +2369,14 @@ app.post('/api/payment/paypal-webhook', async (req, res) => {
                                 customerEmail: userEmail,
                                 customerName: userName,
                                 amount: amount,
-                                paymentId: paymentId
+                                paymentId: paymentId,
+                                // Add items array for email template
+                                items: [{
+                                    title: designInfo.title || folderName,
+                                    format: 'SVG, PNG, PDF, EPS',
+                                    price: amount
+                                }],
+                                total: amount
                             };
                             
                             // Automatically send design files
