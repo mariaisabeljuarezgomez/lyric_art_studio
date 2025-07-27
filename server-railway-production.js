@@ -1822,6 +1822,188 @@ app.get('/api/payment/check-status', (req, res) => {
     }
 });
 
+// Handle both GET and POST for payment capture (GET is for redirects)
+app.get('/api/payment/capture-paypal-order', async (req, res) => {
+    try {
+        const orderId = req.query.orderId;
+        
+        console.log('🎯 GET Payment capture request received for orderId:', orderId);
+        console.log('🔍 Query params:', req.query);
+        console.log('🔍 Session data:', req.session);
+        
+        // ✅ CRITICAL: Validate orderId is real PayPal ID (Manus's fix - relaxed validation)
+        if (!orderId) {
+            console.error('❌ No orderId provided in GET request');
+            return res.status(400).json({ error: 'Order ID is required' });
+        }
+        
+        // Relaxed validation: Accept PayPal IDs between 10-25 characters, or test IDs in development
+        const isValidPayPalId = orderId.match(/^[A-Z0-9]{10,25}$/) || 
+                               (process.env.NODE_ENV === 'development' && orderId === 'test');
+        
+        if (!isValidPayPalId) {
+            console.error('❌ Invalid order ID format:', orderId);
+            return res.status(400).json({ 
+                error: 'Invalid order ID format. Expected PayPal order ID (10-25 characters).' 
+            });
+        }
+
+        // Capture the PayPal order
+        console.log('💳 Attempting to capture PayPal order:', orderId);
+        const captureResult = await capturePayPalOrder(orderId);
+        
+        if (captureResult.success) {
+            console.log('✅ PayPal order captured successfully:', captureResult.capture.id);
+            
+            // LOOK UP PENDING ORDER INSTEAD OF USING SESSION
+            let pendingOrderResult = null;
+            try {
+                console.log('🔍 Looking up pending order for orderId:', orderId);
+                
+                // First try to find by exact orderId match
+                pendingOrderResult = await pool.query(`
+                    SELECT * FROM pending_orders WHERE order_id = $1 AND processed = false
+                `, [orderId]);
+                
+                // If not found, try to find by PayPal order ID pattern (look for recent unprocessed orders)
+                if (pendingOrderResult.rows.length === 0) {
+                    console.log('🔍 No exact match found, looking for recent unprocessed orders...');
+                    pendingOrderResult = await pool.query(`
+                        SELECT * FROM pending_orders 
+                        WHERE processed = false 
+                        ORDER BY created_at DESC 
+                        LIMIT 1
+                    `);
+                }
+                
+                console.log(`📊 Found ${pendingOrderResult.rows.length} pending orders for orderId: ${orderId}`);
+                
+                if (pendingOrderResult.rows.length > 0) {
+                    const pendingOrder = pendingOrderResult.rows[0];
+                    const userId = pendingOrder.user_id;
+                    const items = pendingOrder.items;
+                    
+                    console.log(`📦 Processing pending order for user ${userId} with ${items.length} items`);
+                    console.log(`📦 Pending order details:`, pendingOrder);
+                    
+                    // Record each purchased item
+                    for (const item of items) {
+                        const itemId = item.itemId;
+                        const folderName = itemId; // Always use folder name for design_name
+                        const amount = item.price || 3.00;
+                        
+                        // Look up the correct design ID from the designs database
+                        let numericDesignId = itemId;
+                        try {
+                            // Use the same getNumericDesignId function for consistency
+                            if (typeof itemId === 'string' && itemId.includes('-')) {
+                                // This looks like a folder name, convert it to numeric ID
+                                numericDesignId = await getNumericDesignId(itemId);
+                                console.log(`🔍 Converted folder name "${itemId}" to numeric design ID: ${numericDesignId}`);
+                            } else {
+                                // This might already be a numeric ID
+                                console.log(`🔍 Using itemId as designId (appears to be numeric): ${itemId}`);
+                                numericDesignId = itemId;
+                            }
+                        } catch (error) {
+                            console.error('❌ Error converting design ID:', error);
+                            numericDesignId = itemId; // Fallback to original
+                        }
+                        
+                        try {
+                            // Record the purchase
+                            await pool.query(`
+                                INSERT INTO purchases (user_id, design_id, design_name, amount, purchase_date)
+                                VALUES ($1, $2, $3, $4, NOW())
+                            `, [userId, numericDesignId, item.designName || folderName, amount]);
+                            
+                            console.log(`💾 Purchase recorded for user ${userId}, design: ${numericDesignId} (original itemId: ${itemId})`);
+                        } catch (error) {
+                            console.error('❌ Error recording purchases:', error);
+                        }
+                    }
+                    
+                    // Mark the pending order as processed
+                    await pool.query(`
+                        UPDATE pending_orders 
+                        SET processed = true, processed_at = NOW() 
+                        WHERE id = $1
+                    `, [pendingOrder.id]);
+                    
+                    console.log('✅ All purchases recorded for user', userId);
+                    
+                    // Send order confirmation email
+                    try {
+                        const emailItems = items.map(item => ({
+                            title: item.designName || item.itemId,
+                            format: 'SVG',
+                            price: item.price || 3.00
+                        }));
+                        
+                        console.log('📧 Using pending order data for email:', emailItems);
+                        
+                        const emailData = {
+                            customerEmail: pendingOrder.user_email,
+                            customerName: pendingOrder.user_name,
+                            orderId: orderId,
+                            items: emailItems,
+                            total: pendingOrder.total
+                        };
+                        
+                        console.log('📧 Email data being sent:', emailData);
+                        
+                        await sendEmail(
+                            emailData.customerEmail,
+                            'order-confirmation',
+                            emailData
+                        );
+                        
+                        console.log('✅ Order confirmation email sent');
+                    } catch (emailError) {
+                        console.error('❌ Failed to send order confirmation email:', emailError);
+                    }
+                } else {
+                    console.log('⚠️ No pending order found for orderId:', orderId);
+                }
+            } catch (error) {
+                console.error('❌ Error processing pending order:', error);
+            }
+            
+            // Store payment success data in session
+            req.session.paymentSuccess = {
+                orderId: orderId,
+                amount: captureResult.capture.purchase_units[0].amount.value,
+                status: captureResult.capture.status,
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('✅ Payment success data stored in session:', req.session.paymentSuccess);
+            
+            res.json({
+                success: true,
+                capture: captureResult.capture
+            });
+        } else {
+            console.error('❌ PayPal order capture failed:', captureResult.error);
+            let errorMessage = captureResult.error;
+            let statusCode = 500;
+            
+            if (errorMessage.includes('Specified resource ID does not exist')) {
+                errorMessage = 'PayPal order not found. The order may have expired or been cancelled. Please try creating a new order.';
+                statusCode = 404;
+            } else if (errorMessage.includes('Order already captured')) {
+                errorMessage = 'This order has already been processed. Please check your email for confirmation.';
+                statusCode = 409;
+            }
+            
+            res.status(statusCode).json({ error: errorMessage });
+        }
+    } catch (error) {
+        console.error('❌ Payment capture endpoint error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/payment/capture-paypal-order', async (req, res) => {
     try {
         const { orderId } = req.body;
