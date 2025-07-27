@@ -491,13 +491,19 @@ console.log('   PAYPAL_CLIENT_SECRET exists:', !!process.env.PAYPAL_CLIENT_SECRE
 
 // Simple PayPal configuration
 const isLocalhost = process.env.PORT === '3001' || process.env.PORT === '8080' || !process.env.PORT;
-const useSandbox = process.env.NODE_ENV !== 'production' || isLocalhost;
+
+// Allow forcing sandbox mode for testing on live site
+const forceSandbox = process.env.FORCE_PAYPAL_SANDBOX === 'true';
+const useSandbox = process.env.NODE_ENV !== 'production' || isLocalhost || forceSandbox;
 
 const PAYPAL_BASE_URL = useSandbox 
     ? 'https://api-m.sandbox.paypal.com' 
     : 'https://api-m.paypal.com';
 
 console.log('   Using environment:', useSandbox ? 'SANDBOX' : 'LIVE');
+if (forceSandbox) {
+    console.log('   ⚠️  SANDBOX FORCED for testing on live site');
+}
 console.log('   PayPal Base URL:', PAYPAL_BASE_URL);
 console.log('✅ PayPal configuration ready');
 
