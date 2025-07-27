@@ -759,12 +759,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files for specific directories only
-app.use('/css', express.static(path.join(__dirname, 'css')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use('/pages', express.static(path.join(__dirname, 'pages')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
-
 // Serve favicon
 app.get('/favicon.ico', (req, res) => {
     res.status(204).end(); // No content response for favicon
@@ -3904,6 +3898,14 @@ const getNumericDesignId = async (folderName) => {
         return folderName; // Fallback to original folder name
     }
 };
+
+// ========== STATIC FILES (AFTER ALL API ROUTES) ==========
+
+// Serve static files for specific directories only (AFTER all API routes)
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/pages', express.static(path.join(__dirname, 'pages')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // ========== 404 HANDLER (MUST BE LAST) ==========
 
