@@ -99,7 +99,16 @@
     <div class="custom-designs-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
             <h1 style="margin: 0; color: var(--color-accent);">🎨 Custom Design Requests</h1>
-            <button class="refresh-btn" onclick="loadCustomDesignRequests()">🔄 Refresh</button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input 
+                    type="password" 
+                    id="admin-key-input" 
+                    placeholder="Admin Key" 
+                    value="lyric-admin-2025"
+                    style="padding: 8px 12px; border: 1px solid var(--color-border-subtle); border-radius: 4px; background: var(--color-surface); color: var(--color-text-primary);"
+                >
+                <button class="refresh-btn" onclick="loadCustomDesignRequests()">🔄 Refresh</button>
+            </div>
         </div>
         
         <div id="requests-container">
@@ -117,7 +126,8 @@
 
         async function loadCustomDesignRequests() {
             try {
-                const response = await fetch('/api/admin/custom-designs', {
+                const adminKey = document.getElementById('admin-key-input').value;
+                const response = await fetch(`/api/admin/custom-designs?adminKey=${adminKey}`, {
                     credentials: 'include'
                 });
                 
@@ -200,8 +210,9 @@
             try {
                 const status = document.getElementById(`status-${requestId}`).value;
                 const notes = document.getElementById(`notes-${requestId}`).value;
+                const adminKey = document.getElementById('admin-key-input').value;
                 
-                const response = await fetch(`/api/admin/custom-designs/${requestId}`, {
+                const response = await fetch(`/api/admin/custom-designs/${requestId}?adminKey=${adminKey}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
