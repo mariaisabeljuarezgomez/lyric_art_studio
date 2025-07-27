@@ -145,38 +145,19 @@
                 console.log('💳 Retry attempt:', retryCount + 1);
                 
                 // Capture the PayPal payment
-                console.log('🔍 Making fetch request to:', '/api/payment/capture-paypal-order');
-                console.log('🔍 Request body:', { orderId: token });
-                console.log('🔍 Request headers:', {
-                    'Content-Type': 'application/json',
-                    'credentials': 'include'
+                console.log('💳 Calling payment capture endpoint...');
+                console.log('🔍 Request: GET /api/payment/capture-paypal-order');
+                console.log('🔍 Order ID:', token);
+                
+                const captureResponse = await fetch(`/api/payment/capture-paypal-order?orderId=${encodeURIComponent(token)}`, {
+                    method: 'GET',
+                    credentials: 'include'
                 });
                 
-                // Try POST first, if it fails due to redirect, try GET with query params
-                let response;
-                try {
-                    console.log('🔄 Attempting POST request...');
-                    response = await fetch('/api/payment/capture-paypal-order', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({ orderId: token })
-                    });
-                } catch (error) {
-                    console.log('🔄 POST failed, trying GET with query params...');
-                    // If POST fails, try GET with query parameters
-                    response = await fetch(`/api/payment/capture-paypal-order?orderId=${encodeURIComponent(token)}`, {
-                        method: 'GET',
-                        credentials: 'include'
-                    });
-                }
-
-                console.log('📡 Capture response status:', response.status);
-                console.log('📡 Capture response headers:', Object.fromEntries(response.headers.entries()));
+                console.log('📡 Capture response status:', captureResponse.status);
+                console.log('📡 Capture response headers:', Object.fromEntries(captureResponse.headers.entries()));
                 
-                const data = await response.json();
+                const data = await captureResponse.json();
                 console.log('📡 Capture response data:', data);
 
                 if (data.success) {
@@ -275,33 +256,11 @@
             }
             showError(errorMessage, error, token);
         } else if (token) {
-            // EMERGENCY FIX: Completely disable frontend processing
-            console.log('🚨 EMERGENCY MODE: Frontend processing disabled');
-            console.log('⏳ Server will handle payment processing automatically');
-            
-            // Just check if server already processed it
-            setTimeout(() => {
-                checkPaymentStatus().then(alreadyProcessed => {
-                    if (alreadyProcessed) {
-                        console.log('✅ Payment processed by server');
-                        showSuccess();
-                    } else {
-                        console.log('⏳ Still waiting for server processing...');
-                        // Wait a bit more and check again
-                        setTimeout(() => {
-                            checkPaymentStatus().then(processed => {
-                                if (processed) {
-                                    showSuccess();
-                                } else {
-                                    console.log('⚠️ Server processing taking longer than expected');
-                                }
-                            });
-                        }, 3000);
-                    }
-                });
-            }, 1000);
+        // Re-enable frontend processing
+        if (token) {
+            processPayment();
         } else {
-            showError('No payment token found in URL', 'no_token');
+            showError("No payment token found in URL", "no_token");
         }
     </script>
 </body>
