@@ -4,9 +4,9 @@ async function testAdminNotification() {
     console.log('🧪 Testing Admin Notification System...');
     
     const testData = {
-        email: 'test-subscriber@example.com',
-        name: 'Test User',
-        recaptchaToken: 'test-token'
+        email: 'fresh-test-subscriber@example.com',
+        name: 'Fresh Test User',
+        recaptchaToken: 'test-token' // Placeholder, server is lenient for debugging
     };
     
     try {
