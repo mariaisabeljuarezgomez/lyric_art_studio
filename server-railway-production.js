@@ -2565,13 +2565,8 @@ app.get('/payment/success', async (req, res) => {
                 
                 console.log('✅ Payment success data stored in session:', req.session.paymentSuccess);
                 
-                // Serve the frontend payment success page with cache-busting headers
-                res.set({
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                });
-                res.sendFile(path.join(__dirname, 'pages', 'payment-success.html'));
+                // Serve the frontend payment success page (using renamed file to bypass Railway cache)
+                res.sendFile(path.join(__dirname, 'pages', 'payment-final.html'));
                 
             } else {
                 console.error('❌ Payment capture failed:', captureData.error);

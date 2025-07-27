@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Success - Lyric Art Studio</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <meta name="description" content="Payment completed successfully. Download your lyric art designs." />
+</head>
+<body class="bg-background text-text-primary font-inter">
+    <!-- Navigation Header -->
+    <header class="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-md border-b border-border-subtle shadow-lg">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                        <path d="M19 15L19.5 17L21 17.5L19.5 18L19 20L18.5 18L17 17.5L18.5 17L19 15Z"/>
+                        <path d="M5 15L5.5 17L7 17.5L5.5 18L5 20L4.5 18L3 17.5L4.5 17L5 15Z"/>
+                    </svg>
+                    <span class="text-xl font-montserrat font-bold">Lyric Art Studio</span>
+                </div>
+
+                <!-- Back to Home -->
+                <a href="/homepage" class="text-text-secondary hover:text-accent transition-smooth text-sm font-medium flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    <span>Back to Shop</span>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="min-h-screen pt-24 pb-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Loading State -->
+            <div id="loading" class="text-center py-16">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
+                <p class="text-text-secondary mt-6 text-lg">Processing your payment...</p>
+                <p class="text-text-secondary mt-2 text-sm">This may take a few moments</p>
+            </div>
+
+            <!-- Success State -->
+            <div id="success" class="text-center py-8 sm:py-16" style="display: none;">
+                <div class="max-w-md mx-auto bg-surface/90 backdrop-blur-md rounded-2xl border border-border-subtle p-6 sm:p-8 lg:p-12 shadow-xl mx-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                        <svg class="w-8 h-8 sm:w-10 sm:h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-text-primary mb-2 sm:mb-3">Payment Successful!</h3>
+                    <p class="text-text-secondary mb-6 sm:mb-8 text-sm sm:text-base">Your purchase has been completed successfully. You can now download your designs from your collection.</p>
+                    <div class="space-y-3">
+                        <a href="/my-collection" class="block w-full bg-accent text-background px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-accent/90 transition-all duration-300 font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                            View My Collection
+                        </a>
+                        <a href="/homepage" class="block w-full bg-surface text-text-primary px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-surface/80 transition-all duration-300 font-semibold text-base sm:text-lg border border-border-subtle">
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error" class="text-center py-8 sm:py-16" style="display: none;">
+                <div class="max-w-md mx-auto bg-surface/90 backdrop-blur-md rounded-2xl border border-border-subtle p-6 sm:p-8 lg:p-12 shadow-xl mx-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                        <svg class="w-8 h-8 sm:w-10 sm:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-text-primary mb-2 sm:mb-3">Payment Processing Issue</h3>
+                    <p id="error-message" class="text-text-secondary mb-4 text-sm sm:text-base">There was an issue processing your payment.</p>
+                    <div id="error-details" class="text-xs text-text-secondary mb-6 bg-red-500/10 p-3 rounded-lg" style="display: none;">
+                        <p><strong>Error Code:</strong> <span id="error-code"></span></p>
+                        <p><strong>Order ID:</strong> <span id="order-id"></span></p>
+                    </div>
+                    <div class="space-y-3">
+                        <button id="retry-button" onclick="retryPayment()" class="block w-full bg-accent text-background px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-accent/90 transition-all duration-300 font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                            Try Again
+                        </button>
+                        <a href="/checkout" class="block w-full bg-surface text-text-primary px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-surface/80 transition-all duration-300 font-semibold text-base sm:text-lg border border-border-subtle">
+                            Back to Checkout
+                        </a>
+                        <a href="/homepage" class="block w-full bg-surface text-text-primary px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-surface/80 transition-all duration-300 font-semibold text-base sm:text-lg border border-border-subtle">
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug Info (only shown in development) -->
+            <div id="debug-info" class="mt-8 p-4 bg-gray-100 rounded-lg text-xs text-gray-600" style="display: none;">
+                <h4 class="font-bold mb-2">Debug Information:</h4>
+                <div id="debug-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const PayerID = urlParams.get('PayerID');
+        const error = urlParams.get('error');
+
+        // Debug mode (show in development)
+        const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        console.log('🔍 Payment success page loaded');
+        console.log('🔍 URL parameters:', { token, PayerID, error });
+        console.log('🔍 Development mode:', isDevelopment);
+
+        // Show debug info in development
+        if (isDevelopment) {
+            document.getElementById('debug-info').style.display = 'block';
+            updateDebugInfo();
+        }
+
+        function updateDebugInfo() {
+            const debugContent = document.getElementById('debug-content');
+            debugContent.innerHTML = `
+                <p><strong>Token:</strong> ${token || 'Not found'}</p>
+                <p><strong>PayerID:</strong> ${PayerID || 'Not found'}</p>
+                <p><strong>Error:</strong> ${error || 'None'}</p>
+                <p><strong>Retry Count:</strong> ${retryCount}</p>
+                <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+                <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+            `;
+        }
+
+        async function processPayment() {
+            try {
+                if (!token) {
+                    throw new Error('No payment token found');
+                }
+
+                console.log('💳 Processing payment capture...');
+                console.log('💳 Order ID:', token);
+                console.log('💳 Retry attempt:', retryCount + 1);
+                
+                // Capture the PayPal payment
+                console.log('💳 Calling payment capture endpoint...');
+                console.log('🔍 Request: GET /api/payment/capture-paypal-order');
+                console.log('🔍 Order ID:', token);
+                
+                const captureResponse = await fetch(`/api/payment/capture-paypal-order?orderId=${encodeURIComponent(token)}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                console.log('📡 Capture response status:', captureResponse.status);
+                console.log('📡 Capture response headers:', Object.fromEntries(captureResponse.headers.entries()));
+                
+                const data = await captureResponse.json();
+                console.log('📡 Capture response data:', data);
+
+                if (data.success) {
+                    console.log('✅ Payment captured successfully');
+                    showSuccess();
+                } else {
+                    throw new Error(data.error || 'Payment capture failed');
+                }
+            } catch (error) {
+                console.error('❌ Payment processing error:', error);
+                
+                // Check if it's a network error that might be due to ad blocker
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    showError('Network error detected. This might be due to browser extensions blocking PayPal. Please try disabling ad blockers or use incognito mode.', 'network_error', token);
+                } else {
+                    showError(error.message, 'capture_failed', token);
+                }
+            }
+        }
+
+        async function retryPayment() {
+            retryCount++;
+            console.log('🔄 Retrying payment capture, attempt:', retryCount);
+            
+            if (retryCount > maxRetries) {
+                showError('Maximum retry attempts reached. Please contact support.', 'max_retries', token);
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            // Wait a bit before retrying
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Update debug info
+            if (isDevelopment) {
+                updateDebugInfo();
+            }
+            
+            // Retry the payment
+            await processPayment();
+        }
+
+        function showSuccess() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('success').style.display = 'block';
+        }
+
+        function showError(message, errorCode = 'unknown', orderId = '') {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+            
+            // Show error details
+            document.getElementById('error-details').style.display = 'block';
+            document.getElementById('error-code').textContent = errorCode;
+            document.getElementById('order-id').textContent = orderId;
+            
+            // Update debug info
+            if (isDevelopment) {
+                updateDebugInfo();
+            }
+        }
+
+        // Check if payment was already processed by server
+        async function checkPaymentStatus() {
+            try {
+                const response = await fetch('/api/payment/check-status', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.paymentSuccess) {
+                        console.log('✅ Payment already processed by server:', data.paymentSuccess);
+                        showSuccess();
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.log('🔍 No server-side payment status found, proceeding with client-side processing');
+            }
+            return false;
+        }
+
+        // Handle URL error parameter
+        if (error) {
+            let errorMessage = 'Payment processing failed. Please contact support.';
+            if (error === 'capture_failed') {
+                errorMessage = 'Payment capture failed. This might be due to browser extensions blocking PayPal. Please try disabling ad blockers or use incognito mode.';
+            } else if (error === 'network_error') {
+                errorMessage = 'Network error detected. Please check your connection and try again.';
+            }
+            showError(errorMessage, error, token);
+        } else if (token) {
+        // Re-enable frontend processing
+        if (token) {
+            processPayment();
+        } else {
+            showError("No payment token found in URL", "no_token");
+        }
+    </script>
+</body>
+</html> 
