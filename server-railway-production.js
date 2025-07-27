@@ -770,6 +770,51 @@ app.get('/favicon.ico', (req, res) => {
     res.status(204).end(); // No content response for favicon
 });
 
+// Serve HTML pages specifically
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'homepage.html'));
+});
+
+app.get('/homepage', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'homepage.html'));
+});
+
+app.get('/checkout', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'checkout.html'));
+});
+
+app.get('/payment-success', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'payment-success.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'register.html'));
+});
+
+app.get('/profile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'profile.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'admin.html'));
+});
+
+app.get('/designs', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'designs.html'));
+});
+
+app.get('/wishlist', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'wishlist.html'));
+});
+
+app.get('/purchases', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'purchases.html'));
+});
+
 // Security headers
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -3860,10 +3905,7 @@ const getNumericDesignId = async (folderName) => {
     }
 };
 
-// ========== STATIC FILES AND 404 HANDLER (MUST BE LAST) ==========
-
-// Serve static files for HTML pages (AFTER all API routes)
-app.use(express.static(path.join(__dirname)));
+// ========== 404 HANDLER (MUST BE LAST) ==========
 
 // Handle 404s (MUST BE LAST)
 app.use((req, res) => {
@@ -3911,7 +3953,7 @@ app.use((req, res) => {
     `);
 });
 
-// ========== END STATIC FILES AND 404 HANDLER ==========
+// ========== END 404 HANDLER ==========
 
 // Export app after all routes are defined
 module.exports = app;
