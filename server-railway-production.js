@@ -1996,7 +1996,27 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
             res.json({ success: true, capture: captureResult.capture });
         } else {
             console.error('❌ PayPal order capture failed:', captureResult.error);
-            res.status(500).json({ error: captureResult.error });
+            
+            // Provide more specific error handling for different PayPal errors
+            let errorMessage = captureResult.error;
+            let statusCode = 500;
+            
+            if (errorMessage.includes('Specified resource ID does not exist')) {
+                errorMessage = 'PayPal order not found. The order may have expired or been cancelled. Please try creating a new order.';
+                statusCode = 404;
+            } else if (errorMessage.includes('Order already captured')) {
+                errorMessage = 'This order has already been processed. Please check your email for confirmation.';
+                statusCode = 409;
+            } else if (errorMessage.includes('Order not approved')) {
+                errorMessage = 'Payment was not completed. Please try again.';
+                statusCode = 400;
+            }
+            
+            res.status(statusCode).json({ 
+                error: errorMessage,
+                details: captureResult.error,
+                orderId: orderId
+            });
         }
     } catch (error) {
         console.error('❌ PayPal order capture error:', error);
