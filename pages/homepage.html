@@ -6,6 +6,8 @@
     <title>Lyric Art Studio - Where Lyrics Become Art</title>
     <link rel="stylesheet" href="../css/main.css" />
     <meta name="description" content="Transform your favorite song lyrics into stunning visual art. Premium digital marketplace for music-inspired typographic designs." />
+    <!-- Google reCAPTCHA v3 for spam protection -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdJ4JAr"></script>
     <!-- OpenSeadragon for high-resolution zoomable images -->
     <script src="https://openseadragon.github.io/openseadragon/openseadragon.min.js"></script>
     <!-- Fallback CDN if main one fails -->
@@ -17,8 +19,10 @@
             document.head.appendChild(script);
         }
     </script>
+    <!-- Global Image Protection System -->
+    <script src="../public/global-image-protection.js"></script>
     <!-- Enhanced protected image viewer -->
-    <!-- OpenSeadragon viewer script removed to fix cart functionality -->
+    <script src="../public/openseadragon-viewer.js"></script>
     <!-- Rocket.js script removed to fix cart functionality -->
 </head>
 <body class="bg-background text-text-primary font-inter">
@@ -809,8 +813,7 @@
                                     </div>
                                     <ul style="margin: 0; padding-left: 15px; color: #999; font-size: 10px;">
                                         <li>High-res digital file</li>
-                                        <li>2 revisions included</li>
-                                        <li>3-5 day delivery</li>
+                                        <li>24 hours delivery</li>
                                     </ul>
                                 </div>
                                 
@@ -1477,8 +1480,8 @@
             }
         }
 
-        // Subscription Function
-        function subscribe() {
+        // Subscription Function with reCAPTCHA protection
+        async function subscribe() {
             const email = document.getElementById('subscription-email').value;
             const name = document.getElementById('subscription-name').value;
             
@@ -1490,16 +1493,27 @@
             // Show loading state
             const subscribeButton = document.querySelector('button[onclick="subscribe()"]');
             const originalText = subscribeButton.textContent;
-            subscribeButton.textContent = 'Subscribing...';
+            subscribeButton.textContent = 'Verifying...';
             subscribeButton.disabled = true;
 
-            fetch('/api/subscription/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, name })
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                // Get reCAPTCHA token
+                const recaptchaToken = await grecaptcha.execute('6LdJ4JAr', {action: 'newsletter_subscribe'});
+                
+                subscribeButton.textContent = 'Subscribing...';
+
+                const response = await fetch('/api/subscription/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email, 
+                        name, 
+                        recaptchaToken 
+                    })
+                });
+
+                const data = await response.json();
+                
                 if (data.success) {
                     showNotification('Successfully subscribed! Check your email for your welcome gift!', 'success');
                     document.getElementById('subscription-email').value = '';
@@ -1507,16 +1521,14 @@
                 } else {
                     showNotification(data.error || 'Subscription failed', 'error');
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Subscription error:', error);
-                showNotification('Subscription failed', 'error');
-            })
-            .finally(() => {
+                showNotification('Subscription failed. Please try again.', 'error');
+            } finally {
                 // Restore button state
                 subscribeButton.textContent = originalText;
                 subscribeButton.disabled = false;
-            });
+            }
         }
 
         // Secure initialization system

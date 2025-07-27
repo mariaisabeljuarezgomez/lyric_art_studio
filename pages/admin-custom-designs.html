@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Lyric Art Studio</title>
     <link rel="stylesheet" href="../css/main.css">
+    <!-- Global Image Protection System -->
+    <script src="../public/global-image-protection.js"></script>
     <style>
         .admin-container {
             max-width: 1400px;
@@ -276,14 +278,9 @@
         <div class="admin-header">
             <h1 class="admin-title">🎨 Lyric Art Studio Admin Dashboard</h1>
             <div class="admin-controls">
-                <input 
-                    type="password" 
-                    id="admin-key-input" 
-                    placeholder="Admin Key" 
-                    value="lyric-admin-secure-2025"
-                    class="admin-key-input"
-                >
+                <span id="admin-user-info" class="text-text-secondary mr-4"></span>
                 <button class="refresh-btn" onclick="refreshAllData()">🔄 Refresh All</button>
+                <button class="refresh-btn" onclick="logout()" style="background: #dc3545;">🚪 Logout</button>
             </div>
         </div>
         
@@ -342,10 +339,48 @@
     <script>
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadOverviewData();
-            loadCustomDesignRequests();
-            loadNewsletterSubscribers();
+            checkAdminSession();
         });
+        
+        // Check admin session and load data
+        async function checkAdminSession() {
+            try {
+                const response = await fetch('/api/admin/session', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.authenticated) {
+                        document.getElementById('admin-user-info').textContent = `Welcome, ${data.username || 'Admin'}!`;
+                        loadOverviewData();
+                        loadCustomDesignRequests();
+                        loadNewsletterSubscribers();
+                    } else {
+                        window.location.href = '/admin/login';
+                    }
+                } else {
+                    window.location.href = '/admin/login';
+                }
+            } catch (error) {
+                console.error('Session check error:', error);
+                window.location.href = '/admin/login';
+            }
+        }
+        
+        // Logout function
+        async function logout() {
+            try {
+                await fetch('/api/admin/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                window.location.href = '/admin/login';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/admin/login';
+            }
+        }
 
         // Tab functionality
         function showTab(tabName) {
@@ -376,10 +411,8 @@
         // Load overview statistics
         async function loadOverviewData() {
             try {
-                const adminKey = document.getElementById('admin-key-input').value;
-                
                 // Load subscribers count
-                const subscribersResponse = await fetch(`/api/admin/newsletter-subscribers?adminKey=${adminKey}`, {
+                const subscribersResponse = await fetch('/api/admin/newsletter-subscribers', {
                     credentials: 'include'
                 });
                 
@@ -393,7 +426,7 @@
                 }
                 
                 // Load design requests count
-                const requestsResponse = await fetch(`/api/admin/custom-designs?adminKey=${adminKey}`, {
+                const requestsResponse = await fetch('/api/admin/custom-designs', {
                     credentials: 'include'
                 });
                 
@@ -413,11 +446,10 @@
         // Load custom design requests
         async function loadCustomDesignRequests() {
             try {
-                const adminKey = document.getElementById('admin-key-input').value;
-                console.log('🔍 Loading custom design requests with admin key:', adminKey);
-                console.log('🔍 Making request to:', `/api/admin/custom-designs?adminKey=${adminKey}`);
+                console.log('🔍 Loading custom design requests');
+                console.log('🔍 Making request to:', '/api/admin/custom-designs');
                 
-                const response = await fetch(`/api/admin/custom-designs?adminKey=${adminKey}`, {
+                const response = await fetch('/api/admin/custom-designs', {
                     credentials: 'include'
                 });
                 
@@ -446,10 +478,9 @@
         // Load newsletter subscribers
         async function loadNewsletterSubscribers() {
             try {
-                const adminKey = document.getElementById('admin-key-input').value;
-                console.log('📧 Loading newsletter subscribers with admin key:', adminKey);
+                console.log('📧 Loading newsletter subscribers');
                 
-                const response = await fetch(`/api/admin/newsletter-subscribers?adminKey=${adminKey}`, {
+                const response = await fetch('/api/admin/newsletter-subscribers', {
                     credentials: 'include'
                 });
                 
@@ -581,9 +612,8 @@
             try {
                 const status = document.getElementById(`status-${requestId}`).value;
                 const notes = document.getElementById(`notes-${requestId}`).value;
-                const adminKey = document.getElementById('admin-key-input').value;
                 
-                const response = await fetch(`/api/admin/custom-designs/${requestId}?adminKey=${adminKey}`, {
+                const response = await fetch(`/api/admin/custom-designs/${requestId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'

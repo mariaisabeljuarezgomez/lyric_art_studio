@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Protection Test - Lyric Art Studio</title>
+    <link rel="stylesheet" href="css/main.css">
+    <!-- Global Image Protection System -->
+    <script src="public/global-image-protection.js"></script>
+    <!-- Enhanced protected image viewer -->
+    <script src="public/openseadragon-viewer.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-image {
+            max-width: 300px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .protection-status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Image Protection Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Protection Status</h2>
+        <div id="protection-status" class="protection-status status-active">
+            ✅ Global Image Protection: ACTIVE
+        </div>
+        <div id="devtools-status" class="protection-status status-inactive">
+            🔍 Developer Tools: NOT DETECTED
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Images</h2>
+        <p>Try to right-click, drag, or use keyboard shortcuts on these images:</p>
+        
+        <img src="images/logo.png" alt="Test Image 1" class="test-image">
+        <img src="images/guitar_examples.jpg" alt="Test Image 2" class="test-image">
+        
+        <p><strong>Expected behavior:</strong></p>
+        <ul>
+            <li>❌ Right-click should be disabled</li>
+            <li>❌ Drag and drop should be disabled</li>
+            <li>❌ Ctrl+S, Ctrl+P, F12 should be blocked</li>
+            <li>❌ Ctrl+Shift+I should be blocked</li>
+            <li>❌ Print Screen should be blocked</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Buttons</h2>
+        <button class="test-button" onclick="testRightClick()">Test Right-Click Protection</button>
+        <button class="test-button" onclick="testKeyboardShortcuts()">Test Keyboard Shortcuts</button>
+        <button class="test-button" onclick="testDevToolsDetection()">Test DevTools Detection</button>
+        <button class="test-button" onclick="toggleProtection()">Toggle Protection</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Protection Features</h2>
+        <ul>
+            <li><strong>Right-click disable:</strong> Prevents context menu on images</li>
+            <li><strong>Keyboard shortcuts:</strong> Blocks F12, Ctrl+S, Ctrl+P, Ctrl+U, etc.</li>
+            <li><strong>Drag and drop:</strong> Prevents dragging images</li>
+            <li><strong>Text selection:</strong> Disables text selection on images</li>
+            <li><strong>Copy/paste:</strong> Blocks copy operations on images</li>
+            <li><strong>Developer tools detection:</strong> Detects when dev tools are opened</li>
+            <li><strong>Screenshot detection:</strong> Monitors for screenshot attempts</li>
+            <li><strong>Canvas protection:</strong> Protects OpenSeadragon canvas</li>
+        </ul>
+    </div>
+
+    <script>
+        // Update protection status
+        function updateStatus() {
+            const protectionStatus = document.getElementById('protection-status');
+            const devtoolsStatus = document.getElementById('devtools-status');
+            
+            if (window.GlobalImageProtection && window.GlobalImageProtection.isActive()) {
+                protectionStatus.className = 'protection-status status-active';
+                protectionStatus.innerHTML = '✅ Global Image Protection: ACTIVE';
+            } else {
+                protectionStatus.className = 'protection-status status-inactive';
+                protectionStatus.innerHTML = '❌ Global Image Protection: INACTIVE';
+            }
+            
+            if (window.GlobalImageProtection && window.GlobalImageProtection.isDevToolsDetected()) {
+                devtoolsStatus.className = 'protection-status status-active';
+                devtoolsStatus.innerHTML = '🔍 Developer Tools: DETECTED';
+            } else {
+                devtoolsStatus.className = 'protection-status status-inactive';
+                devtoolsStatus.innerHTML = '🔍 Developer Tools: NOT DETECTED';
+            }
+        }
+
+        // Test functions
+        function testRightClick() {
+            alert('Try right-clicking on an image now. It should be disabled.');
+        }
+
+        function testKeyboardShortcuts() {
+            alert('Try pressing F12, Ctrl+S, or Ctrl+P now. They should be blocked.');
+        }
+
+        function testDevToolsDetection() {
+            alert('Open developer tools (F12) and watch for detection messages.');
+        }
+
+        function toggleProtection() {
+            if (window.GlobalImageProtection) {
+                if (window.GlobalImageProtection.isActive()) {
+                    window.GlobalImageProtection.disable();
+                    alert('Protection disabled!');
+                } else {
+                    window.GlobalImageProtection.enable();
+                    alert('Protection enabled!');
+                }
+                updateStatus();
+            } else {
+                alert('GlobalImageProtection not available');
+            }
+        }
+
+        // Update status every second
+        setInterval(updateStatus, 1000);
+        
+        // Initial status update
+        updateStatus();
+    </script>
+</body>
+</html> 

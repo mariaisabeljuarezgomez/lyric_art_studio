@@ -17,20 +17,58 @@ if (typeof ProtectedImageViewer === 'undefined') {
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             this.showProtectionMessage('Right-click disabled for image protection');
+            return false;
         });
 
-        // Disable keyboard shortcuts
+        // Enhanced keyboard shortcuts protection
         document.addEventListener('keydown', (e) => {
             // Prevent common screenshot shortcuts
-            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'p' || e.key === 'u')) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'p' || e.key === 'u' || e.key === 'c' || e.key === 'v')) {
                 e.preventDefault();
                 this.showProtectionMessage('Screenshot shortcuts disabled');
+                return false;
             }
             
             // Prevent F12 developer tools
             if (e.key === 'F12') {
                 e.preventDefault();
                 this.showProtectionMessage('Developer tools disabled');
+                return false;
+            }
+
+            // Prevent Ctrl+Shift+I (Developer Tools)
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                e.preventDefault();
+                this.showProtectionMessage('Developer tools disabled');
+                return false;
+            }
+
+            // Prevent Ctrl+Shift+J (Console)
+            if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+                e.preventDefault();
+                this.showProtectionMessage('Developer console disabled');
+                return false;
+            }
+
+            // Prevent Ctrl+Shift+C (Inspect Element)
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                this.showProtectionMessage('Inspect element disabled');
+                return false;
+            }
+
+            // Prevent Ctrl+U (View Source)
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                this.showProtectionMessage('View source disabled');
+                return false;
+            }
+
+            // Prevent Print Screen key
+            if (e.key === 'PrintScreen' || e.key === 'Print') {
+                e.preventDefault();
+                this.showProtectionMessage('Print screen disabled');
+                return false;
             }
         });
 
@@ -39,6 +77,7 @@ if (typeof ProtectedImageViewer === 'undefined') {
             if (e.target && (e.target.tagName === 'IMG' || (e.target.closest && e.target.closest('.openseadragon-canvas')))) {
                 e.preventDefault();
                 this.showProtectionMessage('Drag and drop disabled');
+                return false;
             }
         });
 
@@ -46,6 +85,7 @@ if (typeof ProtectedImageViewer === 'undefined') {
         document.addEventListener('selectstart', (e) => {
             if (e.target && e.target.closest && e.target.closest('.openseadragon-canvas')) {
                 e.preventDefault();
+                return false;
             }
         });
 
@@ -54,8 +94,101 @@ if (typeof ProtectedImageViewer === 'undefined') {
             if (e.target && e.target.closest && e.target.closest('.openseadragon-canvas')) {
                 e.preventDefault();
                 this.showProtectionMessage('Copy disabled for image protection');
+                return false;
             }
         });
+
+        // Disable cut
+        document.addEventListener('cut', (e) => {
+            e.preventDefault();
+            this.showProtectionMessage('Cut disabled for image protection');
+            return false;
+        });
+
+        // Disable paste
+        document.addEventListener('paste', (e) => {
+            e.preventDefault();
+            this.showProtectionMessage('Paste disabled for image protection');
+            return false;
+        });
+
+        // Disable save as
+        document.addEventListener('beforeunload', (e) => {
+            // This prevents the "Save As" dialog in some browsers
+            e.preventDefault();
+            e.returnValue = '';
+        });
+
+        // Enhanced developer tools detection
+        this.enhancedDevToolsDetection();
+    }
+
+    // Enhanced developer tools detection
+    enhancedDevToolsDetection() {
+        let devtools = { open: false, orientation: null };
+        
+        // Method 1: Size detection
+        setInterval(() => {
+            const threshold = 160;
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+            
+            if (widthThreshold || heightThreshold) {
+                if (!devtools.open) {
+                    devtools.open = true;
+                    this.showProtectionMessage('Developer tools detected - image protection active');
+                    this.activateEmergencyProtection();
+                }
+            } else {
+                devtools.open = false;
+            }
+        }, 500);
+
+        // Method 2: Console.log detection
+        const originalLog = console.log;
+        console.log = function(...args) {
+            if (devtools.open) {
+                this.showProtectionMessage('Console access detected');
+            }
+            return originalLog.apply(console, args);
+        }.bind(this);
+
+        // Method 3: Debugger detection
+        setInterval(() => {
+            const start = performance.now();
+            debugger;
+            const end = performance.now();
+            if (end - start > 100) {
+                this.showProtectionMessage('Debugger detected');
+                this.activateEmergencyProtection();
+            }
+        }, 1000);
+
+        // Method 4: Firebug detection
+        if (window.console && (window.console.firebug || window.console.exception)) {
+            this.showProtectionMessage('Firebug detected');
+            this.activateEmergencyProtection();
+        }
+    }
+
+    // Emergency protection activation
+    activateEmergencyProtection() {
+        // Hide all images temporarily
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            img.style.filter = 'blur(10px)';
+            img.style.transition = 'filter 0.3s';
+        });
+
+        // Show warning message
+        this.showProtectionMessage('EMERGENCY: Developer tools detected - Images protected');
+
+        // Restore after 5 seconds
+        setTimeout(() => {
+            images.forEach(img => {
+                img.style.filter = 'none';
+            });
+        }, 5000);
     }
 
     // Create protected OpenDragon viewer
@@ -147,6 +280,49 @@ if (typeof ProtectedImageViewer === 'undefined') {
 
         // Layer 4: Viewport protection
         this.protectViewport();
+
+        // Layer 5: Additional canvas protection
+        this.enhancedCanvasProtection();
+    }
+
+    // Enhanced canvas protection
+    enhancedCanvasProtection() {
+        if (!this.viewer || !this.viewer.canvas) return;
+
+        const canvas = this.viewer.canvas;
+
+        // Override getContext to prevent 2D context access
+        const originalGetContext = canvas.getContext;
+        canvas.getContext = function(type, attributes) {
+            if (type === '2d') {
+                this.showProtectionMessage('Canvas 2D context access blocked');
+                return null;
+            }
+            return originalGetContext.call(this, type, attributes);
+        }.bind(this);
+
+        // Override toDataURL method with enhanced protection
+        const originalToDataURL = canvas.toDataURL;
+        canvas.toDataURL = function(type, quality) {
+            this.showProtectionMessage('Canvas export disabled');
+            return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+        }.bind(this);
+
+        // Override toBlob method
+        const originalToBlob = canvas.toBlob;
+        canvas.toBlob = function(callback, type, quality) {
+            this.showProtectionMessage('Canvas export disabled');
+            if (callback) callback(null);
+        }.bind(this);
+
+        // Override getImageData method
+        const originalGetImageData = canvas.getImageData;
+        if (canvas.getImageData) {
+            canvas.getImageData = function(sx, sy, sw, sh) {
+                this.showProtectionMessage('Canvas pixel data access blocked');
+                return new ImageData(sw, sh);
+            }.bind(this);
+        }
     }
 
     // Protect canvas from easy extraction
@@ -158,6 +334,7 @@ if (typeof ProtectedImageViewer === 'undefined') {
         canvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             this.showProtectionMessage('Canvas right-click disabled');
+            return false;
         });
 
         // Override canvas toDataURL method
@@ -192,6 +369,15 @@ if (typeof ProtectedImageViewer === 'undefined') {
         // Monitor for window focus changes
         window.addEventListener('blur', () => {
             this.showProtectionMessage('Window focus lost - potential screenshot attempt');
+        });
+
+        // Monitor for window resize (common for screenshot tools)
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.showProtectionMessage('Window resize detected - potential screenshot attempt');
+            }, 100);
         });
     }
 
@@ -301,6 +487,8 @@ if (typeof ProtectedImageViewer === 'undefined') {
                 z-index: 10000;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
                 animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+                word-wrap: break-word;
             ">
                 <strong>🛡️ Protection Active:</strong> ${message}
             </div>
@@ -362,6 +550,24 @@ if (!document.querySelector('style[data-openseadragon-protection]')) {
             user-select: none;
             -webkit-touch-callout: none;
             -webkit-user-drag: none;
+        }
+
+        /* Additional protection styles */
+        img {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+            pointer-events: auto;
+        }
+
+        .openseadragon-container {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
     `;
     document.head.appendChild(style);

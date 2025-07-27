@@ -76,48 +76,15 @@
                 <p class="text-xl md:text-2xl text-text-secondary mb-8">
                     Discover the talented designers transforming your favorite lyrics into stunning visual art
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                    <button onclick="openCommissionModal()" class="btn-primary text-lg px-8 py-4">
-                        CUSTOM DESIGN REQUEST
-                    </button>
-                    <button class="bg-transparent border-2 border-accent text-accent font-montserrat font-semibold px-8 py-4 rounded-lg hover:bg-accent hover:text-primary transition-smooth">
-                        View All Portfolios
-                    </button>
-                </div>
+
             </div>
         </div>
     </section>
 
-    <!-- Artist Filter & Search -->
-    <section class="py-16 bg-secondary/50">
-        <div class="container mx-auto px-6">
-            <div class="max-w-4xl mx-auto">
-                <!-- Search Bar -->
-                <div class="relative mb-8">
-                    <input type="text" placeholder="Search artists by name, genre specialization, or style..." class="w-full bg-surface border border-border-subtle rounded-lg px-6 py-4 pr-12 text-text-primary placeholder-text-secondary focus:border-accent focus:outline-none transition-smooth" />
-                    <button class="absolute right-4 top-1/2 transform -translate-y-1/2 text-accent">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </button>
-                </div>
 
-                <!-- Filter Tags -->
-                <div class="flex flex-wrap gap-3 justify-center">
-                    <button class="px-4 py-2 bg-accent text-primary rounded-full font-medium transition-smooth">All Artists</button>
-                    <button class="px-4 py-2 bg-surface text-text-secondary rounded-full hover:bg-accent hover:text-primary transition-smooth">Rock Specialists</button>
-                    <button class="px-4 py-2 bg-surface text-text-secondary rounded-full hover:bg-accent hover:text-primary transition-smooth">Pop & R&B</button>
-                    <button class="px-4 py-2 bg-surface text-text-secondary rounded-full hover:bg-accent hover:text-primary transition-smooth">Hip-Hop</button>
-                    <button class="px-4 py-2 bg-surface text-text-secondary rounded-full hover:bg-accent hover:text-primary transition-smooth">Country</button>
-                    <button class="px-4 py-2 bg-surface text-text-secondary rounded-full hover:bg-accent hover:text-primary transition-smooth">Electronic</button>
-                    <button class="px-4 py-2 bg-surface text-text-secondary rounded-full hover:bg-accent hover:text-primary transition-smooth">Retro & Vintage</button>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- Featured Artist Spotlight -->
-    <section class="py-20">
+    <section class="pt-0 pb-20">
         <div class="container mx-auto px-6">
             <div class="text-center mb-12">
                 <h2 class="text-4xl font-montserrat font-bold mb-4">Featured Artist of the Month</h2>
@@ -188,9 +155,9 @@
                 <!-- Time-lapse Video 1 -->
                 <div class="card-surface overflow-hidden hover:border-accent transition-smooth">
                     <div class="relative h-64 bg-gradient-to-br from-secondary to-background">
-                        <video class="w-full h-full object-contain" preload="metadata" controls controlsList="nodownload" muted="false" volume="1">
-                            <source src="../videos/Stairway-To-Heaven-Video.webm" type="video/webm">
-                            <source src="../videos/Stairway-To-Heaven-Video.mp4" type="video/mp4">
+                        <video class="w-full h-full object-contain" preload="metadata" controls controlsList="nodownload" style="background: #000;" crossorigin="anonymous">
+                            <source src="/videos/Stairway-To-Heaven-Video.webm" type="video/webm">
+                            <source src="/videos/Stairway-To-Heaven-Video.mp4" type="video/mp4">
                             Your browser doesn't support video playback.
                         </video>
                     </div>
@@ -207,9 +174,9 @@
                 <!-- Time-lapse Video 2 -->
                 <div class="card-surface overflow-hidden hover:border-accent transition-smooth">
                     <div class="relative h-64 bg-gradient-to-br from-secondary to-background">
-                        <video class="w-full h-full object-contain" poster="https://images.pixabay.com/photo-2015/05/07/11/02/guitar-756326_1280.jpg" preload="metadata" controls>
-                            <source src="../videos/Myway.webm" type="video/webm">
-                            <source src="../videos/Myway.mp4" type="video/mp4">
+                        <video class="w-full h-full object-contain" poster="https://images.pixabay.com/photo-2015/05/07/11/02/guitar-756326_1280.jpg" preload="metadata" controls controlsList="nodownload" style="background: #000;" crossorigin="anonymous">
+                            <source src="/videos/Myway.webm" type="video/webm">
+                            <source src="/videos/Myway.mp4" type="video/mp4">
                             Your browser doesn't support video playback.
                         </video>
                     </div>
@@ -565,8 +532,7 @@
                                     </div>
                                     <ul style="margin: 0; padding-left: 15px; color: #999; font-size: 10px;">
                                         <li>High-res digital file</li>
-                                        <li>2 revisions included</li>
-                                        <li>3-5 day delivery</li>
+                                        <li>24 hours delivery</li>
                                     </ul>
                                 </div>
                                 
@@ -970,6 +936,28 @@
         // Initialize cart count on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateCartCount();
+            
+            // Enhance video playback
+            const videos = document.querySelectorAll('video');
+            videos.forEach(video => {
+                // Ensure videos are playable
+                video.addEventListener('loadedmetadata', function() {
+                    console.log('Video loaded:', video.src);
+                });
+                
+                video.addEventListener('error', function(e) {
+                    console.error('Video error:', e);
+                });
+                
+                // Add click to play functionality
+                video.addEventListener('click', function() {
+                    if (video.paused) {
+                        video.play().catch(e => console.error('Play failed:', e));
+                    } else {
+                        video.pause();
+                    }
+                });
+            });
         });
     </script>
     

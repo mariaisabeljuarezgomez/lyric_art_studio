@@ -209,7 +209,16 @@ const emailTemplates = {
                             <a href="${process.env.SITE_URL || 'https://lyricartstudio.shop'}/homepage" class="button">Continue Shopping</a>
                         </div>
                         
-                        <p style="color: #ffffff;">If you have any questions, please contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}">${process.env.SUPPORT_EMAIL || 'info@lyricartstudio.shop'}</a></p>
+                        <h3>Need Help?</h3>
+                        <p style="color: #ffffff;">Should you experience any issues with your downloads or have any questions about your order, our support team is here to help you immediately. You can reach us through:</p>
+                        
+                        <div style="background: #000000; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #00FFFF;">
+                            <p style="color: #ffffff; margin: 0;"><strong>📧 Email Support:</strong> <a href="mailto:admin@lyricartstudio.shop">admin@lyricartstudio.shop</a></p>
+                            <p style="color: #ffffff; margin: 10px 0 0 0;"><strong>💬 Live Chat:</strong> Use the chat widget on our website for instant assistance</p>
+                            <p style="color: #ffffff; margin: 10px 0 0 0;"><strong>⏰ Response Time:</strong> We typically respond within 1-2 hours during business hours</p>
+                        </div>
+                        
+                        <p style="color: #ffffff;">We're committed to ensuring you have a seamless experience with your Lyric Art Studio purchases!</p>
                     </div>
                     <div class="footer">
                         <p>© 2025 Lyric Art Studio. All rights reserved.</p>
@@ -1840,11 +1849,11 @@ app.post('/api/email/test', async (req, res) => {
     }
 });
 
-// Newsletter Subscription API Routes
+// Newsletter Subscription API Routes with reCAPTCHA protection
 app.post('/api/subscription/create', async (req, res) => {
     try {
         console.log('📧 Newsletter subscription request received');
-        const { email, name } = req.body;
+        const { email, name, recaptchaToken } = req.body;
         
         if (!email) {
             return res.status(400).json({ error: 'Email is required' });
@@ -1854,6 +1863,38 @@ app.post('/api/subscription/create', async (req, res) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Verify reCAPTCHA token
+        if (recaptchaToken) {
+            try {
+                const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY || 'your-recaptcha-secret-key';
+                const recaptchaResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `secret=${recaptchaSecret}&response=${recaptchaToken}`
+                });
+                
+                const recaptchaData = await recaptchaResponse.json();
+                
+                if (!recaptchaData.success || recaptchaData.score < 0.5) {
+                    console.log('❌ reCAPTCHA verification failed:', recaptchaData);
+                    return res.status(400).json({ 
+                        error: 'Security verification failed. Please try again.' 
+                    });
+                }
+                
+                console.log('✅ reCAPTCHA verification successful, score:', recaptchaData.score);
+            } catch (recaptchaError) {
+                console.error('❌ reCAPTCHA verification error:', recaptchaError);
+                return res.status(500).json({ 
+                    error: 'Security verification failed. Please try again.' 
+                });
+            }
+        } else {
+            console.log('⚠️ No reCAPTCHA token provided, proceeding without verification');
         }
 
         // Get IP address and user agent
@@ -4147,35 +4188,237 @@ const upload = multer({
 // Initialize design upload processor
 const designUploadProcessor = new DesignUploadProcessor();
 
+// Rate limiting for admin endpoints
+const adminRateLimit = new Map();
+const ADMIN_RATE_LIMIT = {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 5 // 5 attempts per 15 minutes
+};
+
+// IP whitelist for admin access
+const ADMIN_IP_WHITELIST = process.env.ADMIN_IP_WHITELIST ? 
+    process.env.ADMIN_IP_WHITELIST.split(',').map(ip => ip.trim()) : 
+    ['127.0.0.1', '::1', 'localhost'];
+
+// Admin session management
+const adminSessions = new Map();
+
+// Enhanced admin authentication with session management
 const authenticateAdmin = (req, res, next) => {
-    // Simple admin check - you can enhance this with proper admin roles
-    const adminKey = req.headers['x-admin-key'] || req.query.adminKey;
-    const validAdminKey = 'lyric-admin-secure-2025';
+    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const sessionId = req.sessionID;
     
     console.log('🔐 Admin authentication attempt:', {
-        providedKey: adminKey,
-        validKey: validAdminKey,
-        headers: req.headers['x-admin-key'],
-        query: req.query.adminKey,
-        matches: adminKey === validAdminKey
+        clientIP: clientIP,
+        sessionId: sessionId,
+        userAgent: req.get('User-Agent'),
+        timestamp: new Date().toISOString()
     });
     
-    if (adminKey === validAdminKey) {
-        console.log('✅ Admin authentication successful');
-        next();
-    } else {
-        console.log('❌ Admin authentication failed');
-        res.status(401).json({ 
+    // Check IP whitelist
+    if (!ADMIN_IP_WHITELIST.includes(clientIP) && !ADMIN_IP_WHITELIST.includes('*')) {
+        console.log('❌ Admin access denied - IP not whitelisted:', clientIP);
+        logAdminAttempt(req, 'IP_NOT_WHITELISTED', false);
+        return res.status(403).json({ 
             success: false, 
-            message: 'Admin access required. Please provide valid admin key.',
-            debug: {
-                providedKey: adminKey,
-                validKey: validAdminKey,
-                matches: adminKey === validAdminKey
-            }
+            message: 'Access denied. Your IP address is not authorized for admin access.'
         });
     }
+    
+    // Check rate limiting
+    const rateLimitKey = `admin_${clientIP}`;
+    const now = Date.now();
+    const windowStart = now - ADMIN_RATE_LIMIT.windowMs;
+    
+    if (!adminRateLimit.has(rateLimitKey)) {
+        adminRateLimit.set(rateLimitKey, []);
+    }
+    
+    const attempts = adminRateLimit.get(rateLimitKey).filter(timestamp => timestamp > windowStart);
+    attempts.push(now);
+    adminRateLimit.set(rateLimitKey, attempts);
+    
+    if (attempts.length > ADMIN_RATE_LIMIT.maxRequests) {
+        console.log('❌ Admin access denied - rate limit exceeded:', clientIP);
+        logAdminAttempt(req, 'RATE_LIMIT_EXCEEDED', false);
+        return res.status(429).json({ 
+            success: false, 
+            message: 'Too many login attempts. Please try again later.'
+        });
+    }
+    
+    // Check for valid admin session
+    if (req.session && req.session.adminAuthenticated) {
+        const sessionData = adminSessions.get(sessionId);
+        if (sessionData && sessionData.expires > now) {
+            console.log('✅ Admin session valid:', sessionId);
+            return next();
+        } else {
+            // Session expired
+            delete req.session.adminAuthenticated;
+            adminSessions.delete(sessionId);
+        }
+    }
+    
+    // Fallback to key-based authentication for backward compatibility
+    const adminKey = req.headers['x-admin-key'] || req.query.adminKey;
+    const validAdminKey = process.env.ADMIN_KEY || 'lyric-admin-secure-2025';
+    
+    if (adminKey === validAdminKey) {
+        console.log('✅ Admin key authentication successful');
+        // Create session for future requests
+        req.session.adminAuthenticated = true;
+        adminSessions.set(sessionId, {
+            ip: clientIP,
+            userAgent: req.get('User-Agent'),
+            created: now,
+            expires: now + (24 * 60 * 60 * 1000) // 24 hours
+        });
+        logAdminAttempt(req, 'KEY_AUTH_SUCCESS', true);
+        return next();
+    }
+    
+    console.log('❌ Admin authentication failed');
+    logAdminAttempt(req, 'AUTH_FAILED', false);
+    res.status(401).json({ 
+        success: false, 
+        message: 'Admin access required. Please log in with valid credentials.'
+    });
 };
+
+// Admin login endpoint
+app.post('/api/admin/login', async (req, res) => {
+    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const { username, password, otp } = req.body;
+    
+    console.log('🔐 Admin login attempt:', {
+        username: username,
+        clientIP: clientIP,
+        hasOtp: !!otp,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Check IP whitelist
+    if (!ADMIN_IP_WHITELIST.includes(clientIP) && !ADMIN_IP_WHITELIST.includes('*')) {
+        logAdminAttempt(req, 'LOGIN_IP_NOT_WHITELISTED', false);
+        return res.status(403).json({ 
+            success: false, 
+            message: 'Access denied. Your IP address is not authorized for admin access.'
+        });
+    }
+    
+    // Check rate limiting
+    const rateLimitKey = `admin_login_${clientIP}`;
+    const now = Date.now();
+    const windowStart = now - ADMIN_RATE_LIMIT.windowMs;
+    
+    if (!adminRateLimit.has(rateLimitKey)) {
+        adminRateLimit.set(rateLimitKey, []);
+    }
+    
+    const attempts = adminRateLimit.get(rateLimitKey).filter(timestamp => timestamp > windowStart);
+    attempts.push(now);
+    adminRateLimit.set(rateLimitKey, attempts);
+    
+    if (attempts.length > ADMIN_RATE_LIMIT.maxRequests) {
+        logAdminAttempt(req, 'LOGIN_RATE_LIMIT_EXCEEDED', false);
+        return res.status(429).json({ 
+            success: false, 
+            message: 'Too many login attempts. Please try again later.'
+        });
+    }
+    
+    try {
+        // Validate credentials (you should use proper password hashing in production)
+        const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'secure-admin-password-2025';
+        
+        if (username === adminUsername && password === adminPassword) {
+            // Create admin session
+            req.session.adminAuthenticated = true;
+            adminSessions.set(req.sessionID, {
+                ip: clientIP,
+                userAgent: req.get('User-Agent'),
+                username: username,
+                created: now,
+                expires: now + (24 * 60 * 60 * 1000) // 24 hours
+            });
+            
+            console.log('✅ Admin login successful:', username);
+            logAdminAttempt(req, 'LOGIN_SUCCESS', true);
+            
+            res.json({ 
+                success: true, 
+                message: 'Login successful',
+                sessionId: req.sessionID
+            });
+        } else {
+            console.log('❌ Admin login failed - invalid credentials');
+            logAdminAttempt(req, 'LOGIN_INVALID_CREDENTIALS', false);
+            res.status(401).json({ 
+                success: false, 
+                message: 'Invalid username or password.'
+            });
+        }
+    } catch (error) {
+        console.error('❌ Admin login error:', error);
+        logAdminAttempt(req, 'LOGIN_ERROR', false);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Login failed. Please try again.'
+        });
+    }
+});
+
+// Admin session check endpoint
+app.get('/api/admin/session', (req, res) => {
+    const sessionId = req.sessionID;
+    const sessionData = adminSessions.get(sessionId);
+    const now = Date.now();
+    
+    if (req.session && req.session.adminAuthenticated && sessionData && sessionData.expires > now) {
+        res.json({ 
+            authenticated: true, 
+            username: sessionData.username,
+            expires: sessionData.expires
+        });
+    } else {
+        res.json({ authenticated: false });
+    }
+});
+
+// Admin logout endpoint
+app.post('/api/admin/logout', (req, res) => {
+    const sessionId = req.sessionID;
+    
+    if (req.session) {
+        delete req.session.adminAuthenticated;
+    }
+    
+    adminSessions.delete(sessionId);
+    
+    console.log('🔐 Admin logout:', sessionId);
+    res.json({ success: true, message: 'Logged out successfully' });
+});
+
+// Admin audit logging
+function logAdminAttempt(req, action, success) {
+    const logEntry = {
+        timestamp: new Date().toISOString(),
+        action: action,
+        success: success,
+        ip: req.ip || req.connection.remoteAddress || req.socket.remoteAddress,
+        userAgent: req.get('User-Agent'),
+        sessionId: req.sessionID,
+        method: req.method,
+        url: req.url
+    };
+    
+    console.log('🔍 Admin Audit Log:', logEntry);
+    
+    // In production, you should store this in a database
+    // For now, we'll just log it
+}
 
 // Debug route to check file paths
 app.get('/debug', (req, res) => {
@@ -4217,7 +4460,7 @@ app.get('/api/admin/test-auth', authenticateAdmin, (req, res) => {
 // Debug endpoint to check admin key (no authentication required)
 app.get('/api/admin/debug-key', (req, res) => {
     const adminKey = req.headers['x-admin-key'] || req.query.adminKey;
-    const validAdminKey = 'lyric-admin-secure-2025';
+    const validAdminKey = process.env.ADMIN_KEY || 'lyric-admin-secure-2025';
     
     console.log('🔍 Debug endpoint accessed:', {
         providedKey: adminKey,
@@ -4245,8 +4488,20 @@ app.get('/admin/upload.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'admin-upload.html'));
 });
 
-// Serve custom design requests admin page
-app.get('/admin/custom-designs', (req, res) => {
+// Serve admin login page
+app.get('/admin/login', (req, res) => {
+    console.log('🔐 Admin login page accessed');
+    res.sendFile(path.join(__dirname, 'pages', 'admin-login.html'));
+});
+
+// Serve admin dashboard (protected)
+app.get('/admin/dashboard', authenticateAdmin, (req, res) => {
+    console.log('🎨 Admin dashboard accessed!');
+    res.sendFile(path.join(__dirname, 'pages', 'admin-custom-designs.html'));
+});
+
+// Serve custom design requests admin page (protected)
+app.get('/admin/custom-designs', authenticateAdmin, (req, res) => {
     console.log('🎨 Custom design requests admin page accessed!');
     res.sendFile(path.join(__dirname, 'pages', 'admin-custom-designs.html'));
 });
@@ -4621,6 +4876,20 @@ app.use('/public', express.static(path.join(__dirname, 'public'), {
         res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');
+    }
+}));
+
+// Serve video files with proper MIME types
+app.use('/videos', express.static(path.join(__dirname, 'videos'), {
+    setHeaders: (res, path) => {
+        // Set proper MIME types for video files
+        if (path.endsWith('.mp4')) {
+            res.set('Content-Type', 'video/mp4');
+        } else if (path.endsWith('.webm')) {
+            res.set('Content-Type', 'video/webm');
+        }
+        // Allow caching for videos since they're large files
+        res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     }
 }));
 

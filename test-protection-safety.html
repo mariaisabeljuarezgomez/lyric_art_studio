@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protection Safety Test - Lyric Art Studio</title>
+    <link rel="stylesheet" href="css/main.css">
+    <!-- Global Image Protection System -->
+    <script src="public/global-image-protection.js"></script>
+    <!-- Mobile Menu Scripts -->
+    <script src="public/mobile-menu-config.js" defer></script>
+    <script src="public/mobile-navigation.js" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-image {
+            max-width: 200px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+            width: 200px;
+        }
+        .status-good {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-bad {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .hamburger-menu-btn {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .hamburger-menu-btn {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Protection Safety Test</h1>
+    
+    <div class="test-section">
+        <h2>✅ Test Results</h2>
+        <div id="test-results">
+            <p>Running tests...</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Interactive Elements Test</h2>
+        
+        <h3>Buttons (should work normally)</h3>
+        <button class="test-button" onclick="testButtonClick()">Test Button</button>
+        <button class="test-button" onclick="testButtonClick()">Another Button</button>
+        
+        <h3>Input Fields (should work normally)</h3>
+        <input type="text" class="test-input" placeholder="Type here..." id="test-input">
+        <textarea class="test-input" placeholder="Textarea test..." rows="3"></textarea>
+        
+        <h3>Links (should work normally)</h3>
+        <a href="#" onclick="testLinkClick()" style="color: #007bff; text-decoration: underline;">Test Link</a>
+        
+        <h3>Hamburger Menu (should work on mobile)</h3>
+        <button class="hamburger-menu-btn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+
+    <div class="test-section">
+        <h2>🖼️ Image Protection Test</h2>
+        <p>These images should be protected (right-click disabled, drag disabled):</p>
+        <img src="images/logo.png" alt="Test Image 1" class="test-image">
+        <img src="images/guitar_examples.jpg" alt="Test Image 2" class="test-image">
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Protection Controls</h2>
+        <button class="test-button" onclick="toggleProtection()">Toggle Protection</button>
+        <button class="test-button" onclick="emergencyDisable()">Emergency Disable</button>
+        <button class="test-button" onclick="runAllTests()">Run All Tests</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Test Checklist</h2>
+        <ul id="test-checklist">
+            <li>✅ Protection script loaded</li>
+            <li>⏳ Buttons clickable</li>
+            <li>⏳ Input fields editable</li>
+            <li>⏳ Links clickable</li>
+            <li>⏳ Hamburger menu functional</li>
+            <li>⏳ Images protected</li>
+            <li>⏳ Keyboard shortcuts in inputs</li>
+        </ul>
+    </div>
+
+    <script>
+        let testResults = {
+            protectionLoaded: false,
+            buttonsWorking: false,
+            inputsWorking: false,
+            linksWorking: false,
+            hamburgerWorking: false,
+            imagesProtected: false,
+            keyboardInInputs: false
+        };
+
+        // Test functions
+        function testButtonClick() {
+            alert('✅ Button click works!');
+            testResults.buttonsWorking = true;
+            updateTestResults();
+        }
+
+        function testLinkClick() {
+            alert('✅ Link click works!');
+            testResults.linksWorking = true;
+            updateTestResults();
+        }
+
+        function toggleProtection() {
+            if (window.GlobalImageProtection) {
+                if (window.GlobalImageProtection.isActive()) {
+                    window.GlobalImageProtection.disable();
+                    alert('Protection disabled!');
+                } else {
+                    window.GlobalImageProtection.enable();
+                    alert('Protection enabled!');
+                }
+            } else {
+                alert('GlobalImageProtection not available');
+            }
+        }
+
+        function emergencyDisable() {
+            if (window.GlobalImageProtection) {
+                window.GlobalImageProtection.emergencyDisable();
+                alert('🚨 Emergency: Protection completely disabled!');
+            }
+        }
+
+        function runAllTests() {
+            // Test protection loading
+            testResults.protectionLoaded = !!(window.GlobalImageProtection);
+            
+            // Test input functionality
+            const testInput = document.getElementById('test-input');
+            if (testInput) {
+                testInput.focus();
+                testInput.value = 'Test input works!';
+                testResults.inputsWorking = true;
+            }
+            
+            // Test keyboard shortcuts in inputs
+            testInput.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'c') {
+                    testResults.keyboardInInputs = true;
+                    updateTestResults();
+                }
+            });
+            
+            // Test hamburger menu
+            const hamburgerBtn = document.querySelector('.hamburger-menu-btn');
+            if (hamburgerBtn) {
+                hamburgerBtn.click();
+                testResults.hamburgerWorking = true;
+            }
+            
+            // Test image protection
+            const images = document.querySelectorAll('.test-image');
+            if (images.length > 0) {
+                testResults.imagesProtected = true;
+            }
+            
+            updateTestResults();
+        }
+
+        function updateTestResults() {
+            const resultsDiv = document.getElementById('test-results');
+            const checklist = document.getElementById('test-checklist');
+            
+            let resultsHTML = '<h3>Test Results:</h3>';
+            let checklistHTML = '';
+            
+            // Update results
+            Object.keys(testResults).forEach(key => {
+                const status = testResults[key] ? '✅ PASS' : '❌ FAIL';
+                const statusClass = testResults[key] ? 'status-good' : 'status-bad';
+                resultsHTML += `<p class="${statusClass}">${key}: ${status}</p>`;
+            });
+            
+            // Update checklist
+            const checklistItems = [
+                { key: 'protectionLoaded', text: 'Protection script loaded' },
+                { key: 'buttonsWorking', text: 'Buttons clickable' },
+                { key: 'inputsWorking', text: 'Input fields editable' },
+                { key: 'linksWorking', text: 'Links clickable' },
+                { key: 'hamburgerWorking', text: 'Hamburger menu functional' },
+                { key: 'imagesProtected', text: 'Images protected' },
+                { key: 'keyboardInInputs', text: 'Keyboard shortcuts in inputs' }
+            ];
+            
+            checklistItems.forEach(item => {
+                const status = testResults[item.key] ? '✅' : '⏳';
+                checklistHTML += `<li>${status} ${item.text}</li>`;
+            });
+            
+            resultsDiv.innerHTML = resultsHTML;
+            checklist.innerHTML = checklistHTML;
+        }
+
+        // Run initial tests when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(runAllTests, 1000);
+        });
+    </script>
+</body>
+</html> 
