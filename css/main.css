@@ -2237,3 +2237,235 @@ h1, h2, h3, h4, h5, h6 {
 .openseadragon-canvas {
     background-color: #FFFFFF !important;
 }
+
+/* Mobile Navigation Styles */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 40;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-drawer {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 320px;
+  height: 100%;
+  background: var(--color-background);
+  border-left: 1px solid var(--color-border-subtle);
+  z-index: 50;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-menu-drawer.active {
+  right: 0;
+}
+
+.mobile-menu-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-menu-close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.mobile-menu-close:hover {
+  color: var(--color-accent);
+  background: rgba(0, 255, 255, 0.1);
+}
+
+.mobile-menu-nav {
+  padding: 1rem 0;
+}
+
+.mobile-menu-nav-item {
+  display: block;
+  padding: 1rem 1.5rem;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-menu-nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+  transition: left 0.3s ease;
+}
+
+.mobile-menu-nav-item:hover::before {
+  left: 100%;
+}
+
+.mobile-menu-nav-item:hover {
+  color: var(--color-accent);
+  background: rgba(0, 255, 255, 0.05);
+  border-left-color: var(--color-accent);
+  transform: translateX(4px);
+}
+
+.mobile-menu-nav-item.active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: rgba(0, 255, 255, 0.1);
+}
+
+.mobile-menu-divider {
+  height: 1px;
+  background: var(--color-border-subtle);
+  margin: 0.5rem 1.5rem;
+}
+
+.mobile-menu-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+  margin-top: auto;
+}
+
+.mobile-menu-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.5rem;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.mobile-menu-action-btn:hover {
+  background: var(--color-accent);
+  color: var(--color-background);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+}
+
+.mobile-menu-action-btn:last-child {
+  margin-bottom: 0;
+}
+
+.mobile-menu-action-btn.primary {
+  background: var(--color-accent);
+  color: var(--color-background);
+  border-color: var(--color-accent);
+}
+
+.mobile-menu-action-btn.primary:hover {
+  background: rgba(0, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.4);
+}
+
+.mobile-menu-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.2s ease;
+}
+
+.mobile-menu-action-btn:hover .mobile-menu-icon {
+  transform: scale(1.1);
+}
+
+/* Hamburger Menu Button Animation */
+.hamburger-menu-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 60;
+}
+
+.hamburger-menu-btn span {
+  width: 100%;
+  height: 2px;
+  background: var(--color-text-secondary);
+  border-radius: 1px;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.hamburger-menu-btn:hover span {
+  background: var(--color-accent);
+}
+
+.hamburger-menu-btn.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-menu-btn.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu-btn.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* Mobile menu scrollbar styling */
+.mobile-menu-drawer::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-menu-drawer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-menu-drawer::-webkit-scrollbar-thumb {
+  background: var(--color-border-subtle);
+  border-radius: 2px;
+}
+
+.mobile-menu-drawer::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Ensure mobile menu works on all screen sizes */
+@media (max-width: 320px) {
+  .mobile-menu-drawer {
+    width: 100%;
+  }
+}

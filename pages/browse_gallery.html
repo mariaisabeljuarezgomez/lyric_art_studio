@@ -51,10 +51,10 @@
                         <span id="cart-count" class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
                     </button>
                     <!-- Mobile Menu Button -->
-                    <button id="mobile-menu-btn" class="md:hidden p-2 text-text-secondary hover:text-accent transition-smooth">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
+                    <button class="hamburger-menu-btn md:hidden">
+                        <span></span>
+                        <span></span>
+                        <span></span>
                     </button>
                 </div>
             </div>
@@ -802,5 +802,11 @@
             updateCartCount();
         });
     </script>
+    
+    <!-- Mobile Menu Configuration -->
+    <script src="../public/mobile-menu-config.js"></script>
+    
+    <!-- Mobile Navigation -->
+    <script src="../public/mobile-navigation.js"></script>
 </body>
 </html>
