@@ -808,26 +808,26 @@ app.use(session({
     }
 }));
 
-// Initialize Passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Passport serialization
-passport.serializeUser((user, done) => {
-    done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-    try {
-        const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-        done(null, result.rows[0]);
-    } catch (error) {
-        done(error, null);
-    }
-});
-
-// Google OAuth Strategy - Only configure if credentials are available
+// Initialize Passport - Wrap in try-catch to prevent crashes
 try {
+    app.use(passport.initialize());
+    app.use(passport.session());
+
+    // Passport serialization
+    passport.serializeUser((user, done) => {
+        done(null, user.id);
+    });
+
+    passport.deserializeUser(async (id, done) => {
+        try {
+            const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+            done(null, result.rows[0]);
+        } catch (error) {
+            done(error, null);
+        }
+    });
+
+    // Google OAuth Strategy - Only configure if credentials are available
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         passport.use(new GoogleStrategy({
             clientID: process.env.GOOGLE_CLIENT_ID,
@@ -864,12 +864,8 @@ try {
     } else {
         console.log('⚠️ Google OAuth credentials not configured - skipping Google OAuth');
     }
-} catch (error) {
-    console.log('⚠️ Google OAuth configuration failed - skipping:', error.message);
-}
 
-// GitHub OAuth Strategy - Only configure if credentials are available
-try {
+    // GitHub OAuth Strategy - Only configure if credentials are available
     if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
         passport.use(new GitHubStrategy({
             clientID: process.env.GITHUB_CLIENT_ID,
@@ -906,8 +902,11 @@ try {
     } else {
         console.log('⚠️ GitHub OAuth credentials not configured - skipping GitHub OAuth');
     }
+
+    console.log('✅ Passport and OAuth configuration completed successfully');
 } catch (error) {
-    console.log('⚠️ GitHub OAuth configuration failed - skipping:', error.message);
+    console.log('⚠️ Passport/OAuth configuration failed - continuing without OAuth:', error.message);
+    console.log('⚠️ OAuth features will be disabled, but the rest of the application will work');
 }
 
 // 🎯 CORS FIX - ALLOW COOKIES TO BE SENT
