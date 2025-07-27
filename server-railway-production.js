@@ -1711,6 +1711,7 @@ app.post('/api/discount/validate', async (req, res) => {
 
         const usageCount = parseInt(usageResult.rows[0].usage_count);
         if (usageCount > 0) {
+            console.log('❌ Discount code already used by user:', { userId, userEmail, ipAddress, usageCount });
             return res.json({ valid: false, reason: 'Discount code already used by this user' });
         }
 
@@ -2187,26 +2188,40 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
                             if (discountCodeResult.rows.length > 0) {
                                 const codeId = discountCodeResult.rows[0].id;
                                 
-                                // Record the discount usage
-                                await pool.query(`
-                                    INSERT INTO discount_code_usage (
-                                        code_id, user_id, email, ip_address, order_id, discount_amount
-                                    ) VALUES ($1, $2, $3, $4, $5, $6)
-                                `, [codeId, userId, pendingOrder.user_email, null, pendingOrder.order_id, discountInfo.discountAmount]);
+                                // Check if this user has already used this discount code
+                                const existingUsageResult = await pool.query(`
+                                    SELECT COUNT(*) as usage_count FROM discount_code_usage 
+                                    WHERE code_id = $1 
+                                    AND (user_id = $2 OR email = $3)
+                                `, [codeId, userId, pendingOrder.user_email]);
                                 
-                                // Update usage count
-                                await pool.query(`
-                                    UPDATE discount_codes 
-                                    SET used_count = used_count + 1 
-                                    WHERE id = $1
-                                `, [codeId]);
+                                const existingUsage = parseInt(existingUsageResult.rows[0].usage_count);
                                 
-                                console.log('✅ Discount code usage recorded successfully');
+                                if (existingUsage > 0) {
+                                    console.log('⚠️ User has already used this discount code, skipping usage recording');
+                                } else {
+                                    // Record the discount usage
+                                    await pool.query(`
+                                        INSERT INTO discount_code_usage (
+                                            code_id, user_id, email, ip_address, order_id, discount_amount
+                                        ) VALUES ($1, $2, $3, $4, $5, $6)
+                                    `, [codeId, userId, pendingOrder.user_email, req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'], pendingOrder.order_id, discountInfo.discountAmount]);
+                                    
+                                    // Update usage count
+                                    await pool.query(`
+                                        UPDATE discount_codes 
+                                        SET used_count = used_count + 1 
+                                        WHERE id = $1
+                                    `, [codeId]);
+                                    
+                                    console.log('✅ Discount code usage recorded successfully');
+                                }
                             } else {
                                 console.error('❌ Discount code not found:', discountInfo.code);
                             }
                         } catch (discountError) {
                             console.error('❌ Error recording discount usage:', discountError);
+                            // Don't fail the payment if discount tracking fails, but log it
                         }
                     }
                     
