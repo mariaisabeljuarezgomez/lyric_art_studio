@@ -648,6 +648,14 @@ const capturePayPalOrder = async (orderId) => {
     try {
         console.log('💳 Starting PayPal capture for orderId:', orderId);
         
+        // ✅ Add Kim's suggested logging
+        console.log('🔍 PayPal capture attempt:', {
+            orderId: orderId,
+            environment: process.env.PAYPAL_MODE,
+            baseUrl: PAYPAL_BASE_URL,
+            timestamp: new Date().toISOString()
+        });
+        
         // Validate orderId
         if (!orderId || typeof orderId !== 'string') {
             throw new Error('Invalid order ID provided');
@@ -1816,6 +1824,14 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
         console.log('🎯 Payment capture request received for orderId:', orderId);
         console.log('🔍 Request body:', req.body);
         console.log('🔍 Session data:', req.session);
+        
+        // ✅ CRITICAL: Validate orderId is real PayPal ID (Kim's fix)
+        if (!orderId || !orderId.match(/^[A-Z0-9]{17}$/)) {
+            console.error('❌ Invalid order ID format:', orderId);
+            return res.status(400).json({ 
+                error: 'Invalid order ID format. Expected PayPal order ID (17 characters).' 
+            });
+        }
         
         if (!orderId) {
             console.error('❌ No orderId provided in request');
