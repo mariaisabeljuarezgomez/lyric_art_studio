@@ -2237,6 +2237,15 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
 });
 
 // PayPal Webhook Handler
+app.get('/api/paypal/webhook', (req, res) => {
+    // PayPal webhook validation endpoint
+    res.status(200).json({ 
+        status: 'ok', 
+        message: 'PayPal webhook endpoint is active',
+        timestamp: new Date().toISOString()
+    });
+});
+
 app.post('/api/paypal/webhook', async (req, res) => {
     try {
         const webhookBody = req.body;
