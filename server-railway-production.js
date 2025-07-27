@@ -486,6 +486,14 @@ const emailTemplates = {
 // Email sending function
 const sendEmail = async (to, template, data = {}) => {
     try {
+        console.log('📧 Email sending attempt:', { to, template, data });
+        console.log('📧 Email config check:', {
+            host: process.env.EMAIL_HOST || 'smtp.privateemail.com',
+            port: process.env.EMAIL_PORT || 587,
+            user: process.env.EMAIL_USER || 'admin@lyricartstudio.shop',
+            pass: process.env.EMAIL_PASS ? '***SET***' : '***MISSING***'
+        });
+        
         const transporter = createEmailTransporter();
         const emailContent = emailTemplates[template](data);
         
@@ -496,11 +504,20 @@ const sendEmail = async (to, template, data = {}) => {
             html: emailContent.html
         };
 
+        console.log('📧 Mail options:', { from: mailOptions.from, to: mailOptions.to, subject: mailOptions.subject });
+
         const info = await transporter.sendMail(mailOptions);
         console.log('✅ Email sent successfully:', info.messageId);
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('❌ Email sending failed:', error);
+        console.error('❌ Email error details:', {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            responseCode: error.responseCode,
+            response: error.response
+        });
         return { success: false, error: error.message };
     }
 };
