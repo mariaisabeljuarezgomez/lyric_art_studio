@@ -3681,54 +3681,7 @@ console.log('🔐 Admin page: /admin/upload (requires admin key)');
 
 // ========== END ADMIN ROUTES ==========
 
-// Serve static files for HTML pages (after all API routes)
-app.use(express.static(path.join(__dirname)));
-
-// Handle 404s
-app.use((req, res) => {
-    res.status(404).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>404 - Page Not Found | Lyric Art Studio</title>
-            <style>
-                body { 
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-                    text-align: center; 
-                    padding: 50px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    height: 100vh;
-                    margin: 0;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                }
-                h1 { font-size: 3rem; margin-bottom: 1rem; }
-                p { font-size: 1.2rem; margin-bottom: 2rem; }
-                a { 
-                    color: white; 
-                    text-decoration: none; 
-                    padding: 12px 24px;
-                    background: rgba(255,255,255,0.2);
-                    border-radius: 8px;
-                    transition: all 0.3s ease;
-                }
-                a:hover { 
-                    background: rgba(255,255,255,0.3);
-                    transform: translateY(-2px);
-                }
-            </style>
-        </head>
-        <body>
-            <h1>404</h1>
-            <p>Oops! The page you're looking for doesn't exist.</p>
-            <a href="/homepage">Go Home</a>
-        </body>
-        </html>
-    `);
-});
+// =================================
 
 // =================================
 
@@ -3906,6 +3859,59 @@ const getNumericDesignId = async (folderName) => {
         return folderName; // Fallback to original folder name
     }
 };
+
+// ========== STATIC FILES AND 404 HANDLER (MUST BE LAST) ==========
+
+// Serve static files for HTML pages (AFTER all API routes)
+app.use(express.static(path.join(__dirname)));
+
+// Handle 404s (MUST BE LAST)
+app.use((req, res) => {
+    res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>404 - Page Not Found | Lyric Art Studio</title>
+            <style>
+                body { 
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+                    text-align: center; 
+                    padding: 50px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    height: 100vh;
+                    margin: 0;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                }
+                h1 { font-size: 3rem; margin-bottom: 1rem; }
+                p { font-size: 1.2rem; margin-bottom: 2rem; }
+                a { 
+                    color: white; 
+                    text-decoration: none; 
+                    padding: 12px 24px;
+                    background: rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                }
+                a:hover { 
+                    background: rgba(255,255,255,0.3);
+                    transform: translateY(-2px);
+                }
+            </style>
+        </head>
+        <body>
+            <h1>404</h1>
+            <p>Oops! The page you're looking for doesn't exist.</p>
+            <a href="/homepage">Go Home</a>
+        </body>
+        </html>
+    `);
+});
+
+// ========== END STATIC FILES AND 404 HANDLER ==========
 
 // Export app after all routes are defined
 module.exports = app;
