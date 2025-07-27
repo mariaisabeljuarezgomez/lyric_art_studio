@@ -984,6 +984,10 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'register.html'));
 });
 
+app.get('/test-login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'test-login.html'));
+});
+
 app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'profile.html'));
 });
@@ -2682,6 +2686,24 @@ app.post('/api/payment/paypal-webhook', async (req, res) => {
                             );
                             
                             console.log(`✅ Order ${orderData.orderId} processed and files sent to ${userEmail}`);
+                            
+                            // Clear the cart for this user after successful purchase
+                            try {
+                                // Clear cart by updating the session data
+                                await pool.query(`
+                                    UPDATE sessions 
+                                    SET session_data = jsonb_set(
+                                        session_data::jsonb, 
+                                        '{cart}', 
+                                        '{"items": [], "total": 0, "itemCount": 0}'::jsonb
+                                    )
+                                    WHERE user_id = $1 AND expires > NOW()
+                                `, [userId]);
+                                
+                                console.log(`🛒 Cart cleared for user ${userId} after successful purchase`);
+                            } catch (sessionError) {
+                                console.warn(`⚠️ Could not clear cart for user ${userId}:`, sessionError.message);
+                            }
                         } else {
                             console.warn(`⚠️ Design info not found for ${designId}`);
                         }

@@ -45,38 +45,25 @@
                 </div>
 
                 <!-- Search & User Actions -->
-                <div class="flex items-center space-x-2 sm:space-x-4">
+                <div class="flex items-center space-x-4">
                     <button onclick="openHeaderSearch()" class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </button>
-                    
                     <!-- Shopping Cart -->
                     <button id="cart-button" onclick="window.location.href='/pages/checkout.html'" class="relative p-2 text-text-secondary hover:text-accent transition-smooth">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
-                        <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-sm font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-lg border-2 border-white">0</span>
+                        <span id="cart-count" class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
                     </button>
-                    
-                    <!-- User Authentication -->
-                    <div id="auth-buttons" class="flex items-center space-x-1 sm:space-x-2">
-                        <a href="/login" class="text-text-secondary hover:text-accent transition-smooth text-xs sm:text-sm font-medium">Login</a>
-                        <a href="/register" class="bg-accent text-background px-2 sm:px-4 py-2 rounded-lg hover:bg-accent/90 transition-smooth text-xs sm:text-sm font-medium">Register</a>
+                    <!-- User Profile -->
+                    <div class="relative">
+                        <button class="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-primary font-bold">
+                            J
+                        </button>
                     </div>
-                    
-                    <!-- User Menu (hidden when not logged in) -->
-                    <div id="user-menu" class="hidden flex items-center space-x-1 sm:space-x-2">
-                        <span id="user-email" class="text-text-secondary text-xs sm:text-sm max-w-24 sm:max-w-32 md:max-w-48 truncate" title=""></span>
-                        <button onclick="logout()" class="text-text-secondary hover:text-accent transition-smooth text-xs sm:text-sm font-medium">Logout</button>
-                    </div>
-                    
-                    <!-- Auth Status Indicator (for debugging) -->
-                    <div id="auth-status-indicator" class="hidden text-red-500 text-xs bg-red-100 px-2 py-1 rounded">
-                        Checking auth...
-                    </div>
-                    
                     <!-- Mobile Menu Button -->
                     <button class="hamburger-menu-btn md:hidden">
                         <span></span>
@@ -1407,121 +1394,42 @@
         let authCheckInProgress = false;
         let lastAuthStatus = null;
         
-        function checkAuthStatus() {
-            if (authCheckInProgress) {
-                console.log('⏳ Auth check already in progress, skipping...');
-                return;
+
+        
+
+        
+        async function checkAndClearCartAfterPurchase() {
+            try {
+                // Check if there's payment success data in the session
+                const response = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // If there's payment success data, clear the cart
+                    if (data.paymentSuccess) {
+                        console.log('🛒 Payment success detected, clearing cart...');
+                        const clearResponse = await fetch('/api/cart/clear', {
+                            method: 'DELETE',
+                            credentials: 'include'
+                        });
+                        
+                        if (clearResponse.ok) {
+                            console.log('✅ Cart cleared after successful purchase');
+                            updateCartBadge(); // Update cart badge to show empty cart
+                        } else {
+                            console.warn('⚠️ Could not clear cart after purchase');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Error checking payment status:', error);
             }
-            
-            authCheckInProgress = true;
-            console.log('🔍 Checking authentication status...');
-            
-            fetch('/api/auth/status', {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            })
-            .then(response => {
-                console.log('📡 Auth status response:', response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('📊 Auth status data:', data);
-                
-                // Check if status actually changed
-                const currentStatus = data.loggedIn ? 'logged-in' : 'logged-out';
-                if (lastAuthStatus === currentStatus) {
-                    console.log('🔄 Auth status unchanged, skipping UI update');
-                    authCheckInProgress = false;
-                    return;
-                }
-                
-                lastAuthStatus = currentStatus;
-                
-                if (data.loggedIn) {
-                    console.log('✅ User is logged in:', data.user.email);
-                    updateUIForLoggedInUser(data.user);
-                } else {
-                    console.log('❌ User is not logged in');
-                    updateUIForLoggedOutUser();
-                }
-                
-                authCheckInProgress = false;
-            })
-            .catch(error => {
-                console.error('💥 Auth check error:', error);
-                console.log('❌ Assuming not logged in due to error');
-                updateUIForLoggedOutUser();
-                authCheckInProgress = false;
-            });
         }
         
-        function updateUIForLoggedInUser(user) {
-            console.log('🔧 Updating UI for logged-in user:', user.email);
-            
-            const authButtons = document.getElementById('auth-buttons');
-            const userMenu = document.getElementById('user-menu');
-            const userEmail = document.getElementById('user-email');
-            
-            // Force immediate UI update with multiple approaches
-            if (authButtons) {
-                authButtons.classList.add('hidden');
-                authButtons.style.display = 'none';
-                authButtons.style.visibility = 'hidden';
-                console.log('✅ Auth buttons hidden');
-            }
-            
-            if (userMenu) {
-                userMenu.classList.remove('hidden');
-                userMenu.style.display = 'flex';
-                userMenu.style.visibility = 'visible';
-                console.log('✅ User menu shown');
-            }
-            
-            if (userEmail) {
-                userEmail.textContent = user.email;
-                userEmail.title = user.email; // Add tooltip for full email on hover
-                console.log('✅ User email set to:', user.email);
-            }
-            
-            // Force browser reflow
-            document.body.offsetHeight;
-            
-            console.log('✅ UI updated for logged-in user');
-        }
-        
-        function updateUIForLoggedOutUser() {
-            console.log('🔧 Updating UI for logged-out user');
-            
-            const authButtons = document.getElementById('auth-buttons');
-            const userMenu = document.getElementById('user-menu');
-            
-            // Force immediate UI update with multiple approaches
-            if (authButtons) {
-                authButtons.classList.remove('hidden');
-                authButtons.style.display = 'flex';
-                authButtons.style.visibility = 'visible';
-                console.log('✅ Auth buttons shown');
-            }
-            
-            if (userMenu) {
-                userMenu.classList.add('hidden');
-                userMenu.style.display = 'none';
-                userMenu.style.visibility = 'hidden';
-                console.log('✅ User menu hidden');
-            }
-            
-            // Force browser reflow
-            document.body.offsetHeight;
-            
-            console.log('✅ UI updated for logged-out user');
-        }
+
 
         // Force auth check function (for debugging)
         function forceAuthCheck() {
@@ -1716,12 +1624,53 @@
     <script src="../public/song-catalog.js"></script>
     
     <!-- Mobile Menu Configuration -->
-    <script src="../public/mobile-menu-config.js"></script>
+    <script src="../public/mobile-menu-config.js" defer></script>
     
     <!-- Mobile Navigation -->
-    <script src="../public/mobile-navigation.js"></script>
+    <script src="../public/mobile-navigation.js" defer></script>
+    
+    <!-- Ensure Mobile Navigation Initializes -->
+    <script>
+        // Ensure mobile navigation is properly initialized
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Initializing mobile navigation...');
+            
+            // Check if mobile navigation is loaded
+            if (typeof MobileNavigation !== 'undefined') {
+                console.log('✅ MobileNavigation class found');
+                if (!window.mobileNav) {
+                    console.log('🔄 Creating mobile navigation instance...');
+                    window.mobileNav = new MobileNavigation();
+                }
+            } else {
+                console.log('⚠️ MobileNavigation class not found, using fallback...');
+                // Fallback initialization
+                setTimeout(() => {
+                    if (window.mobileNav) {
+                        console.log('✅ Mobile navigation initialized via fallback');
+                    } else {
+                        console.warn('❌ Mobile navigation failed to initialize');
+                    }
+                }, 1000);
+            }
+        });
+    </script>
     
     <!-- Enhanced Protected Image Viewer -->
     <!-- OpenSeadragon viewer script removed to fix cart functionality -->
+    
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/6886659fc99c121929b6548b/1j16fpu07';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
 </body>
 </html>

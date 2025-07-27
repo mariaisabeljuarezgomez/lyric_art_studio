@@ -210,10 +210,20 @@
                 console.log('📊 Response data:', data);
                 
                 if (data.success) {
-                    showNotification('✅ Login successful! Redirecting to homepage...', 'success');
-                    console.log('✅ Login successful, redirecting...');
-                    // Redirect immediately without delay
-                    window.location.href = '/homepage';
+                    showNotification('✅ Login successful!', 'success');
+                    console.log('✅ Login successful, checking for redirect...');
+                    
+                    // Check if there's a redirect parameter in the URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectUrl = urlParams.get('redirect');
+                    
+                    if (redirectUrl) {
+                        console.log('🔄 Redirecting to:', redirectUrl);
+                        window.location.href = redirectUrl;
+                    } else {
+                        console.log('🔄 No redirect specified, going to homepage');
+                        window.location.href = '/homepage';
+                    }
                 } else {
                     showNotification('❌ ' + (data.error || 'Login failed'), 'error');
                     console.log('❌ Login failed:', data.error);
@@ -276,9 +286,9 @@
     </script>
     
     <!-- Mobile Menu Configuration -->
-    <script src="../public/mobile-menu-config.js"></script>
+    <script src="../public/mobile-menu-config.js" defer></script>
     
     <!-- Mobile Navigation -->
-    <script src="../public/mobile-navigation.js"></script>
+    <script src="../public/mobile-navigation.js" defer></script>
 </body>
 </html> 

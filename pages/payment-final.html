@@ -92,11 +92,7 @@
                 </div>
             </div>
 
-            <!-- Debug Info (only shown in development) -->
-            <div id="debug-info" class="mt-8 p-4 bg-gray-100 rounded-lg text-xs text-gray-600" style="display: none;">
-                <h4 class="font-bold mb-2">Debug Information:</h4>
-                <div id="debug-content"></div>
-            </div>
+
         </div>
     </div>
 
@@ -107,32 +103,11 @@
         const PayerID = urlParams.get('PayerID');
         const error = urlParams.get('error');
 
-        // Debug mode (show in development)
-        const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         let retryCount = 0;
         const maxRetries = 3;
 
         console.log('🔍 Payment success page loaded');
         console.log('🔍 URL parameters:', { token, PayerID, error });
-        console.log('🔍 Development mode:', isDevelopment);
-
-        // Show debug info in development
-        if (isDevelopment) {
-            document.getElementById('debug-info').style.display = 'block';
-            updateDebugInfo();
-        }
-
-        function updateDebugInfo() {
-            const debugContent = document.getElementById('debug-content');
-            debugContent.innerHTML = `
-                <p><strong>Token:</strong> ${token || 'Not found'}</p>
-                <p><strong>PayerID:</strong> ${PayerID || 'Not found'}</p>
-                <p><strong>Error:</strong> ${error || 'None'}</p>
-                <p><strong>Retry Count:</strong> ${retryCount}</p>
-                <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
-                <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
-            `;
-        }
 
         async function processPayment() {
             try {
@@ -194,11 +169,6 @@
             // Wait a bit before retrying
             await new Promise(resolve => setTimeout(resolve, 2000));
             
-            // Update debug info
-            if (isDevelopment) {
-                updateDebugInfo();
-            }
-            
             // Retry the payment
             await processPayment();
         }
@@ -206,6 +176,27 @@
         function showSuccess() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('success').style.display = 'block';
+            
+            // Clear the cart after successful payment
+            clearCartAfterPurchase();
+        }
+        
+        async function clearCartAfterPurchase() {
+            try {
+                console.log('🛒 Clearing cart after successful purchase...');
+                const response = await fetch('/api/cart/clear', {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Cart cleared successfully after purchase');
+                } else {
+                    console.warn('⚠️ Could not clear cart after purchase');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error clearing cart after purchase:', error);
+            }
         }
 
         function showError(message, errorCode = 'unknown', orderId = '') {
@@ -217,11 +208,6 @@
             document.getElementById('error-details').style.display = 'block';
             document.getElementById('error-code').textContent = errorCode;
             document.getElementById('order-id').textContent = orderId;
-            
-            // Update debug info
-            if (isDevelopment) {
-                updateDebugInfo();
-            }
         }
 
         // Check if payment was already processed by server

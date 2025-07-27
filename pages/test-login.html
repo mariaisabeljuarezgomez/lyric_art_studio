@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        .result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login Test</h1>
+        
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" value="test@example.com" required>
+            <input type="password" id="password" placeholder="Password" value="password123" required>
+            <button type="submit">Login</button>
+        </form>
+        
+        <button onclick="checkAuth()">Check Auth Status</button>
+        <button onclick="logout()">Logout</button>
+        <button onclick="showCookies()">Show Cookies</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                console.log('🔐 Attempting login...');
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                console.log('📡 Response status:', response.status);
+                const data = await response.json();
+                console.log('📊 Response data:', data);
+                
+                showResult(data.success ? 'Login successful!' : 'Login failed: ' + data.error, data.success);
+                
+                if (data.success) {
+                    // Check auth status after successful login
+                    setTimeout(checkAuth, 1000);
+                }
+            } catch (error) {
+                console.error('💥 Login error:', error);
+                showResult('Login error: ' + error.message, false);
+            }
+        });
+
+        async function checkAuth() {
+            try {
+                console.log('🔍 Checking auth status...');
+                console.log('🍪 Current cookies:', document.cookie);
+                
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                console.log('📊 Auth status:', data);
+                
+                showResult(data.loggedIn ? 'User is logged in: ' + data.user.email : 'User is not logged in', data.loggedIn);
+            } catch (error) {
+                console.error('💥 Auth check error:', error);
+                showResult('Auth check error: ' + error.message, false);
+            }
+        }
+
+        async function logout() {
+            try {
+                console.log('🚪 Logging out...');
+                const response = await fetch('/api/auth/logout', { method: 'POST' });
+                const data = await response.json();
+                console.log('📊 Logout response:', data);
+                
+                showResult(data.success ? 'Logout successful!' : 'Logout failed', data.success);
+            } catch (error) {
+                console.error('💥 Logout error:', error);
+                showResult('Logout error: ' + error.message, false);
+            }
+        }
+
+        function showResult(message, isSuccess) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = 'result ' + (isSuccess ? 'success' : 'error');
+            result.style.display = 'block';
+        }
+
+        function showCookies() {
+            console.log('🍪 All cookies:', document.cookie);
+            const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+            console.log('🍪 Parsed cookies:', cookies);
+            
+            const lyricartCookie = cookies.find(cookie => cookie.startsWith('lyricart-session='));
+            if (lyricartCookie) {
+                console.log('🍪 LyricArt session cookie found:', lyricartCookie);
+            } else {
+                console.log('❌ No LyricArt session cookie found');
+            }
+            
+            showResult('Cookies logged to console. Check browser console.', true);
+        }
+
+        // Check auth status on page load
+        checkAuth();
+    </script>
+</body>
+</html> 
