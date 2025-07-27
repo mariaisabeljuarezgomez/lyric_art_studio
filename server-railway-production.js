@@ -492,15 +492,22 @@ console.log('   PAYPAL_CLIENT_SECRET exists:', !!process.env.PAYPAL_CLIENT_SECRE
 // Simple PayPal configuration
 const isLocalhost = process.env.PORT === '3001' || process.env.PORT === '8080' || !process.env.PORT;
 
-// Allow forcing sandbox mode for testing on live site
+// Check PayPal mode from environment variable (this is what you already have set)
+const paypalMode = process.env.PAYPAL_MODE || 'sandbox';
 const forceSandbox = process.env.FORCE_PAYPAL_SANDBOX === 'true';
-const useSandbox = process.env.NODE_ENV !== 'production' || isLocalhost || forceSandbox;
+
+// Use PAYPAL_MODE if set, otherwise fall back to the old logic
+const useSandbox = paypalMode === 'sandbox' || process.env.NODE_ENV !== 'production' || isLocalhost || forceSandbox;
 
 const PAYPAL_BASE_URL = useSandbox 
     ? 'https://api-m.sandbox.paypal.com' 
     : 'https://api-m.paypal.com';
 
+console.log('   PAYPAL_MODE from env:', paypalMode);
 console.log('   Using environment:', useSandbox ? 'SANDBOX' : 'LIVE');
+if (paypalMode === 'sandbox') {
+    console.log('   ✅ Using SANDBOX mode from PAYPAL_MODE environment variable');
+}
 if (forceSandbox) {
     console.log('   ⚠️  SANDBOX FORCED for testing on live site');
 }
