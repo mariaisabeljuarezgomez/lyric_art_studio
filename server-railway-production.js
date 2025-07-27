@@ -608,6 +608,7 @@ const sendEmail = async (to, template, data = {}) => {
 const sendCustomDesignNotification = async (commissionData, customerEmail) => {
     try {
         const adminEmail = process.env.ADMIN_EMAIL || 'admin@lyricartstudio.shop';
+        const mariaEmail = 'mariaisabeljuarez85@gmail.com';
         
         const notificationData = {
             customerEmail: customerEmail,
@@ -619,16 +620,28 @@ const sendCustomDesignNotification = async (commissionData, customerEmail) => {
             price: commissionData.price || 25.00
         };
         
+        // Send to admin email
         console.log('📧 Sending custom design notification to admin:', adminEmail);
-        const result = await sendEmail(adminEmail, 'customDesignNotification', notificationData);
+        const adminResult = await sendEmail(adminEmail, 'customDesignNotification', notificationData);
         
-        if (result.success) {
-            console.log('✅ Custom design notification sent successfully');
+        // Always send to Maria's email as well
+        console.log('📧 Sending custom design notification to Maria:', mariaEmail);
+        const mariaResult = await sendEmail(mariaEmail, 'customDesignNotification', notificationData);
+        
+        if (adminResult.success && mariaResult.success) {
+            console.log('✅ Custom design notifications sent successfully to both recipients');
         } else {
-            console.error('❌ Failed to send custom design notification:', result.error);
+            console.error('❌ Failed to send custom design notifications:', {
+                admin: adminResult.error,
+                maria: mariaResult.error
+            });
         }
         
-        return result;
+        return { 
+            success: adminResult.success && mariaResult.success,
+            adminResult,
+            mariaResult
+        };
     } catch (error) {
         console.error('❌ Error in sendCustomDesignNotification:', error);
         return { success: false, error: error.message };
