@@ -4085,12 +4085,27 @@ const authenticateAdmin = (req, res, next) => {
     const adminKey = req.headers['x-admin-key'] || req.query.adminKey;
     const validAdminKey = process.env.ADMIN_KEY || 'lyric-admin-2025'; // Set in environment variables
     
+    console.log('🔐 Admin authentication attempt:', {
+        providedKey: adminKey,
+        validKey: validAdminKey,
+        headers: req.headers['x-admin-key'],
+        query: req.query.adminKey,
+        matches: adminKey === validAdminKey
+    });
+    
     if (adminKey === validAdminKey) {
+        console.log('✅ Admin authentication successful');
         next();
     } else {
+        console.log('❌ Admin authentication failed');
         res.status(401).json({ 
             success: false, 
-            message: 'Admin access required. Please provide valid admin key.' 
+            message: 'Admin access required. Please provide valid admin key.',
+            debug: {
+                providedKey: adminKey,
+                validKey: validAdminKey,
+                matches: adminKey === validAdminKey
+            }
         });
     }
 };
@@ -4120,6 +4135,16 @@ app.get('/admin-test', (req, res) => {
 app.get('/admin/test', (req, res) => {
     console.log('🧪 Test route accessed!');
     res.send('Admin test route works!');
+});
+
+// Admin authentication test endpoint
+app.get('/api/admin/test-auth', authenticateAdmin, (req, res) => {
+    console.log('🔐 Admin auth test successful!');
+    res.json({ 
+        success: true, 
+        message: 'Admin authentication working correctly',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Serve admin upload page (both routes)
@@ -4202,6 +4227,22 @@ app.get('/api/admin/custom-designs', authenticateAdmin, async (req, res) => {
     try {
         console.log('🎨 Admin requesting custom design requests');
         
+        // First check if the table exists
+        const tableCheck = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'custom_design_requests'
+            );
+        `);
+        
+        console.log('📊 Custom design requests table exists:', tableCheck.rows[0].exists);
+        
+        if (!tableCheck.rows[0].exists) {
+            console.log('⚠️ Custom design requests table does not exist, creating it...');
+            await initializeCustomDesignRequestsTable();
+        }
+        
         const result = await pool.query(`
             SELECT 
                 id, user_email, artist_name, song_title, design_style, 
@@ -4214,7 +4255,10 @@ app.get('/api/admin/custom-designs', authenticateAdmin, async (req, res) => {
         res.json({ requests: result.rows });
     } catch (error) {
         console.error('❌ Error fetching custom design requests:', error);
-        res.status(500).json({ error: 'Failed to fetch custom design requests' });
+        res.status(500).json({ 
+            error: 'Failed to fetch custom design requests',
+            details: error.message
+        });
     }
 });
 
