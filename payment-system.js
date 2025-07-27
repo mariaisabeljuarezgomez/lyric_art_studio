@@ -177,7 +177,7 @@ class PaymentSystem {
                 custom_id: `order_${Date.now()}`
             }],
             application_context: {
-                return_url: `${process.env.BASE_URL || 'http://localhost:3001'}/payment/success`,
+                return_url: `${process.env.BASE_URL || 'http://localhost:3001'}/payment-final`,
                 cancel_url: `${process.env.BASE_URL || 'http://localhost:3001'}/payment/cancel`
             }
         };

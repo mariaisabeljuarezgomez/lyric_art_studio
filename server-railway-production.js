@@ -588,7 +588,7 @@ const createPayPalOrder = async (items, total) => {
                 }))
             }],
             application_context: {
-                return_url: `${process.env.PORT === '3001' ? 'http://localhost:3001' : (process.env.SITE_URL || 'https://lyricartstudio.shop')}/payment/success`,
+                return_url: `${process.env.PORT === '3001' ? 'http://localhost:3001' : (process.env.SITE_URL || 'https://lyricartstudio.shop')}/payment-final`,
                 cancel_url: `${process.env.PORT === '3001' ? 'http://localhost:3001' : (process.env.SITE_URL || 'https://lyricartstudio.shop')}/payment/cancel`,
                 brand_name: 'Lyric Art Studio',
                 landing_page: 'BILLING',
@@ -2491,106 +2491,11 @@ function getContentType(format) {
     return contentTypes[format] || 'application/octet-stream';
 }
 
-app.get('/payment/success', async (req, res) => {
-    // --- ADD THESE LOGS ---
-    console.log('--- LANDED ON /payment/success ROUTE ---');
-    console.log('Full requested URL from PayPal:', req.originalUrl);
-    console.log('Parsed query object:', req.query);
-    console.log('All request headers:', req.headers);
-    console.log('Request method:', req.method);
-    console.log('Request path:', req.path);
-    // --- END OF LOGS TO ADD ---
-    
-    const { token, PayerID } = req.query;
-    
-    console.log('🎯 Payment success route accessed with token:', token);
-    console.log('🔍 PayerID:', PayerID);
-    console.log('🔍 Session data:', req.session);
-    
-    if (!token) {
-        console.error('❌ No token provided in payment success route');
-        return res.redirect('/payment/cancel?error=no_token');
-    }
-    
-    try {
-        // Call the payment capture endpoint to process the pending order
-        console.log('💳 Calling payment capture endpoint...');
-        
-        const captureResponse = await fetch(`${req.protocol}://${req.get('host')}/api/payment/capture-paypal-order`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Cookie': req.headers.cookie || ''
-            },
-            body: JSON.stringify({ orderId: token })
-        });
-        
-        console.log('📡 Capture endpoint response status:', captureResponse.status);
-        console.log('📡 Capture endpoint response headers:', Object.fromEntries(captureResponse.headers.entries()));
-        
-        if (captureResponse.ok) {
-            const captureData = await captureResponse.json();
-            console.log('📡 Capture endpoint response data:', captureData);
-            
-            if (captureData.success) {
-                console.log('✅ Payment and pending order processed successfully');
-                
-                // Send order confirmation email if user is logged in
-                if (req.session.userEmail) {
-                    const cart = req.session.cart || { items: [], total: 0 };
-                    try {
-                        await sendEmail(req.session.userEmail, 'orderConfirmation', {
-                            customerEmail: req.session.userEmail,
-                            customerName: req.session.userName || 'Valued Customer',
-                            orderId: captureData.capture.id,
-                            items: cart.items,
-                            total: cart.total
-                        });
-                        console.log('✅ Order confirmation email sent');
-                    } catch (emailError) {
-                        console.error('❌ Failed to send order confirmation email:', emailError);
-                    }
-                }
-                
-                // Clear cart after successful payment
-                req.session.cart = { items: [], total: 0, itemCount: 0 };
-                
-                // Store success data in session for the frontend page
-                req.session.paymentSuccess = {
-                    orderId: captureData.capture.id,
-                    amount: captureData.capture.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value || 'N/A',
-                    status: captureData.capture.status,
-                    timestamp: new Date().toISOString()
-                };
-                
-                console.log('✅ Payment success data stored in session:', req.session.paymentSuccess);
-                
-                // Serve the frontend payment success page (using renamed file to bypass Railway cache)
-                res.sendFile(path.join(__dirname, 'pages', 'payment-final.html'));
-                
-            } else {
-                console.error('❌ Payment capture failed:', captureData.error);
-                res.redirect('/payment/cancel?error=capture_failed');
-            }
-        } else {
-            let errorText = '';
-            try {
-                errorText = await captureResponse.text();
-            } catch (e) {
-                errorText = 'Unable to read error response';
-            }
-            console.error('❌ Payment capture endpoint failed:', {
-                status: captureResponse.status,
-                statusText: captureResponse.statusText,
-                error: errorText
-            });
-            res.redirect('/payment/cancel?error=capture_failed');
-        }
-    } catch (error) {
-        console.error('❌ Payment processing error:', error);
-        console.error('❌ Error stack:', error.stack);
-        res.redirect('/payment/cancel?error=processing_error');
-    }
+// REMOVED: /payment/success route - completely eliminated old payment success handling
+
+// Serve payment final page
+app.get('/payment-final', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'payment-final.html'));
 });
 
 app.get('/payment/cancel', (req, res) => {
