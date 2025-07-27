@@ -1830,11 +1830,20 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
         console.log('🔍 Request body:', req.body);
         console.log('🔍 Session data:', req.session);
         
-        // ✅ CRITICAL: Validate orderId is real PayPal ID (Kim's fix)
-        if (!orderId || !orderId.match(/^[A-Z0-9]{17}$/)) {
+        // ✅ CRITICAL: Validate orderId is real PayPal ID (Manus's fix - relaxed validation)
+        if (!orderId) {
+            console.error('❌ No orderId provided in request');
+            return res.status(400).json({ error: 'Order ID is required' });
+        }
+        
+        // Relaxed validation: Accept PayPal IDs between 10-25 characters, or test IDs in development
+        const isValidPayPalId = orderId.match(/^[A-Z0-9]{10,25}$/) || 
+                               (process.env.NODE_ENV === 'development' && orderId === 'test');
+        
+        if (!isValidPayPalId) {
             console.error('❌ Invalid order ID format:', orderId);
             return res.status(400).json({ 
-                error: 'Invalid order ID format. Expected PayPal order ID (17 characters).' 
+                error: 'Invalid order ID format. Expected PayPal order ID (10-25 characters).' 
             });
         }
         
