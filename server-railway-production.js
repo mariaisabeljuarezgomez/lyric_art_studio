@@ -99,12 +99,35 @@ const authenticateUser = async (req, res, next) => {
             return next();
         }
         
-        // If no session, redirect to login
-        console.log('❌ No valid session found, redirecting to login');
+        // If no session, handle API requests differently than page requests
+        console.log('❌ No valid session found');
+        
+        // For API requests, return 401 instead of redirecting
+        if (req.path.startsWith('/api/')) {
+            console.log('🔐 API request without session, returning 401');
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Authentication required',
+                redirect: '/login'
+            });
+        }
+        
+        // For page requests, redirect to login
+        console.log('🔐 Page request without session, redirecting to login');
         return res.redirect('/login?redirect=' + encodeURIComponent(req.originalUrl));
         
     } catch (error) {
         console.error('❌ Authentication error:', error);
+        
+        // For API requests, return 500 instead of redirecting
+        if (req.path.startsWith('/api/')) {
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Authentication error',
+                redirect: '/login'
+            });
+        }
+        
         return res.redirect('/login?redirect=' + encodeURIComponent(req.originalUrl));
     }
 };
