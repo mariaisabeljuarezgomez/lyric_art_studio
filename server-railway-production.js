@@ -3253,6 +3253,14 @@ app.delete('/api/my-collection/delete-design', authenticateUser, async (req, res
     }
     
     try {
+        // First, let's see what's actually stored in the database for this user
+        const userPurchases = await pool.query(`
+            SELECT design_id, design_name FROM purchases 
+            WHERE user_id = $1
+        `, [req.session.userId]);
+        
+        console.log('🔍 User purchases in database:', userPurchases.rows);
+        
         // Convert folder name to numeric design ID if needed
         let numericDesignId = designId;
         if (typeof designId === 'string' && designId.includes('-')) {
@@ -3260,11 +3268,30 @@ app.delete('/api/my-collection/delete-design', authenticateUser, async (req, res
             console.log(`🔍 Converted folder name "${designId}" to numeric design ID: ${numericDesignId}`);
         }
         
-        // Delete from purchases table
-        const result = await pool.query(`
+        // Try multiple deletion strategies for old purchases
+        let result;
+        
+        // Strategy 1: Try with numeric ID
+        result = await pool.query(`
             DELETE FROM purchases 
             WHERE user_id = $1 AND design_id = $2
         `, [req.session.userId, numericDesignId.toString()]);
+        
+        if (result.rowCount === 0) {
+            // Strategy 2: Try with folder name as design_id (old purchases)
+            result = await pool.query(`
+                DELETE FROM purchases 
+                WHERE user_id = $1 AND design_id = $2
+            `, [req.session.userId, designId]);
+        }
+        
+        if (result.rowCount === 0) {
+            // Strategy 3: Try with design_name (folder name)
+            result = await pool.query(`
+                DELETE FROM purchases 
+                WHERE user_id = $1 AND design_name = $2
+            `, [req.session.userId, designId]);
+        }
         
         if (result.rowCount > 0) {
             console.log(`✅ Deleted design ${designId} from collection for user ${req.session.userId}`);
