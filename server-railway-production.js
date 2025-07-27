@@ -2252,6 +2252,13 @@ app.post('/api/paypal/webhook', async (req, res) => {
         const headers = req.headers;
         
         console.log('📡 PayPal webhook received:', webhookBody.event_type);
+        console.log('🔍 Webhook headers:', Object.keys(headers));
+        
+        // Skip verification for validation requests (no event_type)
+        if (!webhookBody.event_type) {
+            console.log('🔍 Validation request detected, skipping verification');
+            return res.status(200).json({ status: 'ok', message: 'Webhook endpoint is ready' });
+        }
         
         // Verify webhook (basic validation for now)
         if (!verifyPayPalWebhook(headers, webhookBody)) {
