@@ -2565,7 +2565,12 @@ app.get('/payment/success', async (req, res) => {
                 
                 console.log('✅ Payment success data stored in session:', req.session.paymentSuccess);
                 
-                // Serve the frontend payment success page
+                // Serve the frontend payment success page with cache-busting headers
+                res.set({
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                });
                 res.sendFile(path.join(__dirname, 'pages', 'payment-success.html'));
                 
             } else {
@@ -4142,11 +4147,35 @@ const getNumericDesignId = async (folderName) => {
 
 // ========== STATIC FILES (AFTER ALL API ROUTES) ==========
 
-// Serve static files for specific directories only (AFTER all API routes)
-app.use('/css', express.static(path.join(__dirname, 'css')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use('/pages', express.static(path.join(__dirname, 'pages')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
+// Serve static files for specific directories only (AFTER all API routes) with cache-busting
+app.use('/css', express.static(path.join(__dirname, 'css'), {
+    setHeaders: (res, path) => {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+}));
+app.use('/images', express.static(path.join(__dirname, 'images'), {
+    setHeaders: (res, path) => {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+}));
+app.use('/pages', express.static(path.join(__dirname, 'pages'), {
+    setHeaders: (res, path) => {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+}));
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, path) => {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+}));
 
 // ========== DEBUG ROUTE (TEMPORARY) ==========
 
