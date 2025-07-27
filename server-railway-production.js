@@ -3943,6 +3943,38 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+// ========== DEBUG ROUTE (TEMPORARY) ==========
+
+// Add this temporary debug route to check if routes are registered
+app.get('/debug-routes', (req, res) => {
+    const routes = [];
+    app._router.stack.forEach((middleware) => {
+        if (middleware.route) {
+            routes.push({
+                method: Object.keys(middleware.route.methods),
+                path: middleware.route.path
+            });
+        }
+    });
+    res.json({ routes });
+});
+
+// ========== EMERGENCY CAPTURE ROUTE (TEMPORARY) ==========
+
+// Emergency route addition - add this BEFORE your 404 handler
+app.post('/api/payment/capture-paypal-order', async (req, res) => {
+    console.log('🚨 Emergency capture route hit:', req.body);
+    const { orderId } = req.body;
+    
+    try {
+        const result = await capturePayPalOrder(orderId);
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Emergency capture error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ========== 404 HANDLER (MUST BE LAST) ==========
 
 // Handle 404s (MUST BE LAST)
