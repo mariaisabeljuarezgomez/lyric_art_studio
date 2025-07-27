@@ -855,8 +855,8 @@ app.use(session({
 
 // Initialize Passport - Completely bulletproof error handling
 try {
-    // Check if passport is available
-    if (typeof passport !== 'undefined') {
+    // Check if passport is available and imported
+    if (typeof passport !== 'undefined' && passport) {
         app.use(passport.initialize());
         app.use(passport.session());
 
