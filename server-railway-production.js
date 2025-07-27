@@ -2237,15 +2237,6 @@ app.post('/api/payment/capture-paypal-order', async (req, res) => {
 });
 
 // PayPal Webhook Handler
-app.get('/api/payment/paypal-webhook', (req, res) => {
-    // PayPal webhook validation endpoint
-    res.status(200).json({ 
-        status: 'ok', 
-        message: 'PayPal webhook endpoint is active',
-        timestamp: new Date().toISOString()
-    });
-});
-
 app.post('/api/payment/paypal-webhook', async (req, res) => {
     try {
         const webhookBody = req.body;
@@ -2254,21 +2245,17 @@ app.post('/api/payment/paypal-webhook', async (req, res) => {
         console.log('📡 PayPal webhook received:', webhookBody.event_type);
         console.log('🔍 Webhook headers:', Object.keys(headers));
         
-        // TEMPORARILY DISABLE WEBHOOK VERIFICATION FOR VALIDATION
-        // TODO: Re-enable after PayPal accepts the webhook URL
-        console.log('🔍 Webhook verification temporarily disabled for validation');
-        
         // Skip verification for validation requests (no event_type) or empty body
         if (!webhookBody.event_type || Object.keys(webhookBody).length === 0) {
             console.log('🔍 Validation request detected, skipping verification');
             return res.status(200).json({ status: 'ok', message: 'Webhook endpoint is ready' });
         }
         
-        // TEMPORARILY SKIP VERIFICATION
-        // if (!verifyPayPalWebhook(headers, webhookBody)) {
-        //     console.warn('⚠️ Webhook verification failed');
-        //     return res.status(400).json({ error: 'Webhook verification failed' });
-        // }
+        // Verify webhook for real events
+        if (!verifyPayPalWebhook(headers, webhookBody)) {
+            console.warn('⚠️ Webhook verification failed');
+            return res.status(400).json({ error: 'Webhook verification failed' });
+        }
         
         // Handle different webhook events
         switch (webhookBody.event_type) {
