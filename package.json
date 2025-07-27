@@ -13,6 +13,7 @@
     "cleanup": "node cleanup-sessions.js"
   },
   "dependencies": {
+    "@qwen-code/qwen-code": "^0.0.1-alpha.10",
     "archiver": "^7.0.1",
     "bcrypt": "^5.1.1",
     "connect-pg-simple": "^10.0.0",
