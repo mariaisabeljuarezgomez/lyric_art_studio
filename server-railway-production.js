@@ -785,9 +785,8 @@ app.get('/checkout', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'checkout.html'));
 });
 
-app.get('/payment-success', (req, res) => {
-    res.sendFile(path.join(__dirname, 'pages', 'payment-success.html'));
-});
+// REMOVED: Conflicting static route that was intercepting /payment/success
+// The dynamic route at line 2297 handles this properly
 
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'login.html'));
@@ -822,6 +821,12 @@ app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+});
+
+// DEBUG: Log all requests to see route matching
+app.use((req, res, next) => {
+    console.log('🔍 Request:', req.method, req.path);
     next();
 });
 
