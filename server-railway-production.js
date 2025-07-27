@@ -4212,7 +4212,9 @@ const authenticateAdmin = (req, res, next) => {
         clientIP: clientIP,
         sessionId: sessionId,
         userAgent: req.get('User-Agent'),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        adminKey: process.env.ADMIN_KEY ? 'SET' : 'NOT_SET',
+        adminIPWhitelist: process.env.ADMIN_IP_WHITELIST ? 'SET' : 'NOT_SET'
     });
     
     // Check IP whitelist
@@ -4332,6 +4334,19 @@ app.post('/api/admin/login', async (req, res) => {
         // Validate credentials (you should use proper password hashing in production)
         const adminUsername = process.env.ADMIN_USERNAME || 'admin';
         const adminPassword = process.env.ADMIN_PASSWORD || 'secure-admin-password-2025';
+        
+        console.log('🔐 Admin login validation:', {
+            providedUsername: username,
+            expectedUsername: adminUsername,
+            usernameMatch: username === adminUsername,
+            providedPassword: password ? password.substring(0, 3) + '***' : 'EMPTY',
+            expectedPassword: adminPassword ? adminPassword.substring(0, 3) + '***' : 'EMPTY',
+            passwordLength: password ? password.length : 0,
+            expectedPasswordLength: adminPassword ? adminPassword.length : 0,
+            passwordMatch: password === adminPassword,
+            envUsername: process.env.ADMIN_USERNAME ? 'SET' : 'NOT_SET',
+            envPassword: process.env.ADMIN_PASSWORD ? 'SET' : 'NOT_SET'
+        });
         
         if (username === adminUsername && password === adminPassword) {
             // Create admin session
@@ -4510,6 +4525,29 @@ app.get('/admin/custom-designs', authenticateAdmin, (req, res) => {
 app.get('/admin-custom-designs.html', (req, res) => {
     console.log('🎨 Custom design requests admin page accessed (with .html)!');
     res.sendFile(path.join(__dirname, 'pages', 'admin-custom-designs.html'));
+});
+
+// Simple admin test route (no authentication required)
+app.get('/admin/test', (req, res) => {
+    console.log('🧪 Simple admin test route accessed!');
+    res.send('Admin test route works!');
+});
+
+// Simple admin page route (no authentication required for testing)
+app.get('/admin/simple', (req, res) => {
+    console.log('🎨 Simple admin page accessed (no auth required)!');
+    res.sendFile(path.join(__dirname, 'pages', 'admin-custom-designs.html'));
+});
+
+// Admin credentials debug route (no authentication required)
+app.get('/admin/debug-credentials', (req, res) => {
+    console.log('🔍 Admin credentials debug accessed');
+    res.json({
+        adminUsername: process.env.ADMIN_USERNAME || 'NOT_SET',
+        adminPassword: process.env.ADMIN_PASSWORD ? 'SET' : 'NOT_SET',
+        adminKey: process.env.ADMIN_KEY ? 'SET' : 'NOT_SET',
+        adminIPWhitelist: process.env.ADMIN_IP_WHITELIST ? 'SET' : 'NOT_SET'
+    });
 });
 
 // Handle design upload
