@@ -152,14 +152,26 @@
                     'credentials': 'include'
                 });
                 
-                const response = await fetch('/api/payment/capture-paypal-order', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ orderId: token })
-                });
+                // Try POST first, if it fails due to redirect, try GET with query params
+                let response;
+                try {
+                    console.log('🔄 Attempting POST request...');
+                    response = await fetch('/api/payment/capture-paypal-order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ orderId: token })
+                    });
+                } catch (error) {
+                    console.log('🔄 POST failed, trying GET with query params...');
+                    // If POST fails, try GET with query parameters
+                    response = await fetch(`/api/payment/capture-paypal-order?orderId=${encodeURIComponent(token)}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                }
 
                 console.log('📡 Capture response status:', response.status);
                 console.log('📡 Capture response headers:', Object.fromEntries(response.headers.entries()));
