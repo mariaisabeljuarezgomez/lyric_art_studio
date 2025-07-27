@@ -808,104 +808,119 @@ app.use(session({
     }
 }));
 
-// Initialize Passport - Wrap in try-catch to prevent crashes
+// Initialize Passport - Completely bulletproof error handling
 try {
-    app.use(passport.initialize());
-    app.use(passport.session());
+    // Check if passport is available
+    if (typeof passport !== 'undefined') {
+        app.use(passport.initialize());
+        app.use(passport.session());
 
-    // Passport serialization
-    passport.serializeUser((user, done) => {
-        done(null, user.id);
-    });
+        // Passport serialization
+        passport.serializeUser((user, done) => {
+            done(null, user.id);
+        });
 
-    passport.deserializeUser(async (id, done) => {
-        try {
-            const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-            done(null, result.rows[0]);
-        } catch (error) {
-            done(error, null);
+        passport.deserializeUser(async (id, done) => {
+            try {
+                const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+                done(null, result.rows[0]);
+            } catch (error) {
+                done(error, null);
+            }
+        });
+
+        // Google OAuth Strategy - Only configure if credentials are available
+        if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+            try {
+                passport.use(new GoogleStrategy({
+                    clientID: process.env.GOOGLE_CLIENT_ID,
+                    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+                    callbackURL: 'https://lyricartstudio.shop/auth/google/callback' // Always use production domain for OAuth
+                }, async (accessToken, refreshToken, profile, done) => {
+                    try {
+                        console.log('🔐 Google OAuth profile:', profile.id);
+                        
+                        // Check if user exists
+                        let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                        
+                        if (result.rows.length === 0) {
+                            // Create new user
+                            const userId = crypto.randomUUID();
+                            await pool.query(
+                                'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
+                                [userId, profile.emails[0].value, profile.displayName, 'oauth-google-' + profile.id]
+                            );
+                            console.log('✅ New Google user created:', profile.emails[0].value);
+                        } else {
+                            console.log('✅ Existing Google user found:', profile.emails[0].value);
+                        }
+                        
+                        // Get user data
+                        result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                        return done(null, result.rows[0]);
+                    } catch (error) {
+                        console.error('❌ Google OAuth error:', error);
+                        return done(error, null);
+                    }
+                }));
+                console.log('✅ Google OAuth strategy configured');
+            } catch (error) {
+                console.error('❌ Error configuring Google OAuth strategy:', error);
+                console.log('⚠️ Continuing without Google OAuth strategy');
+            }
+        } else {
+            console.log('⚠️ Google OAuth credentials not configured - skipping Google OAuth');
         }
-    });
 
-    // Google OAuth Strategy - Only configure if credentials are available
-    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-        passport.use(new GoogleStrategy({
-            clientID: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: 'https://lyricartstudio.shop/auth/google/callback' // Always use production domain for OAuth
-        }, async (accessToken, refreshToken, profile, done) => {
+        // GitHub OAuth Strategy - Only configure if credentials are available
+        if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
             try {
-                console.log('🔐 Google OAuth profile:', profile.id);
-                
-                // Check if user exists
-                let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-                
-                if (result.rows.length === 0) {
-                    // Create new user
-                    const userId = crypto.randomUUID();
-                    await pool.query(
-                        'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
-                        [userId, profile.emails[0].value, profile.displayName, 'oauth-google-' + profile.id]
-                    );
-                    console.log('✅ New Google user created:', profile.emails[0].value);
-                } else {
-                    console.log('✅ Existing Google user found:', profile.emails[0].value);
-                }
-                
-                // Get user data
-                result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-                return done(null, result.rows[0]);
+                passport.use(new GitHubStrategy({
+                    clientID: process.env.GITHUB_CLIENT_ID,
+                    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+                    callbackURL: 'https://lyricartstudio.shop/auth/github/callback' // Always use production domain for OAuth
+                }, async (accessToken, refreshToken, profile, done) => {
+                    try {
+                        console.log('🔐 GitHub OAuth profile:', profile.id);
+                        
+                        // Check if user exists
+                        let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                        
+                        if (result.rows.length === 0) {
+                            // Create new user
+                            const userId = crypto.randomUUID();
+                            await pool.query(
+                                'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
+                                [userId, profile.emails[0].value, profile.displayName, 'oauth-github-' + profile.id]
+                            );
+                            console.log('✅ New GitHub user created:', profile.emails[0].value);
+                        } else {
+                            console.log('✅ Existing GitHub user found:', profile.emails[0].value);
+                        }
+                        
+                        // Get user data
+                        result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
+                        return done(null, result.rows[0]);
+                    } catch (error) {
+                        console.error('❌ GitHub OAuth error:', error);
+                        return done(error, null);
+                    }
+                }));
+                console.log('✅ GitHub OAuth strategy configured');
             } catch (error) {
-                console.error('❌ Google OAuth error:', error);
-                return done(error, null);
+                console.error('❌ Error configuring GitHub OAuth strategy:', error);
+                console.log('⚠️ Continuing without GitHub OAuth strategy');
             }
-        }));
-        console.log('✅ Google OAuth strategy configured');
-    } else {
-        console.log('⚠️ Google OAuth credentials not configured - skipping Google OAuth');
-    }
+        } else {
+            console.log('⚠️ GitHub OAuth credentials not configured - skipping GitHub OAuth');
+        }
 
-    // GitHub OAuth Strategy - Only configure if credentials are available
-    if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-        passport.use(new GitHubStrategy({
-            clientID: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
-            callbackURL: 'https://lyricartstudio.shop/auth/github/callback' // Always use production domain for OAuth
-        }, async (accessToken, refreshToken, profile, done) => {
-            try {
-                console.log('🔐 GitHub OAuth profile:', profile.id);
-                
-                // Check if user exists
-                let result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-                
-                if (result.rows.length === 0) {
-                    // Create new user
-                    const userId = crypto.randomUUID();
-                    await pool.query(
-                        'INSERT INTO users (id, email, name, password) VALUES ($1, $2, $3, $4)',
-                        [userId, profile.emails[0].value, profile.displayName, 'oauth-github-' + profile.id]
-                    );
-                    console.log('✅ New GitHub user created:', profile.emails[0].value);
-                } else {
-                    console.log('✅ Existing GitHub user found:', profile.emails[0].value);
-                }
-                
-                // Get user data
-                result = await pool.query('SELECT * FROM users WHERE email = $1', [profile.emails[0].value]);
-                return done(null, result.rows[0]);
-            } catch (error) {
-                console.error('❌ GitHub OAuth error:', error);
-                return done(error, null);
-            }
-        }));
-        console.log('✅ GitHub OAuth strategy configured');
+        console.log('✅ Passport and OAuth configuration completed successfully');
     } else {
-        console.log('⚠️ GitHub OAuth credentials not configured - skipping GitHub OAuth');
+        console.log('⚠️ Passport not available - skipping OAuth configuration');
     }
-
-    console.log('✅ Passport and OAuth configuration completed successfully');
 } catch (error) {
-    console.log('⚠️ Passport/OAuth configuration failed - continuing without OAuth:', error.message);
+    console.error('❌ Passport/OAuth configuration failed - continuing without OAuth:', error.message);
     console.log('⚠️ OAuth features will be disabled, but the rest of the application will work');
 }
 
