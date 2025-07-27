@@ -537,16 +537,29 @@ const createPayPalOrder = async (items, total) => {
     try {
         const accessToken = await getPayPalAccessToken();
         
+        // Calculate the total from items to ensure it matches PayPal requirements
+        const calculatedTotal = items.reduce((sum, item) => {
+            const price = parseFloat(item.price) || 3.00;
+            const quantity = parseInt(item.quantity || item.qty || 1);
+            return sum + (price * quantity);
+        }, 0);
+        
+        console.log('💰 Calculated total from items:', calculatedTotal);
+        console.log('💰 Received total from frontend:', total);
+        
+        // Use the calculated total to ensure PayPal validation passes
+        const finalTotal = calculatedTotal.toFixed(2);
+        
         const requestBody = {
             intent: 'CAPTURE',
             purchase_units: [{
                 amount: {
                     currency_code: 'USD',
-                    value: total.toFixed(2),
+                    value: finalTotal,
                     breakdown: {
                         item_total: {
                             currency_code: 'USD',
-                            value: total.toFixed(2)
+                            value: finalTotal
                         }
                     }
                 },
