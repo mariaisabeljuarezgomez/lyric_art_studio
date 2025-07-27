@@ -275,15 +275,31 @@
             }
             showError(errorMessage, error, token);
         } else if (token) {
-            // Server already processes the payment, just check status
-            checkPaymentStatus().then(alreadyProcessed => {
-                if (alreadyProcessed) {
-                    console.log('✅ Payment already processed by server');
-                } else {
-                    console.log('⏳ Waiting for server to process payment...');
-                    // Don't call processPayment() - server handles it
-                }
-            });
+            // EMERGENCY FIX: Completely disable frontend processing
+            console.log('🚨 EMERGENCY MODE: Frontend processing disabled');
+            console.log('⏳ Server will handle payment processing automatically');
+            
+            // Just check if server already processed it
+            setTimeout(() => {
+                checkPaymentStatus().then(alreadyProcessed => {
+                    if (alreadyProcessed) {
+                        console.log('✅ Payment processed by server');
+                        showSuccess();
+                    } else {
+                        console.log('⏳ Still waiting for server processing...');
+                        // Wait a bit more and check again
+                        setTimeout(() => {
+                            checkPaymentStatus().then(processed => {
+                                if (processed) {
+                                    showSuccess();
+                                } else {
+                                    console.log('⚠️ Server processing taking longer than expected');
+                                }
+                            });
+                        }, 3000);
+                    }
+                });
+            }, 1000);
         } else {
             showError('No payment token found in URL', 'no_token');
         }
