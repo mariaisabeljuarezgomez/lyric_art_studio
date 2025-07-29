@@ -8388,7 +8388,7 @@
       "song": "Hotel California",
       "shape": "GUITAR",
       "genre": "Rock",
-      "price": 3,
+      "price": 0.5,
       "formats": [
         "SVG",
         "PDF",
