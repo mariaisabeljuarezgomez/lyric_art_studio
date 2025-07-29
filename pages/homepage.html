@@ -46,6 +46,9 @@ loadRecaptcha();
     <!-- Rocket.js script removed to fix cart functionality -->
 </head>
 <body class="bg-background text-text-primary font-inter">
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-accent text-white px-4 py-2 rounded z-50">Skip to main content</a>
+    
     <!-- Navigation Header -->
     <header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-border-subtle">
         <nav class="container mx-auto px-6 py-4">
@@ -70,13 +73,13 @@ loadRecaptcha();
 
                 <!-- Search & User Actions -->
                 <div class="flex items-center space-x-4">
-                    <button onclick="openHeaderSearch()" class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth">
+                    <button onclick="openHeaderSearch()" class="hidden md:block p-2 text-text-secondary hover:text-accent transition-smooth" aria-label="Search website">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </button>
                     <!-- Shopping Cart -->
-                    <button id="cart-button" onclick="window.location.href='/pages/checkout.html'" class="relative p-2 text-text-secondary hover:text-accent transition-smooth">
+                    <button id="cart-button" onclick="window.location.href='/pages/checkout.html'" class="relative p-2 text-text-secondary hover:text-accent transition-smooth" aria-label="Shopping cart">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
@@ -84,12 +87,12 @@ loadRecaptcha();
                     </button>
                     <!-- User Profile -->
                     <div class="relative">
-                        <button class="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-primary font-bold">
+                        <button class="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-primary font-bold" aria-label="User profile">
                             J
                         </button>
                     </div>
                     <!-- Mobile Menu Button -->
-                    <button class="hamburger-menu-btn md:hidden">
+                    <button class="hamburger-menu-btn md:hidden" aria-label="Open mobile menu">
                         <span></span>
                         <span></span>
                         <span></span>
@@ -139,7 +142,7 @@ loadRecaptcha();
     </div>
 
     <!-- Hero Section -->
-    <section class="relative min-h-screen flex items-center justify-center pt-20">
+    <section id="main-content" class="relative min-h-screen flex items-center justify-center pt-20">
         <div class="container mx-auto px-6 text-center">
             <div class="max-w-4xl mx-auto">
                 <!-- Main Headline -->
@@ -199,8 +202,8 @@ loadRecaptcha();
                                     placeholder="Search songs and artists..."
                                     style="width: 100%; height: 60px; padding: 15px; border: 3px solid #000000; background-color: #ffffff; color: #000000; font-size: 20px; font-family: Arial; border-radius: 8px;"
                                 />
-                    <button onclick="searchFromHomepage()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-accent">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button onclick="searchFromHomepage()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-accent p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Search for songs and artists">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </button>
@@ -316,7 +319,7 @@ loadRecaptcha();
                             <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                                 <input type="email" id="subscription-email" placeholder="Enter your email address" 
                                        class="flex-1 px-4 py-3 bg-background border border-border-subtle rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-text-primary placeholder-text-secondary text-base">
-                                <button onclick="subscribe()" class="bg-accent text-background px-8 py-3 rounded-lg hover:bg-accent/90 transition-smooth text-base font-montserrat font-semibold whitespace-nowrap shadow-lg hover:shadow-xl transform hover:scale-105">
+                                <button onclick="subscribe()" class="bg-accent text-white px-8 py-3 rounded-lg hover:bg-accent/90 transition-smooth text-base font-montserrat font-semibold whitespace-nowrap shadow-lg hover:shadow-xl transform hover:scale-105" style="background-color: #1a5f7a;">
                                     Subscribe & Save 25%
                                 </button>
                             </div>
@@ -361,8 +364,8 @@ loadRecaptcha();
                     <ul class="space-y-2 text-sm">
                         <li><a href="/browse" class="text-text-secondary hover:text-accent transition-smooth">Browse Gallery</a></li>
                         <li><a href="/artist-profiles" class="text-text-secondary hover:text-accent transition-smooth">Artists</a></li>
-                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Genres</a></li>
-                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">New Releases</a></li>
+                        <li><a href="/browse?genre=rock" class="text-text-secondary hover:text-accent transition-smooth">Genres</a></li>
+                        <li><a href="/browse?sort=newest" class="text-text-secondary hover:text-accent transition-smooth">New Releases</a></li>
                     </ul>
                 </div>
 
@@ -370,10 +373,10 @@ loadRecaptcha();
                 <div>
                     <h4 class="font-montserrat font-semibold mb-4">Support</h4>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Help Center</a></li>
-                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Download Guide</a></li>
-                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Licensing</a></li>
-                        <li><a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">Contact Us</a></li>
+                        <li><a href="/help" class="text-text-secondary hover:text-accent transition-smooth">Help Center</a></li>
+                        <li><a href="/download-guide" class="text-text-secondary hover:text-accent transition-smooth">Download Guide</a></li>
+                        <li><a href="/licensing" class="text-text-secondary hover:text-accent transition-smooth">Licensing</a></li>
+                        <li><a href="/contact" class="text-text-secondary hover:text-accent transition-smooth">Contact Us</a></li>
                     </ul>
                 </div>
 
@@ -381,12 +384,12 @@ loadRecaptcha();
                 <div>
                     <h4 class="font-montserrat font-semibold mb-4">Connect</h4>
                     <div class="flex space-x-4">
-                        <a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">
+                        <a href="https://twitter.com/lyricartstudio" class="text-text-secondary hover:text-accent transition-smooth" aria-label="Follow us on Twitter">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.36 2.165-2.38-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                             </svg>
                         </a>
-                        <a href="javascript:void(0)" class="text-text-secondary hover:text-accent transition-smooth">
+                        <a href="https://instagram.com/lyricartstudio" class="text-text-secondary hover:text-accent transition-smooth" aria-label="Follow us on Instagram">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
                             </svg>
