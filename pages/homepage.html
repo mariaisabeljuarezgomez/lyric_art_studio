@@ -86,10 +86,24 @@ loadRecaptcha();
                         <span id="cart-count" class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
                     </button>
                     <!-- User Profile -->
-                    <div class="relative">
-                        <button class="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-primary font-bold" aria-label="User profile">
+                    <div class="relative" id="user-profile-container">
+                        <button onclick="toggleUserMenu()" class="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-primary font-bold hover:bg-accent/90 transition-smooth" aria-label="User profile">
                             J
                         </button>
+                        <!-- User Dropdown Menu -->
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-background border border-border-subtle rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50">
+                            <div class="py-2">
+                                <div class="px-4 py-2 text-sm text-text-secondary border-b border-border-subtle" id="user-email-display">
+                                    Loading...
+                                </div>
+                                <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm text-text-secondary hover:text-accent hover:bg-accent/10 transition-smooth flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                    Logout
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <!-- Mobile Menu Button -->
                     <button class="hamburger-menu-btn md:hidden" aria-label="Open mobile menu">
@@ -1485,11 +1499,93 @@ loadRecaptcha();
         
 
 
+        // Check authentication status and update UI
+        async function checkAuthStatus() {
+            if (authCheckInProgress) {
+                console.log('⏳ Auth check already in progress, skipping...');
+                return;
+            }
+            
+            authCheckInProgress = true;
+            
+            try {
+                console.log('🔐 Checking authentication status...');
+                
+                const response = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('📊 Auth status response:', data);
+                
+                if (data.authenticated) {
+                    console.log('✅ User is authenticated:', data.user);
+                    
+                    // Update user profile display
+                    const userEmailDisplay = document.getElementById('user-email-display');
+                    if (userEmailDisplay) {
+                        userEmailDisplay.textContent = data.user.email || 'User';
+                    }
+                    
+                    // Show user profile button
+                    const userContainer = document.getElementById('user-profile-container');
+                    if (userContainer) {
+                        userContainer.style.display = 'block';
+                    }
+                    
+                } else {
+                    console.log('❌ User is not authenticated');
+                    
+                    // Hide user profile button
+                    const userContainer = document.getElementById('user-profile-container');
+                    if (userContainer) {
+                        userContainer.style.display = 'none';
+                    }
+                    
+                    // Hide user dropdown
+                    const dropdown = document.getElementById('user-dropdown');
+                    if (dropdown) {
+                        dropdown.classList.add('invisible', 'opacity-0');
+                    }
+                }
+                
+                lastAuthStatus = data.authenticated;
+                
+            } catch (error) {
+                console.error('💥 Auth check error:', error);
+            } finally {
+                authCheckInProgress = false;
+            }
+        }
+
         // Force auth check function (for debugging)
         function forceAuthCheck() {
             console.log('🔄 Manual force auth check triggered');
             checkAuthStatus();
         }
+
+        // User menu toggle function
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('user-dropdown');
+            if (dropdown) {
+                const isVisible = !dropdown.classList.contains('invisible');
+                if (isVisible) {
+                    dropdown.classList.add('invisible', 'opacity-0');
+                } else {
+                    dropdown.classList.remove('invisible', 'opacity-0');
+                }
+            }
+        }
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const userContainer = document.getElementById('user-profile-container');
+            const dropdown = document.getElementById('user-dropdown');
+            
+            if (userContainer && dropdown && !userContainer.contains(event.target)) {
+                dropdown.classList.add('invisible', 'opacity-0');
+            }
+        });
 
         async function logout() {
             try {
@@ -1516,8 +1612,17 @@ loadRecaptcha();
                     if (authButtons) authButtons.classList.remove('hidden');
                     if (userMenu) userMenu.classList.add('hidden');
                     
+                    // Hide user dropdown
+                    const dropdown = document.getElementById('user-dropdown');
+                    if (dropdown) {
+                        dropdown.classList.add('invisible', 'opacity-0');
+                    }
+                    
                     // Update cart count
                     updateCartBadge();
+                    
+                    // Redirect to homepage
+                    window.location.href = '/homepage';
                     
                     console.log('✅ UI updated, user logged out');
                     showNotification('Logged out successfully', 'success');
