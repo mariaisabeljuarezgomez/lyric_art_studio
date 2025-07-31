@@ -1527,6 +1527,14 @@ loadRecaptcha();
                         userEmailDisplay.textContent = data.user.email || 'User';
                     }
                     
+                    // Update user initials in profile button
+                    const profileButton = document.querySelector('#user-profile-container button');
+                    if (profileButton) {
+                        const initials = getUserInitials(data.user.name || data.user.email || 'User');
+                        profileButton.textContent = initials;
+                        console.log('👤 Updated user initials to:', initials);
+                    }
+                    
                     // Show user profile button
                     const userContainer = document.getElementById('user-profile-container');
                     if (userContainer) {
@@ -1555,6 +1563,30 @@ loadRecaptcha();
                 console.error('💥 Auth check error:', error);
             } finally {
                 authCheckInProgress = false;
+            }
+        }
+
+        // Get user initials from name or email
+        function getUserInitials(nameOrEmail) {
+            if (!nameOrEmail || nameOrEmail === 'User') {
+                return 'U';
+            }
+            
+            // If it's an email, extract the part before @
+            let displayName = nameOrEmail;
+            if (nameOrEmail.includes('@')) {
+                displayName = nameOrEmail.split('@')[0];
+            }
+            
+            // Split by spaces and get first letter of each word
+            const words = displayName.trim().split(/\s+/);
+            
+            if (words.length === 1) {
+                // Single word - return first two letters if available
+                return displayName.substring(0, 2).toUpperCase();
+            } else {
+                // Multiple words - return first letter of each word (max 2)
+                return words.slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('');
             }
         }
 
