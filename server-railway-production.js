@@ -1387,7 +1387,7 @@ app.use(session({
     cookie: {
         maxAge: 24 * 60 * 60 * 1000, // 1 day
         httpOnly: true, // More secure - prevent XSS
-        secure: process.env.NODE_ENV === 'production', // Secure in production
+        secure: false, // Set to false for Railway compatibility
         sameSite: 'lax'
     }
 }));
@@ -1818,6 +1818,26 @@ app.post('/api/auth/login', async (req, res) => {
             userName: user.name
         });
 
+        // Force session save and wait for it
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Session save error:', err);
+                    reject(err);
+                } else {
+                    console.log('✅ Session saved successfully');
+                    resolve();
+                }
+            });
+        });
+
+        console.log('🔍 Session after save:', {
+            sessionId: req.sessionID,
+            userId: req.session.userId,
+            userEmail: req.session.userEmail,
+            userName: req.session.userName
+        });
+
         res.json({ 
             success: true, 
             user: { 
@@ -1830,6 +1850,26 @@ app.post('/api/auth/login', async (req, res) => {
         console.error('Login error:', err);
         res.status(500).json({ error: 'Server error' });
     }
+});
+
+// Session debugging endpoint
+app.get('/api/auth/debug-session', (req, res) => {
+    console.log('🔍 Session debug requested');
+    console.log('📊 Session data:', {
+        sessionId: req.sessionID,
+        userId: req.session.userId,
+        userEmail: req.session.userEmail,
+        userName: req.session.userName,
+        cookie: req.session.cookie
+    });
+    
+    res.json({
+        sessionId: req.sessionID,
+        userId: req.session.userId,
+        userEmail: req.session.userEmail,
+        userName: req.session.userName,
+        isAuthenticated: !!req.session.userId
+    });
 });
 
 app.get('/api/auth/status', async (req, res) => {
