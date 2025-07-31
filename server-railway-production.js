@@ -3671,8 +3671,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         prompt: 'select_account' // Force account selection every time
     }));
 
+    // Simple test route to check if Google OAuth is configured
+    app.get('/auth/google/test', (req, res) => {
+        res.json({ available: true, message: 'Google OAuth is configured' });
+    });
+
     // Special route for testing with forced account selection
-    app.get('/auth/google/test', passport.authenticate('google', { 
+    app.get('/auth/google/authenticate', passport.authenticate('google', { 
         scope: ['profile', 'email'],
         prompt: 'select_account',
         access_type: 'offline' // Request refresh token for better testing
@@ -3726,10 +3731,24 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             res.redirect(redirectUrl);
         }
     );
+} else {
+    // Google OAuth not configured
+    app.get('/auth/google/test', (req, res) => {
+        res.status(404).json({ available: false, message: 'Google OAuth not configured' });
+    });
+    
+    app.get('/auth/google', (req, res) => {
+        res.status(404).json({ error: 'Google OAuth not configured' });
+    });
 }
 
 if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
     app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
+
+    // Simple test route to check if GitHub OAuth is configured
+    app.get('/auth/github/test', (req, res) => {
+        res.json({ available: true, message: 'GitHub OAuth is configured' });
+    });
 
     app.get('/auth/github/callback',
         passport.authenticate('github', { failureRedirect: '/login' }),
@@ -3747,6 +3766,15 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
             res.redirect(redirectUrl);
         }
     );
+} else {
+    // GitHub OAuth not configured
+    app.get('/auth/github/test', (req, res) => {
+        res.status(404).json({ available: false, message: 'GitHub OAuth not configured' });
+    });
+    
+    app.get('/auth/github', (req, res) => {
+        res.status(404).json({ error: 'GitHub OAuth not configured' });
+    });
 }
 
 app.get('/auth/logout', (req, res) => {
