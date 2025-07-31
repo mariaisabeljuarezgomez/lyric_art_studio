@@ -992,18 +992,36 @@ const isLocalhost = process.env.PORT === '3001' || process.env.PORT === '8080' |
 const paypalMode = process.env.PAYPAL_MODE || 'sandbox';
 const forceSandbox = process.env.FORCE_PAYPAL_SANDBOX === 'true';
 
-// Use PAYPAL_MODE if set, otherwise fall back to the old logic
-const useSandbox = paypalMode === 'sandbox' || process.env.NODE_ENV !== 'production' || isLocalhost || forceSandbox;
+// Prioritize PAYPAL_MODE setting over NODE_ENV
+let useSandbox;
+if (paypalMode === 'production' || paypalMode === 'live') {
+    useSandbox = false; // Use LIVE mode
+} else if (paypalMode === 'sandbox') {
+    useSandbox = true; // Use SANDBOX mode
+} else {
+    // Fall back to NODE_ENV logic only if PAYPAL_MODE is not explicitly set
+    useSandbox = process.env.NODE_ENV !== 'production' || isLocalhost || forceSandbox;
+}
 
 const PAYPAL_BASE_URL = useSandbox 
     ? 'https://api-m.sandbox.paypal.com' 
     : 'https://api-m.paypal.com';
 
 console.log('   PAYPAL_MODE from env:', paypalMode);
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   isLocalhost:', isLocalhost);
+console.log('   forceSandbox:', forceSandbox);
+console.log('   Final decision - useSandbox:', useSandbox);
 console.log('   Using environment:', useSandbox ? 'SANDBOX' : 'LIVE');
-if (paypalMode === 'sandbox') {
+
+if (paypalMode === 'production' || paypalMode === 'live') {
+    console.log('   ✅ Using LIVE mode from PAYPAL_MODE environment variable');
+} else if (paypalMode === 'sandbox') {
     console.log('   ✅ Using SANDBOX mode from PAYPAL_MODE environment variable');
+} else {
+    console.log('   ⚠️  Using fallback logic based on NODE_ENV');
 }
+
 if (forceSandbox) {
     console.log('   ⚠️  SANDBOX FORCED for testing on live site');
 }
