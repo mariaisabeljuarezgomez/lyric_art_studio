@@ -1678,8 +1678,8 @@ const initializeCustomDesignRequestsTable = async () => {
 // API Routes
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
-        console.log('🔐 Registration attempt:', { name, email, password: '***' });
+        const { name, email, password, newsletterSubscribed } = req.body;
+        console.log('🔐 Registration attempt:', { name, email, password: '***', newsletterSubscribed });
 
         // Check if user already exists
         const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -1701,6 +1701,64 @@ app.post('/api/auth/register', async (req, res) => {
 
         const user = result.rows[0];
 
+        // Handle newsletter subscription if requested
+        if (newsletterSubscribed) {
+            try {
+                console.log('📧 Adding user to newsletter during registration:', email);
+                
+                // Add to newsletter subscribers
+                const subscriberResult = await pool.query(
+                    `INSERT INTO newsletter_subscribers (email, name, ip_address, user_agent, status) 
+                     VALUES ($1, $2, $3, $4, 'active')
+                     ON CONFLICT (email) DO UPDATE SET 
+                     name = COALESCE($2, newsletter_subscribers.name),
+                     ip_address = COALESCE($3, newsletter_subscribers.ip_address),
+                     user_agent = COALESCE($4, newsletter_subscribers.user_agent),
+                     status = 'active',
+                     updated_at = CURRENT_TIMESTAMP
+                     RETURNING *`,
+                    [email, name, req.ip, req.get('User-Agent')]
+                );
+                
+                console.log('✅ Newsletter subscriber added during registration:', subscriberResult.rows[0]);
+                
+                // Send welcome email to subscriber
+                try {
+                    await sendEmail(email, 'newsletterWelcomeEmail', {
+                        subscriberName: name,
+                        subscriberEmail: email
+                    });
+                    console.log('✅ Newsletter welcome email sent to new registrant');
+                } catch (emailError) {
+                    console.error('❌ Newsletter welcome email failed:', emailError);
+                }
+                
+                // Send admin notification
+                try {
+                    const statsResult = await pool.query(
+                        'SELECT COUNT(*) as total, COUNT(CASE WHEN status = \'active\' THEN 1 END) as active FROM newsletter_subscribers'
+                    );
+                    const stats = statsResult.rows[0];
+                    
+                    await sendEmail(process.env.ADMIN_EMAIL, 'adminNotification', {
+                        subject: 'New Newsletter Subscriber from Registration',
+                        message: `A new user registered and subscribed to the newsletter!`,
+                        subscriberName: name,
+                        subscriberEmail: email,
+                        totalSubscribers: stats.total,
+                        activeSubscribers: stats.active
+                    });
+                    console.log('✅ Admin notification sent for newsletter subscription');
+                } catch (adminEmailError) {
+                    console.error('❌ Admin notification failed:', adminEmailError);
+                }
+                
+            } catch (newsletterError) {
+                console.error('❌ Newsletter subscription error during registration:', newsletterError);
+                // Don't fail registration if newsletter subscription fails
+            }
+        }
+
         // Set session data
         req.session.userId = user.id;
         req.session.userEmail = user.email;
@@ -1720,7 +1778,8 @@ app.post('/api/auth/register', async (req, res) => {
                 id: user.id, 
                 email: user.email, 
                 name: user.name 
-            } 
+            },
+            newsletterSubscribed: newsletterSubscribed || false
         });
     } catch (err) {
         console.error('Registration error:', err);

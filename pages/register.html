@@ -149,12 +149,19 @@
             console.log('✅ Validation passed, making API call...');
             
             try {
+                const newsletterSubscribed = document.getElementById('newsletter').checked;
+                
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ name, email, password })
+                    body: JSON.stringify({ 
+                        name, 
+                        email, 
+                        password, 
+                        newsletterSubscribed 
+                    })
                 });
                 
                 console.log('📡 Response status:', response.status);
@@ -174,10 +181,17 @@
                 
                 if (data.success) {
                     console.log('✅ Registration successful!');
-                    showNotification('Account created successfully! Redirecting...', 'success');
+                    
+                    let successMessage = 'Account created successfully!';
+                    if (data.newsletterSubscribed) {
+                        successMessage += ' You have been subscribed to our newsletter.';
+                    }
+                    successMessage += ' Redirecting...';
+                    
+                    showNotification(successMessage, 'success');
                     setTimeout(() => {
                         window.location.href = '/';
-                    }, 1500);
+                    }, 2000);
                 } else {
                     console.log('❌ Registration failed:', data.error);
                     showNotification(data.error || 'Registration failed', 'error');
