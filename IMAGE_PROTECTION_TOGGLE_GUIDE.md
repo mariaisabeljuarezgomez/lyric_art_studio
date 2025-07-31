@@ -8,7 +8,7 @@
 node toggle-image-protection.js status
 
 # Turn OFF protection (for debugging)
-node toggle-image-protection.js disable
+``````node toggle-image-protection.js disable``````
 
 # Turn ON protection (for production)
 node toggle-image-protection.js enable
