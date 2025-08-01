@@ -2,6 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const sharp = require('sharp');
 const { Pool } = require('pg');
+const cloudinary = require('cloudinary').v2;
 
 class DesignUploadProcessor {
     constructor() {
@@ -13,6 +14,13 @@ class DesignUploadProcessor {
         this.pool = new Pool({
             connectionString: process.env.DATABASE_URL,
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+        });
+        
+        // Configure Cloudinary
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET
         });
         
         // Known multi-word artists for better parsing
@@ -63,9 +71,18 @@ class DesignUploadProcessor {
             await this.createOptimizedWebImage(designInfo.folderName);
             console.log('🖼️ Web image created and optimized');
             
-            // Step 7: Update databases
+            // Step 7: Update databases (with local paths)
             await this.updateDatabases(designId, designInfo);
-            console.log('💾 Databases updated');
+            console.log('💾 Databases updated with local paths');
+            
+            // Step 8: Upload to Cloudinary and update database with Cloudinary URL
+            const cloudinaryUrl = await this.uploadToCloudinary(designInfo.folderName);
+            if (cloudinaryUrl) {
+                await this.updateDatabaseWithCloudinaryUrl(designId, cloudinaryUrl);
+                console.log('☁️ Cloudinary upload completed and database updated');
+            } else {
+                console.log('⚠️ Cloudinary upload skipped (credentials not configured)');
+            }
             
             const result = {
                 success: true,
@@ -73,6 +90,7 @@ class DesignUploadProcessor {
                 designName: `${designInfo.artist} - ${designInfo.song}`,
                 folderName: designInfo.folderName,
                 filesCreated: Object.keys(fileStructure.files).length + 1, // +1 for webp
+                cloudinaryUrl: cloudinaryUrl || null,
                 message: 'Design successfully added and is now live!'
             };
             
@@ -423,6 +441,55 @@ class DesignUploadProcessor {
         
         // Default to Rock
         return 'Rock';
+    }
+
+    /**
+     * Upload image to Cloudinary
+     */
+    async uploadToCloudinary(folderName) {
+        const imagePath = path.join(this.imagesDesignsPath, folderName, `${folderName}.webp`);
+        
+        try {
+            // Check if file exists
+            await fs.access(imagePath);
+        } catch (error) {
+            console.warn(`Image not found at ${imagePath} for Cloudinary upload.`);
+            return null;
+        }
+
+        try {
+            const result = await cloudinary.uploader.upload(imagePath, {
+                folder: 'designs',
+                use_filename: true,
+                unique_filename: false,
+                overwrite: true,
+                resource_type: 'image'
+            });
+            console.log(`✅ Cloudinary upload successful: ${result.secure_url}`);
+            return result.secure_url;
+        } catch (error) {
+            console.error('❌ Cloudinary upload failed:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Update PostgreSQL database with Cloudinary URL
+     */
+    async updateDatabaseWithCloudinaryUrl(designId, cloudinaryUrl) {
+        if (!cloudinaryUrl) {
+            console.warn('Cloudinary URL is not available for update.');
+            return;
+        }
+
+        const updateQuery = `
+            UPDATE designs
+            SET image_url = $1
+            WHERE design_id = $2
+        `;
+
+        await this.pool.query(updateQuery, [cloudinaryUrl, designId]);
+        console.log(`✅ PostgreSQL: Updated design ID ${designId} with Cloudinary URL: ${cloudinaryUrl}`);
     }
 
     /**

@@ -504,11 +504,12 @@ class SongCatalogManager {
 
     renderSongCard(song) {
         // Use the correct image paths from the database
-        const imageSrc = '/' + song.image;
-        const webpSrc = '/' + song.webp;
+        // Check if the image URL is already absolute (starts with http/https)
+        const imageSrc = song.image.startsWith('http') ? song.image : '/' + song.image;
+        const webpSrc = song.webp.startsWith('http') ? song.webp : '/' + song.webp;
         
         // Store high-res path for OpenSeadragon
-        const highResPath = '/' + song.webp;
+        const highResPath = song.webp.startsWith('http') ? song.webp : '/' + song.webp;
         
         return `
             <div class="card-surface group cursor-pointer hover:border-accent transition-smooth" 
@@ -567,9 +568,10 @@ class SongCatalogManager {
 
     renderSongListItem(song) {
         // Use the correct image paths from the database
-        const imageSrc = '/' + song.image;
-        const webpSrc = '/' + song.webp;
-        const highResPath = '/' + song.webp;
+        // Check if the image URL is already absolute (starts with http/https)
+        const imageSrc = song.image.startsWith('http') ? song.image : '/' + song.image;
+        const webpSrc = song.webp.startsWith('http') ? song.webp : '/' + song.webp;
+        const highResPath = song.webp.startsWith('http') ? song.webp : '/' + song.webp;
         
         return `
             <div class="card-surface p-4 flex items-center space-x-4 group cursor-pointer hover:border-accent transition-smooth"
@@ -639,13 +641,15 @@ class SongCatalogManager {
 function openDesignModal(imageSrc, songTitle, artistName, shape, price, highResPath, designId) {
     // Use WebP for display, high-res path for zoom
     let correctedImageSrc = imageSrc;
-    if (!correctedImageSrc.startsWith('/')) {
+    // Only prepend '/' if it's not already an absolute URL
+    if (!correctedImageSrc.startsWith('http') && !correctedImageSrc.startsWith('/')) {
         correctedImageSrc = '/' + correctedImageSrc;
     }
     
     // Use high-res path for zoom functionality
     let correctedHighResPath = highResPath || imageSrc;
-    if (!correctedHighResPath.startsWith('/')) {
+    // Only prepend '/' if it's not already an absolute URL
+    if (!correctedHighResPath.startsWith('http') && !correctedHighResPath.startsWith('/')) {
         correctedHighResPath = '/' + correctedHighResPath;
     }
     

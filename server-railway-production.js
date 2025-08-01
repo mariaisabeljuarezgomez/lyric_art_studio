@@ -31,6 +31,9 @@ const PORT = process.env.PORT || 8080;
 console.log(`🚀 STARTUP: PORT configured as ${PORT}`);
 console.log(`🚀 STARTUP: NODE_ENV = ${process.env.NODE_ENV}`);
 console.log(`🚀 STARTUP: DATABASE_URL = ${process.env.DATABASE_URL ? 'SET' : 'MISSING'}`);
+console.log(`🚀 STARTUP: CLOUDINARY_CLOUD_NAME = ${process.env.CLOUDINARY_CLOUD_NAME ? 'SET' : 'MISSING'}`);
+console.log(`🚀 STARTUP: CLOUDINARY_API_KEY = ${process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING'}`);
+console.log(`🚀 STARTUP: CLOUDINARY_API_SECRET = ${process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING'}`);
 
 // Global error handlers for process stability
 process.on('uncaughtException', (error) => {
@@ -3975,8 +3978,51 @@ app.get('/subscription', (req, res) => {
 });
 
 // API route for designs database
-app.get('/api/designs', (req, res) => {
-    res.sendFile(path.join(__dirname, 'designs-database.json'));
+app.get('/api/designs', async (req, res) => {
+    try {
+        // Query designs from PostgreSQL database
+        const result = await pool.query('SELECT * FROM designs ORDER BY design_id');
+        
+        // Transform the data to match the expected format
+        const designs = result.rows.map(row => ({
+            id: parseInt(row.design_id),
+            artist: row.artist,
+            song: row.name,
+            shape: row.category || 'GUITAR',
+            genre: row.genre || 'Rock',
+            price: parseFloat(row.price) || 3.00,
+            formats: ['SVG', 'PDF', 'PNG', 'EPS'],
+            image: row.image_url,
+            webp: row.image_url,
+            files: {
+                svg: `music_lyricss/${row.design_id}/${row.design_id}.svg`,
+                pdf: `music_lyricss/${row.design_id}/${row.design_id}.pdf`,
+                png: `music_lyricss/${row.design_id}/${row.design_id}.png`,
+                eps: `music_lyricss/${row.design_id}/${row.design_id}.eps`
+            }
+        }));
+
+        const response = {
+            designs: designs,
+            metadata: {
+                totalDesigns: designs.length,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                pricing: {
+                    standardPrice: 3,
+                    currency: 'USD'
+                },
+                formats: ['SVG', 'PDF', 'PNG', 'EPS'],
+                shapes: ['GUITAR', 'PIANO', 'CASSETTE'],
+                genres: ['Rock', 'Country', 'Pop', 'Alternative Rock', 'Classic Rock', 'Folk/Singer-Songwriter', 'Hip-Hop', 'Electronic', 'Jazz', 'Blues']
+            }
+        };
+
+        res.json(response);
+    } catch (error) {
+        console.error('❌ Error fetching designs from database:', error);
+        // Fallback to JSON file if database fails
+        res.sendFile(path.join(__dirname, 'designs-database.json'));
+    }
 });
 
 // Test page for wishlist functionality

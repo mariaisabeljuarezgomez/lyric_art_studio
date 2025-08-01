@@ -519,12 +519,12 @@ loadRecaptcha();
                 .slice(0, 8);
             
             featuredContainer.innerHTML = featuredDesigns.map(design => `
-                <div class="group cursor-pointer" onclick="openDesignModal('/${design.webp}', '${design.song}', '${design.artist}', '${design.instrumentShape}', ${design.price}, '/${design.webp}', ${design.id})">
+                <div class="group cursor-pointer" onclick="openDesignModal('${design.webp.startsWith('http') ? design.webp : '/' + design.webp}', '${design.song}', '${design.artist}', '${design.instrumentShape}', ${design.price}, '${design.webp.startsWith('http') ? design.webp : '/' + design.webp}', ${design.id})">
                     <div class="card-surface overflow-hidden hover:border-accent transition-smooth group-hover:shadow-accent-glow">
                         <div class="relative aspect-square" style="background-color: white;">
                             <picture>
-                                <source srcset="/${design.webp}" type="image/webp">
-                                <img src="/${design.image}" alt="${design.song} by ${design.artist}" 
+                                <source srcset="${design.webp.startsWith('http') ? design.webp : '/' + design.webp}" type="image/webp">
+                                <img src="${design.image.startsWith('http') ? design.image : '/' + design.image}" alt="${design.song} by ${design.artist}" 
                                      class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" style="padding: 8px;">
                             </picture>
                             <div class="absolute top-2 right-2 bg-accent text-primary text-xs px-2 py-1 rounded">
@@ -576,7 +576,8 @@ loadRecaptcha();
             // Use the correct image path directly - no need to convert from images/designs to music_lyricss
             let correctedImageSrc = imageSrc;
             let correctedHighResPath = highResPath || imageSrc;
-            if (!correctedImageSrc.startsWith('/')) {
+            // Only prepend '/' if it's not already an absolute URL
+            if (!correctedImageSrc.startsWith('http') && !correctedImageSrc.startsWith('/')) {
                 correctedImageSrc = '/' + correctedImageSrc;
                 correctedHighResPath = '/' + correctedHighResPath;
             }
