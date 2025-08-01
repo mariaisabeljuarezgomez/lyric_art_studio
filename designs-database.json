@@ -6,7 +6,7 @@
       "song": "Back In Black",
       "shape": "GUITAR",
       "genre": "Rock",
-      "price": 3,
+      "price": 1,
       "formats": [
         "SVG",
         "PDF",
@@ -4978,7 +4978,7 @@
       "song": "Zeppelin Stairway To Heaven",
       "shape": "GUITAR",
       "genre": "Rock",
-      "price": 0.5,
+      "price": 1,
       "formats": [
         "SVG",
         "PDF",
