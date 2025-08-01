@@ -272,7 +272,7 @@
             const itemsHtml = items.map(item => {
                 console.log('🛒 Processing item for display:', item);
                 const designName = item.designName || item.itemId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                const price = item.price || 3.00;
+                const price = item.price || 0;
                 const quantity = item.qty || item.quantity || 1;
                 const totalPrice = (price * quantity).toFixed(2);
                 
@@ -315,7 +315,7 @@
         function displayOrderSummary(cart) {
             const container = document.getElementById('summary-container');
             
-                            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
+                            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.qty || item.quantity || 1)), 0);
                 const tax = subtotal * 0.08; // 8% tax
                 const discountAmount = currentDiscount ? currentDiscount.discountAmount : 0;
                 const total = subtotal + tax - discountAmount;
@@ -395,7 +395,7 @@
                 if (Array.isArray(items) && items.length > 0) {
                     try {
                         total = items.reduce((sum, item) => {
-                            const price = parseFloat(item.price) || 3.00;
+                            const price = parseFloat(item.price) || 0;
                             const quantity = parseInt(item.qty || item.quantity || 1);
                             return sum + (price * quantity);
                         }, 0);
@@ -620,7 +620,7 @@
                     }
                 }
 
-                const subtotal = items.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
+                const subtotal = items.reduce((sum, item) => sum + ((item.price || 0) * (item.qty || item.quantity || 1)), 0);
                 const orderTotal = subtotal + (subtotal * 0.08); // Include tax
                 
                 // Determine order type (all downloadable for now)
@@ -691,7 +691,7 @@
         function updateOrderSummaryWithDiscount(items, discountAmount) {
             const container = document.getElementById('summary-container');
             
-            const subtotal = items.reduce((sum, item) => sum + ((item.price || 3.00) * (item.qty || item.quantity || 1)), 0);
+                            const subtotal = items.reduce((sum, item) => sum + ((item.price || 0) * (item.qty || item.quantity || 1)), 0);
             const tax = subtotal * 0.08; // 8% tax
             const total = subtotal + tax - discountAmount;
             

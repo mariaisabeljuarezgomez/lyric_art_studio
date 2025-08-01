@@ -1877,7 +1877,7 @@
                     body: JSON.stringify({ 
                         itemId: designId,
                         designId: designId, // Add this to trigger name conversion
-                        price: 3.00,
+                        price: 0, // Will use actual price from database
                         format: 'SVG, PNG, PDF, EPS' // Add format parameter
                     })
                 });
@@ -1905,7 +1905,7 @@
                     // Restore button state
                     if (buttonElement) {
                         buttonElement.disabled = false;
-                        buttonElement.textContent = `Add to Cart - $3.00`;
+                        buttonElement.textContent = `Add to Cart`;
                         buttonElement.classList.remove('opacity-50');
                     }
                 }, 1500); // Increased delay to 1.5 seconds
