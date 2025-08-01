@@ -469,7 +469,7 @@ const emailTemplates = {
     }),
 
     newsletterWelcomeEmail: (subscriberData) => ({
-        subject: `🎵 Welcome to Lyric Art Studio - Your 25% Discount Code Inside!`,
+        subject: `Welcome to Lyric Art Studio - Your Exclusive Offer`,
         html: `
             <!DOCTYPE html>
             <html>
@@ -504,12 +504,12 @@ const emailTemplates = {
                         
                         <p style="color: #ffffff;">Welcome to the Lyric Art Studio family! We're thrilled to have you join our community of music enthusiasts and art lovers.</p>
                         
-                        <div class="discount-box">
-                            <h3 style="color: #00FFFF; margin-top: 0;">🎉 Your Welcome Gift: 25% OFF!</h3>
-                            <p style="margin: 10px 0;">Use this exclusive discount code on your first purchase:</p>
-                            <div class="discount-code">WELCOME100</div>
-                            <p style="font-size: 14px; margin: 10px 0; opacity: 0.8;">*Valid on downloadable designs only. One-time use per customer.</p>
-                        </div>
+                                            <div class="discount-box">
+                        <h3 style="color: #00FFFF; margin-top: 0;">Your Welcome Gift</h3>
+                        <p style="margin: 10px 0;">Use this exclusive code on your first purchase:</p>
+                        <div class="discount-code">WELCOME100</div>
+                        <p style="font-size: 14px; margin: 10px 0; opacity: 0.8;">*Valid on downloadable designs only. One-time use per customer.</p>
+                    </div>
 
                         <h3 style="color: #00FFFF;">✨ What Makes Us Special</h3>
                         <div class="feature-list">
@@ -916,7 +916,12 @@ const sendEmail = async (to, template, data = {}) => {
             from: process.env.EMAIL_FROM || `"Lyric Art Studio" <${process.env.EMAIL_USER || 'admin@lyricartstudio.shop'}>`,
             to: to,
             subject: emailContent.subject,
-            html: emailContent.html
+            html: emailContent.html,
+            headers: {
+                'List-Unsubscribe': '<mailto:admin@lyricartstudio.shop?subject=unsubscribe>',
+                'X-Mailer': 'Lyric Art Studio Newsletter System',
+                'Precedence': 'bulk'
+            }
         };
 
         console.log('📧 Mail options:', { from: mailOptions.from, to: mailOptions.to, subject: mailOptions.subject });
@@ -2310,7 +2315,10 @@ app.post('/api/subscription/create', async (req, res) => {
         if (recaptchaToken) {
             try {
                 const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY || 'your-recaptcha-secret-key';
-                console.log('🔍 reCAPTCHA verification attempt with secret:', recaptchaSecret ? 'SET' : 'NOT_SET');
+                console.log('🔍 reCAPTCHA verification attempt:');
+                console.log('  Secret key set:', !!process.env.RECAPTCHA_SECRET_KEY);
+                console.log('  Secret key being used:', recaptchaSecret);
+                console.log('  Token received:', recaptchaToken.substring(0, 20) + '...');
                 
                 const recaptchaResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
                     method: 'POST',
@@ -2364,6 +2372,8 @@ app.post('/api/subscription/create', async (req, res) => {
             email: email,
             name: name || 'Music Lover'
         });
+
+        console.log('📧 Email sending result:', emailResult);
 
         if (emailResult.success) {
             console.log('✅ Newsletter welcome email sent successfully');
@@ -5748,6 +5758,9 @@ const getNumericDesignId = async (folderName) => {
 // Dynamic reCAPTCHA site key injection (secure)
 app.get('/api/recaptcha-site-key', (req, res) => {
     const siteKey = process.env.RECAPTCHA_SITE_KEY || '6LdJ4JAr'; // fallback for development
+    console.log('🔍 reCAPTCHA site key request:');
+    console.log('  Environment variable set:', !!process.env.RECAPTCHA_SITE_KEY);
+    console.log('  Site key being returned:', siteKey);
     res.json({ siteKey });
 });
 
