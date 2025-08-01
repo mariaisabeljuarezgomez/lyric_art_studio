@@ -33,3 +33,9 @@ temp/
 pages/admin-upload.html
 ADMIN_UPLOAD_SYSTEM_GUIDE.md
 QUICK_INSTALL_UPLOAD_SYSTEM.md
+
+# Cloudinary Integration Files (LOCAL USE ONLY - Contains API Keys)
+upload-to-cloudinary.js
+test-cloudinary-upload.js
+LYRIC_ART_STUDIO_UNIFIED_PROJECT_REVIEW.md
+CLOUDINARY_INTEGRATION_COMPLETE_GUIDE.md
