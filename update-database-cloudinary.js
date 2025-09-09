@@ -28,6 +28,10 @@ async function updateDatabaseWithCloudinary() {
       const relativePath = path.relative(path.join(__dirname, 'images'), result.originalPath);
       const normalizedPath = relativePath.replace(/\\/g, '/'); // Convert backslashes to forward slashes
       urlMapping[normalizedPath] = result.cloudinaryUrl;
+      
+      // Also create a mapping for .webp files (database has .webp, but Cloudinary has .png)
+      const webpPath = normalizedPath.replace(/\.png$/, '.webp');
+      urlMapping[webpPath] = result.cloudinaryUrl;
     });
 
     console.log(`📊 Found ${Object.keys(urlMapping).length} Cloudinary URLs`);

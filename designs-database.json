@@ -9539,6 +9539,160 @@
         "png": "music_lyricss/bob-dylan-like-a-rolling-stone-guitar/bob-dylan-like-a-rolling-stone-guitar.png",
         "eps": "music_lyricss/bob-dylan-like-a-rolling-stone-guitar/bob-dylan-like-a-rolling-stone-guitar.eps"
       }
+    },
+    {
+      "id": 439,
+      "artist": "Anne",
+      "song": "Wilson My Jesus",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/anne-wilson-my-jesus-guitar/anne-wilson-my-jesus-guitar.webp",
+      "webp": "images/designs/anne-wilson-my-jesus-guitar/anne-wilson-my-jesus-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/anne-wilson-my-jesus-guitar/anne-wilson-my-jesus-guitar.svg",
+        "pdf": "music_lyricss/anne-wilson-my-jesus-guitar/anne-wilson-my-jesus-guitar.pdf",
+        "png": "music_lyricss/anne-wilson-my-jesus-guitar/anne-wilson-my-jesus-guitar.png",
+        "eps": "music_lyricss/anne-wilson-my-jesus-guitar/anne-wilson-my-jesus-guitar.eps"
+      }
+    },
+    {
+      "id": 440,
+      "artist": "Journey",
+      "song": "Faithfully Ss",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/journey-faithfully-ss-guitar/journey-faithfully-ss-guitar.webp",
+      "webp": "images/designs/journey-faithfully-ss-guitar/journey-faithfully-ss-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/journey-faithfully-ss-guitar/journey-faithfully-ss-guitar.svg",
+        "pdf": "music_lyricss/journey-faithfully-ss-guitar/journey-faithfully-ss-guitar.pdf",
+        "png": "music_lyricss/journey-faithfully-ss-guitar/journey-faithfully-ss-guitar.png",
+        "eps": "music_lyricss/journey-faithfully-ss-guitar/journey-faithfully-ss-guitar.eps"
+      }
+    },
+    {
+      "id": 441,
+      "artist": "Bon",
+      "song": "Jovi Living on A Prayer",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/bon-jovi-living-on-a-prayer-guitar/bon-jovi-living-on-a-prayer-guitar.webp",
+      "webp": "images/designs/bon-jovi-living-on-a-prayer-guitar/bon-jovi-living-on-a-prayer-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/bon-jovi-living-on-a-prayer-guitar/bon-jovi-living-on-a-prayer-guitar.svg",
+        "pdf": "music_lyricss/bon-jovi-living-on-a-prayer-guitar/bon-jovi-living-on-a-prayer-guitar.pdf",
+        "png": "music_lyricss/bon-jovi-living-on-a-prayer-guitar/bon-jovi-living-on-a-prayer-guitar.png",
+        "eps": "music_lyricss/bon-jovi-living-on-a-prayer-guitar/bon-jovi-living-on-a-prayer-guitar.eps"
+      }
+    },
+    {
+      "id": 442,
+      "artist": "Scotty",
+      "song": "Mccreery Five More Minutes",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/scotty-mccreery-five-more-minutes-guitar/scotty-mccreery-five-more-minutes-guitar.webp",
+      "webp": "images/designs/scotty-mccreery-five-more-minutes-guitar/scotty-mccreery-five-more-minutes-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/scotty-mccreery-five-more-minutes-guitar/scotty-mccreery-five-more-minutes-guitar.svg",
+        "pdf": "music_lyricss/scotty-mccreery-five-more-minutes-guitar/scotty-mccreery-five-more-minutes-guitar.pdf",
+        "png": "music_lyricss/scotty-mccreery-five-more-minutes-guitar/scotty-mccreery-five-more-minutes-guitar.png",
+        "eps": "music_lyricss/scotty-mccreery-five-more-minutes-guitar/scotty-mccreery-five-more-minutes-guitar.eps"
+      }
+    },
+    {
+      "id": 443,
+      "artist": "Kiss",
+      "song": "Beth",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/kiss-beth-guitar/kiss-beth-guitar.webp",
+      "webp": "images/designs/kiss-beth-guitar/kiss-beth-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/kiss-beth-guitar/kiss-beth-guitar.svg",
+        "pdf": "music_lyricss/kiss-beth-guitar/kiss-beth-guitar.pdf",
+        "png": "music_lyricss/kiss-beth-guitar/kiss-beth-guitar.png",
+        "eps": "music_lyricss/kiss-beth-guitar/kiss-beth-guitar.eps"
+      }
+    },
+    {
+      "id": 444,
+      "artist": "Luke",
+      "song": "Bryan Huntin Fishin and Lovin Every Day",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/luke-bryan-huntin-fishin-and-lovin-every-day-guitar/luke-bryan-huntin-fishin-and-lovin-every-day-guitar.webp",
+      "webp": "images/designs/luke-bryan-huntin-fishin-and-lovin-every-day-guitar/luke-bryan-huntin-fishin-and-lovin-every-day-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/luke-bryan-huntin-fishin-and-lovin-every-day-guitar/luke-bryan-huntin-fishin-and-lovin-every-day-guitar.svg",
+        "pdf": "music_lyricss/luke-bryan-huntin-fishin-and-lovin-every-day-guitar/luke-bryan-huntin-fishin-and-lovin-every-day-guitar.pdf",
+        "png": "music_lyricss/luke-bryan-huntin-fishin-and-lovin-every-day-guitar/luke-bryan-huntin-fishin-and-lovin-every-day-guitar.png",
+        "eps": "music_lyricss/luke-bryan-huntin-fishin-and-lovin-every-day-guitar/luke-bryan-huntin-fishin-and-lovin-every-day-guitar.eps"
+      }
+    },
+    {
+      "id": 445,
+      "artist": "Kenny",
+      "song": "Chesney I Go Back",
+      "shape": "GUITAR",
+      "genre": "Rock",
+      "price": 3,
+      "formats": [
+        "SVG",
+        "PDF",
+        "PNG",
+        "EPS"
+      ],
+      "image": "images/designs/kenny-chesney-i-go-back-guitar/kenny-chesney-i-go-back-guitar.webp",
+      "webp": "images/designs/kenny-chesney-i-go-back-guitar/kenny-chesney-i-go-back-guitar.webp",
+      "files": {
+        "svg": "music_lyricss/kenny-chesney-i-go-back-guitar/kenny-chesney-i-go-back-guitar.svg",
+        "pdf": "music_lyricss/kenny-chesney-i-go-back-guitar/kenny-chesney-i-go-back-guitar.pdf",
+        "png": "music_lyricss/kenny-chesney-i-go-back-guitar/kenny-chesney-i-go-back-guitar.png",
+        "eps": "music_lyricss/kenny-chesney-i-go-back-guitar/kenny-chesney-i-go-back-guitar.eps"
+      }
     }
   ],
   "metadata": {
