@@ -1,65 +1,90 @@
-// Check for duplicate images in database
-require('dotenv').config();
-const { Pool } = require('pg');
+const fs = require('fs');
+const crypto = require('crypto');
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
-
-async function checkDuplicateImages() {
-    try {
-        console.log('🔍 Checking for duplicate images in database...');
-        
-        // Get all designs with their image URLs
-        const result = await pool.query(`
-            SELECT design_id, name, artist, price, image_url 
-            FROM designs 
-            ORDER BY image_url, design_id
-        `);
-        
-        // Group designs by image URL
-        const imageGroups = {};
-        result.rows.forEach(row => {
-            const imageUrl = row.image_url;
-            if (!imageGroups[imageUrl]) {
-                imageGroups[imageUrl] = [];
-            }
-            imageGroups[imageUrl].push(row);
-        });
-        
-        // Find duplicates (more than one design using the same image)
-        const duplicates = {};
-        Object.keys(imageGroups).forEach(imageUrl => {
-            if (imageGroups[imageUrl].length > 1) {
-                duplicates[imageUrl] = imageGroups[imageUrl];
-            }
-        });
-        
-        if (Object.keys(duplicates).length === 0) {
-            console.log('✅ No duplicate images found! All designs have unique images.');
-        } else {
-            console.log(`❌ Found ${Object.keys(duplicates).length} duplicate image URLs:`);
-            console.log('');
-            
-            Object.keys(duplicates).forEach(imageUrl => {
-                const designs = duplicates[imageUrl];
-                const folderName = imageUrl.split('/').pop().replace('.png', '');
-                console.log(`📁 Folder: ${folderName}`);
-                console.log(`🔗 URL: ${imageUrl}`);
-                console.log(`📊 Used by ${designs.length} designs:`);
-                designs.forEach(design => {
-                    console.log(`   - Design ID ${design.design_id}: ${design.name} - $${design.price}`);
-                });
-                console.log('');
-            });
-        }
-        
-    } catch (error) {
-        console.error('❌ Error checking for duplicate images:', error);
-    } finally {
-        await pool.end();
-    }
+// Function to get file hash
+function getFileHash(filePath) {
+  const fileBuffer = fs.readFileSync(filePath);
+  const hashSum = crypto.createHash('md5');
+  hashSum.update(fileBuffer);
+  return hashSum.digest('hex');
 }
 
-checkDuplicateImages(); 
+// Check Alabama Dixieland Delight designs
+console.log('🔍 Checking Alabama Dixieland Delight designs...\n');
+
+const alabamaFiles = [
+  'images/designs/alabama-dixieland-delight-guitar/alabama-dixieland-delight-guitar.webp',
+  'images/designs/alabama-dixieland-delight-guitar-2/alabama-dixieland-delight-guitar-2.webp',
+  'images/designs/alabama-dixieland-delight-guitar-ss/alabama-dixieland-delight-guitar-ss.webp'
+];
+
+const alabamaHashes = {};
+alabamaFiles.forEach(file => {
+  if (fs.existsSync(file)) {
+    const hash = getFileHash(file);
+    const fileName = file.split('/').pop();
+    alabamaHashes[fileName] = hash;
+    console.log(`✅ ${fileName}: ${hash}`);
+  } else {
+    console.log(`❌ ${file} - File not found`);
+  }
+});
+
+// Check for duplicates
+const alabamaHashValues = Object.values(alabamaHashes);
+const alabamaUniqueHashes = [...new Set(alabamaHashValues)];
+console.log(`\n📊 Alabama Dixieland Delight: ${alabamaUniqueHashes.length} unique images out of ${alabamaFiles.length} files`);
+
+if (alabamaUniqueHashes.length < alabamaFiles.length) {
+  console.log('❌ DUPLICATE IMAGES FOUND in Alabama Dixieland Delight!');
+} else {
+  console.log('✅ All Alabama Dixieland Delight images are unique');
+}
+
+console.log('\n' + '='.repeat(60) + '\n');
+
+// Check Eric Church Hell of a View designs
+console.log('🔍 Checking Eric Church Hell of a View designs...\n');
+
+const ericFiles = [
+  'images/designs/eric-church-hell-of-a-view-guitar/eric-church-hell-of-a-view-guitar.webp',
+  'images/designs/eric-church-hell-of-a-view-guitar-2/eric-church-hell-of-a-view-guitar-2.webp',
+  'images/designs/eric-church-hell-of-a-view-guitar-3/eric-church-hell-of-a-view-guitar-3.webp'
+];
+
+const ericHashes = {};
+ericFiles.forEach(file => {
+  if (fs.existsSync(file)) {
+    const hash = getFileHash(file);
+    const fileName = file.split('/').pop();
+    ericHashes[fileName] = hash;
+    console.log(`✅ ${fileName}: ${hash}`);
+  } else {
+    console.log(`❌ ${file} - File not found`);
+  }
+});
+
+// Check for duplicates
+const ericHashValues = Object.values(ericHashes);
+const ericUniqueHashes = [...new Set(ericHashValues)];
+console.log(`\n📊 Eric Church Hell of a View: ${ericUniqueHashes.length} unique images out of ${ericFiles.length} files`);
+
+if (ericUniqueHashes.length < ericFiles.length) {
+  console.log('❌ DUPLICATE IMAGES FOUND in Eric Church Hell of a View!');
+} else {
+  console.log('✅ All Eric Church Hell of a View images are unique');
+}
+
+console.log('\n' + '='.repeat(60) + '\n');
+
+// Summary
+const totalFiles = alabamaFiles.length + ericFiles.length;
+const totalUnique = alabamaUniqueHashes.length + ericUniqueHashes.length;
+console.log(`📊 SUMMARY: ${totalUnique} unique images out of ${totalFiles} total files`);
+
+if (totalUnique < totalFiles) {
+  console.log('❌ DUPLICATE IMAGES DETECTED - This explains why the website shows identical images!');
+  console.log('💡 Solution: Replace the duplicate image files with unique designs');
+} else {
+  console.log('✅ All images are unique - The issue might be elsewhere');
+}
